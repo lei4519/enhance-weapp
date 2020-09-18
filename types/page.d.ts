@@ -1,0 +1,1 @@
+declare var Page: WechatMiniprogram.Page.Constructor
