@@ -3,6 +3,12 @@ import { Ecomponent } from '@/Ecomponent'
 import { onLoad, onCreated } from '@/lifecycle'
 import { setTimeoutResolve } from '@/util'
 describe('装饰生命周期函数', () => {
+  test('__hooks__属性不可遍历', () => {
+    const pageOptions = {}
+    Epage(pageOptions)
+    expect(Object.keys(pageOptions).findIndex(k => k === '__hooks__')).toBe(-1)
+  })
+
   test('Page装饰后生命周期函数不再是之前的函数', () => {
     const onLoad = () => {}
     const onShow = () => {}
@@ -27,6 +33,24 @@ describe('装饰生命周期函数', () => {
     expect(componentOptions.lifetimes.attached).toBeTruthy()
     expect(componentOptions.lifetimes.created).not.toEqual(created)
     expect(componentOptions.lifetimes.attached).not.toEqual(attached)
+  })
+
+  test('装饰后选项上的生命周期函数可以是数组', done => {
+    const onLoad1 = jest.fn()
+    const onLoad2 = jest.fn()
+    const onLoad3 = jest.fn()
+    const onLoad4 = jest.fn()
+    const pageOptions: any = {
+      onLoad: [onLoad1, onLoad2, onLoad3, onLoad4]
+    }
+    const page: any = Epage(pageOptions)
+    page.$once('onLoad:done', () => {
+      expect(onLoad1.mock.calls.length).toBe(1)
+      expect(onLoad2.mock.calls.length).toBe(1)
+      expect(onLoad3.mock.calls.length).toBe(1)
+      expect(onLoad4.mock.calls.length).toBe(1)
+      done()
+    })
   })
 
   test('装饰后生命周期可以正常执行, 并通过监听xxx:done来判断执行完成', () => {

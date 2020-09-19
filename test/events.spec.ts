@@ -1,6 +1,12 @@
 import { initEvents } from '@/events'
 
 describe('事件通信', () => {
+  test('__events__属性不可遍历', () => {
+    const ctx: any = {}
+    initEvents(ctx)
+    expect(Object.keys(ctx).findIndex(k => k === '__events__')).toBe(-1)
+  })
+
   test('on 监听多个函数并使用emit触发', () => {
     const fn1 = jest.fn()
     const fn2 = jest.fn()

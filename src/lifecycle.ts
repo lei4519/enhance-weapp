@@ -1,5 +1,12 @@
-import { disableEnumerable, isObject, noop, transformOnName } from '@/util'
+import {
+  disableEnumerable,
+  isFunction,
+  isObject,
+  noop,
+  transformOnName
+} from '@/util'
 import { initEvents } from './events'
+import { handlerSetup } from './reactive'
 
 const lc = {
   page: [
@@ -37,45 +44,60 @@ export function decoratorLifeCycle(
       options.lifetimes = {}
     }
     // 保留原函数
-    let hook: HookFn
+    let hook: HookFn | HookFn[]
     if (type === 'page') {
       hook = options[name]
     } else {
       hook = options.lifetimes[name] || options[name]
     }
     const opt = type === 'page' ? options : options.lifetimes
-    opt[name] = function (options: PageOptions | ComponentOptions) {
+    opt[name] = function (options: LooseObject) {
       const ctx = this
       if (name === 'onLoad' || name === 'created') {
         // 初始化事件通信
         initEvents(ctx)
-        // 初始化 hook
+        // 初始化 hooks
         initHooks(type, ctx)
-        // setup
+        // 处理 setup
+        handlerSetup(ctx)
       }
-      // 将原函数放入队尾
+
       if (hook) {
-        // 全局保存this，执行生命周期期间可以新增生命周期钩子
-        setCurrentCtx(ctx)
-        if (type === 'page') {
-          pagePushHooks[name as PageLifeTime](hook)
-        } else {
-          const onName = transformOnName(name)
-          componentPushHooks[onName as ComponentHooksName](hook)
+        // 兼容数组
+        if (isFunction(hook)) hook = [hook as HookFn]
+        if (Array.isArray(hook)) {
+          setCurrentCtx(ctx)
+          hook.forEach(fn => {
+            if (isFunction(fn)) {
+              // 在setup中添加的钩子应该于原函数之前执行
+              // 将原函数放入队尾
+              if (type === 'page') {
+                pagePushHooks[name as PageLifeTime](fn)
+              } else {
+                const onName = transformOnName(name)
+                componentPushHooks[onName as ComponentHooksName](fn)
+              }
+            }
+          })
+          setCurrentCtx(null)
         }
-        setCurrentCtx(null)
       }
+      // 执行收集的钩子函数
       callHooks(name, options, ctx).then(() => {
+        // 执行完成 触发事件
         ctx.$emit(`${name}:done`)
       })
     }
   })
 }
 
+// 全局保留上下文，添加钩子函数时需要用到
 let currentCtx: PageInstance | ComponentInstance | null = null
 function setCurrentCtx(ctx: PageInstance | ComponentInstance | null) {
   currentCtx = ctx
 }
+
+// 初始化钩子
 function initHooks(type: DecoratorType, ctx: PageInstance | ComponentInstance) {
   ctx.__hooks__ = {} as any
 
@@ -86,6 +108,7 @@ function initHooks(type: DecoratorType, ctx: PageInstance | ComponentInstance) {
   })
 }
 
+// 执行钩子
 function callHooks(
   name: PageLifeTime | ComponentLifeTime,
   options: LooseObject,
@@ -100,19 +123,18 @@ function callHooks(
       // 异步微任务执行
       promise = promise.then(result => {
         // 每次执行前将当前的ctx推入全局
-        // 以此保证多个实例在异步穿插运行时的使用onXXX动态添加的生命周期函数指向正确
+        // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
         setCurrentCtx(ctx)
         const res = callbacks[i].call(ctx, result)
         setCurrentCtx(null)
         return res
       })
     }
-    // 运行期间可以动态添加生命周期, 运行链结束检查是否有新增的
+    // 运行期间可以动态添加生命周期, 运行链结束检查是否有新增的钩子函数
     promise = promise.then(() => {
       const nowLen = ctx.__hooks__[name].length
       if (nowLen > len) {
-        // 此次产生的微任务会在当前宏任务的微任务队尾中
-        // 所以如果想要保证生命周期已经全部执行完成 要使用setTimeout在下一宏任务访问
+        // 如果有，就执行新增的钩子函数
         return callHooks(name, options, ctx, len)
       }
     })
@@ -120,12 +142,14 @@ function callHooks(
   return promise
 }
 
+// 生成添加钩子函数
 function genPushHooks(name: PageLifeTime | ComponentLifeTime) {
+  // 添加钩子函数
   return function pushHooks(cb: HookFn) {
     currentCtx && currentCtx.__hooks__[name].push(cb)
   }
 }
-
+// 页面的添加函数
 const pagePushHooks = lc.page.reduce((res, name) => {
   res[name] = genPushHooks(name)
   return res
@@ -144,6 +168,7 @@ export const onTabItemTap = pagePushHooks.onTabItemTap
 export const onResize = pagePushHooks.onResize
 export const onAddToFavorites = pagePushHooks.onAddToFavorites
 
+// 组件的添加函数
 const componentPushHooks = lc.component.reduce((res, name: string) => {
   // created => onCreated | ready => onReady
   const onName = transformOnName(name)
