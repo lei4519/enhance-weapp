@@ -1,4 +1,4 @@
-class WxPage {
+class WxComponent {
   constructor(config = {}) {
     Object.keys(config).forEach(key => {
       this[key] = config[key]
@@ -35,11 +35,12 @@ class WxPage {
   }
 }
 
-function Page(config) {
-  const page = new WxPage(config)
-  page?.onLoad()
-  page?.onShow()
+function Component(config) {
+  const component = new WxComponent(config)
+  Object.keys(component.lifetimes).forEach(key =>
+    component.lifetimes[key].call(component)
+  )
 
-  return page
+  return component
 }
-global.Page = Page
+global.Component = Component
