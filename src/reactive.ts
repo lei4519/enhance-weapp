@@ -6,7 +6,7 @@ import {
   isRef,
   toRaw,
   unref
-} from '../fork/reactive.js'
+} from '../fork/@vue-reactivity'
 import { isSymbol } from '@vue/shared'
 import { setData, setDataRunning } from './setDataEffect'
 export function handlerSetup(
@@ -29,6 +29,7 @@ export function handlerSetup(
 
   ctx.data = reactive(ctx.data)
   let keyPath = ''
+  // TODO vue issue
   onGetterChange((target: LooseObject, key: string, receiver: any) => {
     if (setDataRunning) return
     // 访问原型方法
