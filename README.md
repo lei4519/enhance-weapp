@@ -18,8 +18,9 @@ uniapp、trao等框架也可以实现开发效率的提升，但是这些框架�
   - 通过适配 Vue3 reactivity模块，加入响应式、setup、自定义hooks等能力
 - 全局逻辑复用能力：mixins
   - 全局为 页面/组件 实例混入生命周期钩子、data、方法等
-- 生命周期改为数组结构，方便扩展
+- 生命周期改为数组结构，可以在setup函数或全局mixins中多次注册
   - 遍历执行时，如果某个函数返回了Promise，则会阻塞后续代码的执行。
+- 将 wx.request 代理到 this.$ajax 上，加入axios拦截器机制抽离业务逻辑
 
 ### 响应式
 
@@ -43,6 +44,10 @@ Epage({
 
     const toggleShow = () => show.value = !show.value
 
+    onShow(function() {
+      console.log('onShow')
+    })
+
     watch(show, (newVal, oldVal) => console.log(`show值变化了：${oldVal}, ${newVal}`))
 
     return {
@@ -61,86 +66,106 @@ Epage({
 </view>
 ```
 
-定义的setup函数，会在页面onLoad时期执行，其参数就是onLoad函数的参数。
+1. 定义的setup函数，会在页面onLoad时期执行，其参数就是onLoad函数的参数。
 
-setup函数会先于onLoad生命周期函数前调用，其返回值中的函数，会与页面实例进行合并(组件则是methods对象)，非函数值会和data属性进行合并。（⚠️setup合并优先级最高，如有重名，会覆盖data属性）
+2. setup函数会先于onLoad生命周期函数前调用，其返回值中的函数，会与页面实例进行合并(组件则是methods对象)，非函数值会和data属性进行合并。（⚠️setup合并优先级最高，如有重名，会覆盖data属性）
 
-在setup中运行期间，可以使用ref，reactive，创建响应式对象。可以定义函数来修改其值。
+3. 在setup中运行期间，可以使用ref，reactive，创建响应式对象，定义函数来修改其值。
+  - reactive 对象 数组
+  - ref 基本类型
+  - watch，computed 监听响应式对象（Vue2）
 
+4. 使用onLoad、onShow等函数注册生命周期钩子
 
+#### 修改值的方式
+  - this.setData
+  - 通过函数直接修改ref、reactive的值
+  - 通过修改this.data$的值（this.data的响应式对象）
 
-
-开始计时，暂停计时demo
-reactive 对象 数组
-ref 基本类型 设置.value 获取不需要
-watch，computed 监听响应式对象
-
-ˉ
-
-onLoad 注册生命周期钩子
-
-data响应式
-  - data响应式，既然加入了响应式，页面实例的data属性自然也顺利成章的变成了响应式
-
-setdata优化
-nexttick函数
+#### 使用nextTick等待视图渲染完成
+ - this.$nextTick (同Vue，可以传入函数或者使用.then)
 
 
-data变化大家好接受，现在都在写vue
+## 项目相关
+
+### 代码内聚
+
+> 逻辑、样式等相关性的东西应该是集中的，而不是分散不同的文件夹中
+
+1. config中的检查移至每个页面中
+  ```js
+  Epage({
+    config: {
+      setting: true
+    }
+  })
+  ```
+
+2. urls.js 文件不再需要，在拦截器中进行统一处理
+  ```js
+    // 页面
+    this.$ajax({
+      host: 'xcx',
+      url: '/api/list'
+    })
+
+    // 拦截器
+    function(config) {
+      const host = {
+        dev: {
+          xcx: 'xcxbch'
+        },
+        prop: {
+          xcx: 'xcx'
+        }
+      }
+      config.url = host[isDev ? 'dev' : 'prod'][config.host] + config.url
+    }
+  ```
+
+3. sass文件放置每个页面/组件的文件夹中，使用脚本或者编辑器插件进行编译
+
+4. 雪碧图使用iconfont代替
+
+5. 使用Git版本控制
+
+### 开发相关
+
+禁止：
+  1. 随意新增、修改、删除globalData值
+  2. 通过getCurrentPages 获取页面实例修改属性
+
+以上行为会导致页面状态无法追踪，项目可维护性变差。
+
+- 状态可追踪
+  - 在数据的上下文文件中是否可以搜索到
+  - 是否可以通过打断点调试到
+
+- 全局状态管理
+  - 旧项目给globalData加入get、set函数，修改值时需要调用函数来保证数据的可追踪性/可调式性（约定不直接修改数据）
+  - 新项目直接加入redux（无法直接数据）
+
+- 封装布局组件，每个页面都需要引入
+  ```
+    <Layout>
+      <view></view>
+    </Layout>
+  ```
+  1. 提供全局视图层的复用机会（如登录弹窗组件）
+    - 布局组件复用视图层，全局mixins onLoad和data 复用逻辑层
+  2. 解决自定义顶导底导滚动不固定问题
+    - 顶导底导封装至布局组件中，页面内容使用scrollview包裹。如果有坑可以给一个开关来控制scrollview。
+
+- promise化微信api，搭配async/await 提高代码阅读性
+
+- 引入vant组件库
 
 
+## ⚠️框架注意点
 
+⚠️component ready 名称为 onComponentReady，避免和page 的onReady 冲突
 
-
-生命周期改为数组，可以在setup或全局混入中多次注册。
-生命周期函数按照注册顺序依次执行，如果返回promise，将会阻塞后续函数执行。
-
-
-全局逻辑复用 mixins 生命周期 属性 方法
-config中的检查
-弹窗登录，混入onload和data（封装了逻辑）
-
-封装布局组件
-每个页面都需要引入
-有机会封装全局视图层：弹窗登录
-解决自定义顶导底导滚动不固定问题
-顶导底导封装至布局组件中，页面内容使用scrollview包裹。如果有坑可以给一个开关来控制scrollview。
-
-store redux
-
-
-维护
-重构
-扩展
-
-
-一次性代码，不可能被重构。只能被重写
-全局data 修改 新增 删除
-getcurrentpage 修改属性
-非本人维护和扩展代码逻辑时，花费的时间和写出bug的几率都会大大增加。
-
-为什么上面的操作会导致这些问题？
-程序的运行，本质就是状态。数据的改变。我们要考虑的是状态的改变可以被追踪吗？是否可在当前上下文中搜索到？是否可用打断点的形式捕获到。如果状态不能被追踪，那这个坏的代码。
-
-
-注入ajax至this 封装 拦截器功能
-
-urls文件不再需要，放入ajax中处理。请求是传入host类型，具体值在拦截器中处理。
-
-config移至每个页面配置中，功能内聚
-
-promise化微信api，搭配async/await 提高代码阅读性
-
-引入vant组件库
-
-
-
-
-
-component ready 名称为 onComponentReady，避免和page 的onReady 冲突
-
-生命周期函数可能是异步的，如果需要等生命周期函数全部执行完成后在执行一些操作，可以监听'onLoad:done' 'created:done' 等事件
-
+⚠️生命周期函数可能是异步的，如果需要等生命周期函数全部执行完成后在执行一些操作，可以监听'onLoad:done' 'created:done' 等事件
 
 ⚠️生命周期函数应该避免使用箭头函数，这将使this丢失
 
