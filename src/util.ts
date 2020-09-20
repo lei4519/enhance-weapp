@@ -20,6 +20,10 @@ export const isObject = isType('Object')
 
 export const isFunction = isType('Function')
 
+export const isSymbol = isType('Symbol')
+
+export const isLooseObject = (obj: any) => obj && typeof obj === 'object'
+
 /**
  * @description 返回promise，超时后resolve promise
  * @param resolveData promise.resolve 的数据

@@ -58,8 +58,9 @@ export function decoratorLifeCycle(
         initEvents(ctx)
         // 初始化 hooks
         initHooks(type, ctx)
+        // 装饰 setData
         // 处理 setup
-        handlerSetup(ctx)
+        handlerSetup(ctx, options, type)
       }
 
       if (hook) {
@@ -143,7 +144,7 @@ function callHooks(
 }
 
 // 生成添加钩子函数
-function genPushHooks(name: PageLifeTime | ComponentLifeTime) {
+function createPushHooks(name: PageLifeTime | ComponentLifeTime) {
   // 添加钩子函数
   return function pushHooks(cb: HookFn) {
     currentCtx && currentCtx.__hooks__[name].push(cb)
@@ -151,7 +152,7 @@ function genPushHooks(name: PageLifeTime | ComponentLifeTime) {
 }
 // 页面的添加函数
 const pagePushHooks = lc.page.reduce((res, name) => {
-  res[name] = genPushHooks(name)
+  res[name] = createPushHooks(name)
   return res
 }, {} as { [P in PageLifeTime]: Function })
 
@@ -172,7 +173,7 @@ export const onAddToFavorites = pagePushHooks.onAddToFavorites
 const componentPushHooks = lc.component.reduce((res, name: string) => {
   // created => onCreated | ready => onReady
   const onName = transformOnName(name)
-  res[onName as ComponentHooksName] = genPushHooks(name as ComponentLifeTime)
+  res[onName as ComponentHooksName] = createPushHooks(name as ComponentLifeTime)
   return res
 }, {} as { [P in ComponentHooksName]: Function })
 

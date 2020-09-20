@@ -22,6 +22,8 @@ interface PageInstance
   $once: (name: string, cb: LooseFunction) => void
   $off: (name: string, cb: LooseFunction, offCallbackIndex?: number) => void
   $emit: (name: string) => void
+  setup: LooseFunction
+  data: LooseObject
 }
 interface ComponentInstance
   extends WechatMiniprogram.Component.Instance<DataOption, CustomOption> {
@@ -35,6 +37,9 @@ interface ComponentInstance
   $once: (name: string, cb: LooseFunction) => void
   $off: (name: string, cb: LooseFunction, offCallbackIndex?: number) => void
   $emit: (name: string) => void
+  setup: LooseFunction
+  data: LooseObject
+  methods: LooseObject
 }
 type ComponentHooksName =
   | 'onCreated'
