@@ -1,3 +1,2 @@
-src/kd/components/iconfont/fonts/*
-build/**
-src/singlecomponents/**
+fork/**
+env/**

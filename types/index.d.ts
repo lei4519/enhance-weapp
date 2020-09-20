@@ -10,3 +10,7 @@ type HookFn = (
 ) =>
   | (LooseObject | undefined)
   | Promise<(opt: LooseObject | undefined) => LooseObject | undefined>
+
+declare module 'fork/fork-reactive.js' {
+  export {}
+}

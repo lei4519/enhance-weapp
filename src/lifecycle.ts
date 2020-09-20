@@ -7,6 +7,7 @@ import {
 } from '@/util'
 import { initEvents } from './events'
 import { handlerSetup } from './reactive'
+import { nextTick } from './setDataEffect'
 
 const lc = {
   page: [
@@ -58,7 +59,8 @@ export function decoratorLifeCycle(
         initEvents(ctx)
         // 初始化 hooks
         initHooks(type, ctx)
-        // 装饰 setData
+        // nextTick
+        ctx.$nextTick = nextTick
         // 处理 setup
         handlerSetup(ctx, options, type)
       }

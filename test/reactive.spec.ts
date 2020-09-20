@@ -1,12 +1,5 @@
 import { handlerSetup } from '@/reactive'
-import {
-  isReactive,
-  isRef,
-  isReadonly,
-  readonly,
-  reactive,
-  ref
-} from '../src/fork-reactive.js'
+import { isReactive, isReadonly, readonly, ref } from '../fork/fork-reactive.js'
 
 describe('响应式处理', () => {
   test('setup返回值，函数绑定至this(methods)上，其他值绑定到data上', () => {

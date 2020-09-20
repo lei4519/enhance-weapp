@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:esm": "npx rollup --config",
-    "test": "jest ./test/reactive.spec.ts"
+    "test": "jest ./test/setDataEffect.spec.ts"
   },
   "keywords": [
     "composition",

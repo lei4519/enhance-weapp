@@ -24,6 +24,9 @@ interface PageInstance
   $emit: (name: string) => void
   setup: LooseFunction
   data: LooseObject
+  setData: LooseFunction
+  $nextTick(cb: LooseFunction): void
+  $nextTick(): Promise<void>
 }
 interface ComponentInstance
   extends WechatMiniprogram.Component.Instance<DataOption, CustomOption> {
@@ -40,6 +43,9 @@ interface ComponentInstance
   setup: LooseFunction
   data: LooseObject
   methods: LooseObject
+  setData: LooseFunction
+  $nextTick(cb: LooseFunction): void
+  $nextTick(): Promise<void>
 }
 type ComponentHooksName =
   | 'onCreated'
