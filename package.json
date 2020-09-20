@@ -4,8 +4,8 @@
   "description": "增强小程序开发能力，加入vue composition api等特性",
   "main": "index.js",
   "scripts": {
-    "build:esm": "npx rollup --config",
-    "test": "jest ./test/mixins.spec.ts"
+    "build": "NODE_ENV=production npx rollup --config",
+    "test": "jest"
   },
   "keywords": [
     "composition",
@@ -26,6 +26,7 @@
     "@commitlint/config-conventional": "^11.0.0",
     "@rollup/plugin-commonjs": "^15.0.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
+    "@rollup/plugin-replace": "^2.3.3",
     "@types/jest": "^26.0.14",
     "@typescript-eslint/eslint-plugin": "^4.1.1",
     "@typescript-eslint/parser": "^4.1.1",

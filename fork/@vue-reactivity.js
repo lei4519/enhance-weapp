@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true })
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-var shared = require('@vue/shared')
+var shared = require('@vue/shared/dist/shared.cjs.prod')
 
 const targetMap = new WeakMap()
 const effectStack = []
