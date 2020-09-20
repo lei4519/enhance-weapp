@@ -32,8 +32,11 @@ function flushJobs(ctx: PageInstance | ComponentInstance) {
   isFlushing = false
   let res: LooseObject = {}
   while (queue.length) {
-    const { path, value } = queue.shift()!()
-    res[path] = value
+    let obj: any
+    if ((obj = queue.shift()!()) && obj.path) {
+      const { path, value = null } = obj
+      res[path] = value
+    }
   }
   if (Object.keys(res).length === 0) return
   console.log(res)
@@ -49,10 +52,10 @@ export function nextTick(
   cb?: LooseFunction
 ) {
   let resolve: LooseFunction
-  const promise = new Promise(r => (resolve = r))
+  let promise = new Promise(r => (resolve = r))
   this.$once('setDataRender:done', resolve!)
   if (isFunction(cb)) {
-    promise.then(cb)
+    promise = promise.then(cb)
   }
   return promise!
 }

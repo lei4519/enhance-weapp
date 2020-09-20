@@ -1,8 +1,11 @@
 // rollup.config.js
-import resolve from '@rollup/plugin-node-resolve'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from 'rollup-plugin-typescript2'
 import { terser } from 'rollup-plugin-terser'
+import replace from '@rollup/plugin-replace'
+const env = process.env.NODE_ENV
+
 export default {
   input: 'src/main.ts',
   output: [
@@ -16,5 +19,13 @@ export default {
       plugins: [terser()]
     }
   ],
-  plugins: [typescript(), commonjs(), resolve()]
+  plugins: [
+    commonjs(),
+    typescript(),
+    nodeResolve(),
+    replace({
+      'process.env.NODE_ENV': JSON.stringify(env)
+    })
+    // commonjs(),
+  ]
 }

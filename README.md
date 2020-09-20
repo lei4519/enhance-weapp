@@ -65,7 +65,11 @@ Epage({
 
 setup函数会先于onLoad生命周期函数前调用，其返回值中的函数，会与页面实例进行合并(组件则是methods对象)，非函数值会和data属性进行合并。（⚠️setup合并优先级最高，如有重名，会覆盖data属性）
 
-在setup中运行期间，可以使用ref，reactive，创建响应式对象。可以定义函数来修改
+在setup中运行期间，可以使用ref，reactive，创建响应式对象。可以定义函数来修改其值。
+
+
+
+
 开始计时，暂停计时demo
 reactive 对象 数组
 ref 基本类型 设置.value 获取不需要
@@ -74,7 +78,6 @@ watch，computed 监听响应式对象
 ˉ
 
 onLoad 注册生命周期钩子
-
 
 data响应式
   - data响应式，既然加入了响应式，页面实例的data属性自然也顺利成章的变成了响应式

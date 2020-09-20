@@ -14,20 +14,24 @@ export function handlerSetup(
   options: LooseObject,
   type: DecoratorType
 ) {
+  if (!ctx.data) ctx.data = {}
+  ctx.data$ = JSON.parse(JSON.stringify(ctx.data))
   if (isFunction(ctx.setup)) {
     const setupData = ctx.setup(options) || {}
-    if (!ctx.data) ctx.data = {}
     if (type === 'component' && !ctx.methods) ctx.methods = {}
-    Object.entries(setupData).forEach(([key, val]) => {
+    Object.keys(setupData).forEach(key => {
+      const val = setupData[key]
       if (isFunction(val)) {
         ;(type === 'page' ? ctx : ctx.methods)[key] = val
       } else {
-        ctx.data[key] = val
+        ctx.data$[key] = val
+        ctx.data[key] = isRef(val) ? unref(val) : toRaw(val)
       }
     })
   }
-
-  ctx.data = reactive(ctx.data)
+  // 同步合并后的值到渲染层
+  ctx.setData(ctx.data)
+  ctx.data$ = reactive(ctx.data$)
   let keyPath = ''
   // TODO vue issue
   onGetterChange((target: LooseObject, key: string, receiver: any) => {
@@ -35,7 +39,7 @@ export function handlerSetup(
     // 访问原型方法
     if (Object.getPrototypeOf(target)[key]) return
     if (isSymbol(key)) return
-    if (receiver === ctx.data) {
+    if (receiver === ctx.data$) {
       keyPath = `data.${key}`
     } else {
       keyPath = `${keyPath}.${key}`

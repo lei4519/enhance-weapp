@@ -1,6 +1,6 @@
 import { Epage } from '@/Epage'
 import { handlerSetup } from '@/reactive'
-import { nextTick, setData } from '@/setDataEffect'
+import { setData } from '@/setDataEffect'
 import { readonly, reactive, ref } from '../fork/@vue-reactivity'
 describe('setData', () => {
   // test('setData下一微任务执行', done => {
@@ -20,72 +20,72 @@ describe('setData', () => {
   //     done()
   //   })
   // })
-  // test('nextTick传入函数', done => {
-  //   const fn = jest.fn()
-  //   const page = Epage({})
-  //   page.data.a = 1
-  //   page.$nextTick(fn)
-  //   page.$nextTick(() => {
-  //     expect(fn.mock.calls.length).toBe(1)
-  //     done()
-  //   })
-  //   expect(fn.mock.calls.length).toBe(0)
-  // })
-  // test('nextTick Promise', done => {
-  //   const fn = jest.fn()
-  //   const page = Epage({})
-  //   page.data.a = 1
-  //   page.$nextTick().then(() => {
-  //     fn()
-  //   })
-  //   page.$nextTick().then(() => {
-  //     expect(fn.mock.calls.length).toBe(1)
-  //     done()
-  //   })
-  //   expect(fn.mock.calls.length).toBe(0)
-  // })
-  // test('nextTick Promise和函数同时使用，可以顺序执行', done => {
-  //   const fn = jest.fn()
-  //   const page = Epage({})
-  //   page.data.a = 1
-  //   page.$nextTick().then(() => {
-  //     fn()
-  //   })
-  //   page.$nextTick(() => {
-  //     expect(fn.mock.calls.length).toBe(1)
-  //     done()
-  //   })
-  //   expect(fn.mock.calls.length).toBe(0)
-  // })
-  // test('data', () => {
-  //   const page: any = {
-  //     data: {
-  //       d: 1
-  //     },
-  //     setup() {
-  //       let a = ref(1)
-  //       let e = reactive({
-  //         f: [
-  //           {
-  //             g: 1
-  //           }
-  //         ]
-  //       })
-  //       const c = readonly({})
-  //       return {
-  //         a,
-  //         b: {},
-  //         c,
-  //         e
-  //       }
-  //     }
-  //   }
-  //   handlerSetup(page, {}, 'page')
-  //   page.data.e.f.push(3)
-  //   page.data.e.f[0].g = 2
-  //   page.data.a = 2
-  //   page.data.d = 4
-  //   page.data.o = ref(4)
-  //   page.data.d = reactive({})
-  // })
+  test('nextTick传入函数', done => {
+    const fn = jest.fn()
+    const page = Epage({})
+    page.data$.a = 1
+    page.$nextTick(fn)
+    page.$nextTick(() => {
+      expect(fn.mock.calls.length).toBe(1)
+      done()
+    })
+    expect(fn.mock.calls.length).toBe(0)
+  })
+  test('nextTick Promise', done => {
+    const fn = jest.fn()
+    const page = Epage({})
+    page.data$.a = 1
+    page.$nextTick().then(() => {
+      fn()
+    })
+    page.$nextTick().then(() => {
+      expect(fn.mock.calls.length).toBe(1)
+      done()
+    })
+    expect(fn.mock.calls.length).toBe(0)
+  })
+  test('nextTick Promise和函数同时使用，可以顺序执行', done => {
+    const fn = jest.fn()
+    const page = Epage({})
+    page.data$.a = 1
+    page.$nextTick().then(() => {
+      fn()
+    })
+    page.$nextTick(() => {
+      expect(fn.mock.calls.length).toBe(1)
+      done()
+    })
+    expect(fn.mock.calls.length).toBe(0)
+  })
+  test('data', () => {
+    const page: any = {
+      data: {
+        d: 1
+      },
+      setup() {
+        let a = ref(1)
+        let e = reactive({
+          f: [
+            {
+              g: 1
+            }
+          ]
+        })
+        const c = readonly({})
+        return {
+          a,
+          b: {},
+          c,
+          e
+        }
+      }
+    }
+    handlerSetup(page, {}, 'page')
+    page.data$.e.f.push(3)
+    page.data$.e.f[0].g = 2
+    page.data$.a = 2
+    page.data$.d = 4
+    page.data$.o = ref(4)
+    page.data$.d = reactive({})
+  })
 })

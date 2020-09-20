@@ -18,7 +18,7 @@ describe('全局混入', () => {
       config: {}
     })
     const page = Epage({})
-    expect(page.data.a).toBe(1)
+    expect(page.data$.a).toBe(1)
     expect(page.config).toEqual({})
     expect(page.__hooks__.onLoad.length).toBe(1)
     expect(page.__hooks__.onShow.length).toBe(1)
@@ -38,7 +38,7 @@ describe('全局混入', () => {
       config: {}
     })
     const comp = Ecomponent({})
-    expect(comp.data.a).toBe(1)
+    expect(comp.data$.a).toBe(1)
     expect(comp.config).toEqual({})
     expect(comp.__hooks__.created.length).toBe(1)
     expect(comp.__hooks__.ready.length).toBe(1)
@@ -58,7 +58,7 @@ describe('全局混入', () => {
       },
       config: { a: 1 }
     })
-    expect(page.data.a).toBe(2)
+    expect(page.data$.a).toBe(2)
     expect(page.config).toEqual({ a: 1 })
     expect(!!page.c).toBeTruthy()
   })

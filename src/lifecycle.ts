@@ -64,7 +64,9 @@ export function decoratorLifeCycle(
         // nextTick
         ctx.$nextTick = nextTick
         // 处理 setup
+        setCurrentCtx(ctx)
         handlerSetup(ctx, options, type)
+        setCurrentCtx(null)
       }
 
       if (hook) {
