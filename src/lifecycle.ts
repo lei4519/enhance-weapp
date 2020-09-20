@@ -7,7 +7,7 @@ import {
 import { initEvents } from './events'
 import { handlerMixins } from './mixins'
 import { handlerSetup } from './reactive'
-import { nextTick } from './setDataEffect'
+import { setDataNextTick } from './setDataEffect'
 
 const lc = {
   page: [
@@ -62,7 +62,7 @@ export function decoratorLifeCycle(
         // 处理mixins
         handlerMixins(type, ctx)
         // nextTick
-        ctx.$nextTick = nextTick
+        ctx.$nextTick = setDataNextTick
         // 处理 setup
         setCurrentCtx(ctx)
         handlerSetup(ctx, options, type)

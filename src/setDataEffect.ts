@@ -1,39 +1,39 @@
 import { isFunction } from './util'
 
 // 异步队列
-const queue: LooseFunction[] = []
+const setDataQueue: LooseFunction[] = []
 let isFlushing = false
 export let setDataRunning = false
 export function setData(
   ctx: PageInstance | ComponentInstance,
   fn: LooseFunction
 ) {
-  queueJob(ctx, fn)
+  queueSetDataJob(ctx, fn)
 }
 
-export function queueJob(
+export function queueSetDataJob(
   ctx: PageInstance | ComponentInstance,
   job: LooseFunction
 ) {
-  if (!queue.includes(job)) {
-    queue.push(job)
-    queueFlush(ctx)
+  if (!setDataQueue.includes(job)) {
+    setDataQueue.push(job)
+    queueSetDataFlush(ctx)
   }
 }
 
-function queueFlush(ctx: PageInstance | ComponentInstance) {
+function queueSetDataFlush(ctx: PageInstance | ComponentInstance) {
   if (!isFlushing) {
     isFlushing = true
-    Promise.resolve().then(() => flushJobs(ctx))
+    Promise.resolve().then(() => flushSetDataJobs(ctx))
   }
 }
 
-function flushJobs(ctx: PageInstance | ComponentInstance) {
+function flushSetDataJobs(ctx: PageInstance | ComponentInstance) {
   isFlushing = false
   let res: LooseObject = {}
-  while (queue.length) {
+  while (setDataQueue.length) {
     let obj: any
-    if ((obj = queue.shift()!()) && obj.path) {
+    if ((obj = setDataQueue.shift()!()) && obj.path) {
       const { path, value = null } = obj
       res[path] = value
     }
@@ -47,7 +47,7 @@ function flushJobs(ctx: PageInstance | ComponentInstance) {
   })
 }
 
-export function nextTick(
+export function setDataNextTick(
   this: PageInstance | ComponentInstance,
   cb?: LooseFunction
 ) {
