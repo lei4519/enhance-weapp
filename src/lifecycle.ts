@@ -2,10 +2,10 @@ import {
   disableEnumerable,
   isFunction,
   isObject,
-  noop,
   transformOnName
 } from '@/util'
 import { initEvents } from './events'
+import { handlerMixins } from './mixins'
 import { handlerSetup } from './reactive'
 import { nextTick } from './setDataEffect'
 
@@ -19,7 +19,7 @@ const lc = {
     'onPullDownRefresh',
     'onReachBottom',
     'onShareAppMessage',
-    'onPageScroll',
+    // 'onPageScroll', 性能问题：一旦监听，每次滚动两个线程之间都会通信一次
     'onTabItemTap',
     'onResize',
     'onAddToFavorites'
@@ -59,6 +59,8 @@ export function decoratorLifeCycle(
         initEvents(ctx)
         // 初始化 hooks
         initHooks(type, ctx)
+        // 处理mixins
+        handlerMixins(type, ctx)
         // nextTick
         ctx.$nextTick = nextTick
         // 处理 setup
@@ -118,7 +120,7 @@ function callHooks(
   ctx: PageInstance | ComponentInstance,
   startIdx: number = 0
 ) {
-  let promise = Promise.resolve<LooseObject | undefined>(options)
+  let promise = Promise.resolve<any>(options)
   const callbacks = ctx.__hooks__[name]
   const len = callbacks.length
   if (len) {
@@ -166,7 +168,6 @@ export const onUnload = pagePushHooks.onUnload
 export const onPullDownRefresh = pagePushHooks.onPullDownRefresh
 export const onReachBottom = pagePushHooks.onReachBottom
 export const onShareAppMessage = pagePushHooks.onShareAppMessage
-export const onPageScroll = pagePushHooks.onPageScroll
 export const onTabItemTap = pagePushHooks.onTabItemTap
 export const onResize = pagePushHooks.onResize
 export const onAddToFavorites = pagePushHooks.onAddToFavorites

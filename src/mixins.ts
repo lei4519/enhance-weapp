@@ -1,62 +1,44 @@
+import { isObject } from './util'
 
-let mixins = {
-  page: {
-    hooks: {
-      onLoad: [
-        function createReactiveData(options) {
-          if (!isObject(this.data)) this.data = {}
-          if (isFunction(this.setup)) {
-            const setupData = this.setup(options)
-            if (isObject(setupData)) {
-              Object.entries(setupData).forEach(
-                ([key, val]) =>
-                  ((isFunction(val) ? this : this.data)[key] = val)
-              )
-            } else {
-              console.warn('setup函数应该返回对象')
-            }
-          }
-          reactive(this.data)
-          return options
-        },
-        function bindSetDataEffect(options) {
-          function bindEffect(data, key) {
-            Object.entries(data).forEach(([k, val])=> {
-              const keyPath = key ? `${key}.${k}` : k
-              if (!isRef(val) && typeof val === 'object') {
-                bindEffect(val, keyPath)
+let mixins: GlobalMixins | null = null
+
+export function handlerMixins(
+  type: DecoratorType,
+  ctx: PageInstance | ComponentInstance
+) {
+  if (mixins) {
+    Object.entries(mixins).forEach(([key, val]) => {
+      if (key === 'hooks') {
+        if (isObject(val) && isObject(val[type])) {
+          Object.entries<HookFn | HookFn[]>(val[type]).forEach(
+            ([lcName, hooksFn]) => {
+              if (ctx.__hooks__[lcName]) {
+                if (!Array.isArray(hooksFn)) hooksFn = [hooksFn]
+                ctx.__hooks__[lcName].push(...hooksFn)
               }
-              effect(function setDataEffect() {
-                const item = data[k]
-                const key = isRef(item) ? resKey : resKey
-                const value = isRef(item) ? unref(item) : toRaw(item)
-                this.setData(page, { [key]: value })
-              })
-            })
-          }
-          bindEffect(this.data)
-          return options
-        },
-        function decoratorSetData(options) {
-          const setData = this.setData.bind(this)
-          const queue = []
-          const flag = true
-          const nextTick = null
-          this.setData = function optimizeSetData(obj) {
-            queue.push(obj)
-            if (flag) {
-              Promise.resolve().then(() => {
-                this.flag = false
-                setData()
-              })
             }
-          }
-          return options
+          )
         }
-      ],
-    },
-  },
+      } else if (key === 'data') {
+        if (isObject(val)) {
+          if (!ctx.data) ctx.data = {}
+          Object.entries(val).forEach(([key, val]) => {
+            // mixins优先级最低
+            if (!ctx.data[key]) {
+              ctx.data[key] = val
+            }
+          })
+        }
+      } else {
+        // mixins优先级最低
+        if (!ctx[key]) {
+          ctx[key] = val
+        }
+      }
+    })
+  }
 }
-function globalMixins(m) {
+
+export function globalMixins(m: GlobalMixins) {
   mixins = m
 }

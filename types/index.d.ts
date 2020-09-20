@@ -5,12 +5,19 @@ interface LooseFunction extends LooseObject {
   (...args: any[]): any
 }
 type DecoratorType = 'page' | 'component'
-type HookFn = (
-  opt: LooseObject | undefined
-) =>
-  | (LooseObject | undefined)
-  | Promise<(opt: LooseObject | undefined) => LooseObject | undefined>
+type HookFn = (opt?: LooseObject) => void
+type HookFn = (opt?: LooseObject) => LooseObject
+type HookFn = (opt?: LooseObject) => Promise<any>
 
-declare module 'fork/fork-reactive.js' {
-  export {}
+interface GlobalMixins {
+  hooks?: {
+    page?: {
+      [key in PageLifeTime]?: HookFn[]
+    }
+    component?: {
+      [key in ComponentLifeTime]?: HookFn[]
+    }
+  }
+  data?: LooseObject
+  [key: string]: any
 }

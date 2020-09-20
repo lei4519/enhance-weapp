@@ -1,7 +1,7 @@
 import { Epage } from '@/Epage'
 import { handlerSetup } from '@/reactive'
 import { nextTick, setData } from '@/setDataEffect'
-import { readonly, reactive, ref } from '../fork/fork-reactive.js'
+import { readonly, reactive, ref } from '../fork/reactive.js'
 describe('setData', () => {
   // test('setData下一微任务执行', done => {
   //   const fn1 = jest.fn()

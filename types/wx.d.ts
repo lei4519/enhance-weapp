@@ -1,6 +1,6 @@
 type DataOption = WechatMiniprogram.Page.DataOption
 type CustomOption = WechatMiniprogram.Page.CustomOption
-type PageLifeTime = keyof WechatMiniprogram.Page.ILifetime
+type PageLifeTime = keyof Omit<WechatMiniprogram.Page.ILifetime, 'onPageScroll'>
 type ComponentLifeTime = keyof Omit<
   WechatMiniprogram.Component.Lifetimes,
   'lifetimes'
@@ -27,6 +27,7 @@ interface PageInstance
   setData: LooseFunction
   $nextTick(cb: LooseFunction): void
   $nextTick(): Promise<void>
+  [key: string]: any
 }
 interface ComponentInstance
   extends WechatMiniprogram.Component.Instance<DataOption, CustomOption> {
@@ -46,6 +47,7 @@ interface ComponentInstance
   setData: LooseFunction
   $nextTick(cb: LooseFunction): void
   $nextTick(): Promise<void>
+  [key: string]: any
 }
 type ComponentHooksName =
   | 'onCreated'

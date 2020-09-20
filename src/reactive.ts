@@ -6,7 +6,7 @@ import {
   isRef,
   toRaw,
   unref
-} from '../fork/fork-reactive.js'
+} from '../fork/reactive.js'
 import { isSymbol } from '@vue/shared'
 import { setData, setDataRunning } from './setDataEffect'
 export function handlerSetup(
