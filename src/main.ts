@@ -50,5 +50,4 @@ export {
   triggerRef,
   unref
 } from '../fork/@vue-reactivity'
-// TODO 不同的reactivity，可能会有问题
-export { watch, watchEffect } from '@vue/runtime-core'
+export { watch, watchEffect } from '../fork/@vue-runtime-core'

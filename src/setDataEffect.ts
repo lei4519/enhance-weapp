@@ -30,7 +30,7 @@ function queueSetDataFlush(ctx: PageInstance | ComponentInstance) {
 
 function flushSetDataJobs(ctx: PageInstance | ComponentInstance) {
   isFlushing = false
-  let res: LooseObject = {}
+  const res: LooseObject = {}
   while (setDataQueue.length) {
     let obj: any
     if ((obj = setDataQueue.shift()!()) && obj.path) {
@@ -39,7 +39,7 @@ function flushSetDataJobs(ctx: PageInstance | ComponentInstance) {
     }
   }
   if (Object.keys(res).length === 0) return
-  console.log(res)
+  console.log('响应式触发this.setDat，参数: ', res)
   setDataRunning = true
   ctx.setData(res, () => {
     setDataRunning = false

@@ -11,12 +11,12 @@
   "keywords": [
     "composition",
     "miniprogram",
+    "wxapp",
     "vue"
   ],
   "author": "lei4519",
   "license": "ISC",
   "dependencies": {
-    "@vue/runtime-core": "^3.0.0",
     "@vue/shared": "^3.0.0"
   },
   "devDependencies": {
