@@ -21,6 +21,7 @@ uniapp、trao等框架也可以实现开发效率的提升，但是这些框架�
 - 生命周期改为数组结构，可以在setup函数或全局mixins中多次注册
   - 遍历执行时，如果某个函数返回了Promise，则会阻塞后续代码的执行。
 - 将 wx.request 代理到 this.$ajax 上，加入axios拦截器机制抽离业务逻辑
+- 插件机制：多个项目间复用全局混用
 
 ### 响应式
 
@@ -85,18 +86,36 @@ Epage({
 #### 使用nextTick等待视图渲染完成
  - this.$nextTick (同Vue，可以传入函数或者使用.then)
 
-
 ## 项目相关
 
 ### 代码内聚
 
 > 逻辑、样式等相关性的东西应该是集中的，而不是分散不同的文件夹中
 
-1. config中的检查移至每个页面中
+1. config中的检查移至每个页面中, 全局混入onLoad处理
   ```js
+  // 页面
   Epage({
     config: {
       setting: true
+    }
+  })
+  // 混入onLoad
+  globalMixins({
+    hook: {
+      page: {
+        onLoad: [
+          function checkToken() {
+            if (this.config.token) {}
+          },
+          function checkSetting() {
+            if (this.config.setting) {}
+          },
+          function checkUcenter() {
+            if (this.config.ucenter) {}
+          },
+        ]
+      }
     }
   })
   ```
@@ -124,6 +143,7 @@ Epage({
   ```
 
 3. sass文件放置每个页面/组件的文件夹中，使用脚本或者编辑器插件进行编译
+  - 使用脚本编译，解决sass编译css时重复@import
 
 4. 雪碧图使用iconfont代替
 
@@ -134,6 +154,7 @@ Epage({
 禁止：
   1. 随意新增、修改、删除globalData值
   2. 通过getCurrentPages 获取页面实例修改属性
+  3. ...
 
 以上行为会导致页面状态无法追踪，项目可维护性变差。
 
@@ -161,6 +182,11 @@ Epage({
 - 引入vant组件库
 
 
+## API
+
+// ...
+
+
 ## ⚠️框架注意点
 
 ⚠️component ready 名称为 onComponentReady，避免和page 的onReady 冲突
@@ -170,8 +196,6 @@ Epage({
 ⚠️生命周期函数应该避免使用箭头函数，这将使this丢失
 
 ⚠️重名合并策略优先级： setup > data > mixins
-
-⚠️不要再使用this.setData, 没有做处理
 
 ⚠️考虑性能问题: 一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
 
