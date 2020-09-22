@@ -1,7 +1,7 @@
 import { Epage } from '@/Epage'
 import { handlerSetup } from '@/reactive'
 import { setData } from '@/setDataEffect'
-import { readonly, reactive, ref } from '../fork/@vue-reactivity'
+import { readonly, reactive, ref } from '@vue/reactivity'
 describe('setData', () => {
   test('setData下一微任务执行', done => {
     const fn1 = jest.fn()
@@ -78,31 +78,4 @@ describe('setData', () => {
     })
     expect(fn.mock.calls.length).toBe(0)
   })
-  // test('直接调用setData，值会同步至data$、ref、reactive', done => {
-  //   let refVal: any
-  //   let reactiveVal: any
-  //   const page: any = Epage({
-  //     setup() {
-  //       refVal = ref(1)
-  //       reactiveVal = reactive({ a: 1 })
-  //       return {
-  //         refVal,
-  //         reactiveVal
-  //       }
-  //     }
-  //   })
-  //   page.setData({
-  //     refVal: 2,
-  //     reactiveVal: {
-  //       a: 2
-  //     }
-  //   }
-  // })
-  //   page.$nextTick().then(() => {
-  //     expect(page.data$.refVal).toBe(2)
-  //     expect(page.data$.reactiveVal.a).toBe(2)
-  //     expect(refVal.value).toBe(2)
-  //     expect(reactiveVal.a).toBe(2)
-  //     done()
-  //   })
 })

@@ -2,23 +2,23 @@ export { Ecomponent } from './Ecomponent'
 export { Epage } from './Epage'
 
 export {
-  onLoad,
-  onShow,
-  onReady,
-  onHide,
-  onUnload,
-  onPullDownRefresh,
-  onReachBottom,
-  onShareAppMessage,
-  onTabItemTap,
-  onResize,
-  onAddToFavorites,
-  onCreated,
-  onAttached,
-  onComponentReady,
-  onMoved,
-  onDetached,
-  onError
+  onLoad as onLoadHooks,
+  onShow as onShowHooks,
+  onReady as onReadyHooks,
+  onHide as onHideHooks,
+  onUnload as onUnloadHooks,
+  onPullDownRefresh as onPullDownRefreshHooks,
+  onReachBottom as onReachBottomHooks,
+  onShareAppMessage as onShareAppMessageHooks,
+  onTabItemTap as onTabItemTapHooks,
+  onResize as onResizeHooks,
+  onAddToFavorites as onAddToFavoritesHooks,
+  onCreated as onCreatedHooks,
+  onAttached as onAttachedHooks,
+  onComponentReady as onComponentReadyHooks,
+  onMoved as onMovedHooks,
+  onDetached as onDetachedHooks,
+  onError as onErrorHooks
 } from './lifecycle'
 export { globalMixins } from './mixins'
 
@@ -49,5 +49,5 @@ export {
   trigger,
   triggerRef,
   unref
-} from '../fork/@vue-reactivity'
-export { watch, watchEffect } from '../fork/@vue-runtime-core'
+} from '@vue/reactivity'
+export { watch, watchEffect } from '@vue/runtime-core'

@@ -4,7 +4,7 @@ import {
   reactive,
   readonly,
   ref
-} from '../fork/@vue-reactivity.js'
+} from '@vue/reactivity'
 import { Epage } from '@/Epage'
 import { Ecomponent } from '@/Ecomponent'
 import { watch } from '@/main'

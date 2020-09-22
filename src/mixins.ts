@@ -42,3 +42,36 @@ export function handlerMixins(
 export function globalMixins(m: GlobalMixins) {
   mixins = m
 }
+
+globalMixins({
+  // 生命周期钩子
+  hooks: {
+    // 页面钩子
+    page: {
+      onLoad: [],
+      onShow: [],
+      onReady: [],
+      onHide: [],
+      onUnload: [],
+      onPullDownRefresh: [],
+      onReachBottom: [],
+      onShareAppMessage: [],
+      onTabItemTap: [],
+      onResize: [],
+      onAddToFavorites: []
+    },
+    // 组件钩子
+    component: {
+      created: [],
+      attached: [],
+      ready: [],
+      moved: [],
+      detached: [],
+      error: []
+    }
+  },
+  // 属性
+  data: {},
+  // 方法
+  anyFunction() {}
+})

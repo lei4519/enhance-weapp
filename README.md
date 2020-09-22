@@ -1,6 +1,10 @@
 # enhance-wxapp
 
-## 简介
+
+<a href="#API">API</a>
+
+
+## <a name="#1">简介</a>
 
 增强微信小程序运行时框架：保留微信原生框架的性能，通过增加特性来提高开发效率
 
@@ -20,7 +24,10 @@ uniapp、trao等框架也可以实现开发效率的提升，但是这些框架�
   - 全局为 页面/组件 实例混入生命周期钩子、data、方法等
 - 生命周期改为数组结构，可以在setup函数或全局mixins中多次注册
   - 遍历执行时，如果某个函数返回了Promise，则会阻塞后续代码的执行。
-- 将 wx.request 代理到 this.$ajax 上，加入axios拦截器机制抽离业务逻辑
+- 为this 加入$ajax方法
+    - 将 wx.request 代理到 `this.$ajax` 上，加入axios拦截器机制抽离业务逻辑
+- 为this 加入发布订阅方法
+    - `this.$on`、`this.$once`、`this.$emit`、`this.$off`
 - 插件机制：多个项目间复用全局混用
 
 ### 响应式
@@ -79,7 +86,6 @@ Epage({
 4. 使用onLoad、onShow等函数注册生命周期钩子
 
 #### 修改值的方式
-  - this.setData
   - 通过函数直接修改ref、reactive的值
   - 通过修改this.data$的值（this.data的响应式对象）
 
@@ -129,7 +135,7 @@ Epage({
     })
 
     // 拦截器
-    function(config) {
+    function interceptor(config) {
       const host = {
         dev: {
           xcx: 'xcxbch'
@@ -182,21 +188,206 @@ Epage({
 - 引入vant组件库
 
 
-## API
+## <a name="#API">API</a>
 
-// ...
+### 全局混入方法
 
+#### 使用示例
+```js
+globalMixins({
+  // 生命周期钩子
+  hooks: {
+    // 页面钩子
+    page: {
+      onLoad: [],
+      onShow: [],
+      onReady: [],
+      onHide: [],
+      onUnload: [],
+      onPullDownRefresh: [],
+      onReachBottom: [],
+      onShareAppMessage: [],
+      onTabItemTap: [],
+      onResize: [],
+      onAddToFavorites: []
+    },
+    // 组件钩子
+    component: {
+      created: [],
+      attached: [],
+      ready: [],
+      moved: [],
+      detached: [],
+      error: []
+    }
+  },
+  // 属性
+  data: {},
+  // 方法
+  anyFunction() {}
+})
+```
 
-## ⚠️框架注意点
+### 生命周期监听钩子
 
-⚠️component ready 名称为 onComponentReady，避免和page 的onReady 冲突
+⚠️不提供onPageScroll钩子监听
 
-⚠️生命周期函数可能是异步的，如果需要等生命周期函数全部执行完成后在执行一些操作，可以监听'onLoad:done' 'created:done' 等事件
+> 考虑性能问题: 一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
 
 ⚠️生命周期函数应该避免使用箭头函数，这将使this丢失
 
-⚠️重名合并策略优先级： setup > data > mixins
+#### 使用示例
+```js
+// 在setup函数和生命周期函数中调用才能正常运行
+Epage({
+    setup() {
+      onShowHooks(function() {
+        console.log('show1')
+        // 可以嵌套调用
+        onShowHooks(function() { 
+          console.log('show2')
+        })
+      })
+    },
+    onShow() {
+        console.log('show3')
+        // 可以嵌套调用
+        onShowHooks(function() { 
+          console.log('show4')
+        })
+    }
+})
+```
 
-⚠️考虑性能问题: 一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
+#### Page钩子列表
 
-⚠️ref值修改时需要加.value, 而在data$.ref修改时不需要
+```js
+onLoadHooks
+onShowHooks
+onReadyHooks
+onHideHooks
+onUnloadHooks
+onPullDownRefreshHooks
+onReachBottomHooks
+onShareAppMessageHooks
+onTabItemTapHooks
+onResizeHooks
+onAddToFavoritesHooks
+```
+
+#### Component钩子列表
+
+⚠️component ready 名称为 onComponentReadyHooks，避免和page onReadyHooks 冲突
+
+```js
+onCreatedHooks
+onAttachedHooks
+onComponentReadyHooks
+onMovedHooks
+onDetachedHooks
+onErrorHooks
+```
+
+#### 监听生命周期执行完成
+
+⚠️生命周期函数的执行是异步的，并且支持递归嵌套执行，如果需要感知生命周期函数全部执行完成后，可以监听'onLoad:done' 'created:done' 等事件
+
+##### 示例
+```js
+this.$once('onLoad:done', () => console.log('页面onLoad函数全部执行完毕'))
+```
+##### 事件清单
+```js
+page: [
+    'onLoad:done',
+    'onShow:done',
+    'onReady:done',
+    'onHide:done',
+    'onUnload:done',
+    'onPullDownRefresh:done',
+    'onReachBottom:done',
+    'onShareAppMessage:done',
+    'onTabItemTap:done',
+    'onResize:done',
+    'onAddToFavorites:done',
+]
+component: [
+    'created:done',
+    'attached:done',
+    'ready:done',
+    'moved:done',
+    'detached:done',
+    'error:done',
+]
+```
+
+### Vue3 Composition API 清单
+```js
+export {
+  computed,
+  customRef,
+  effect,
+  enableTracking,
+  isProxy,
+  isReactive,
+  isReadonly,
+  isRef,
+  markRaw,
+  pauseTracking,
+  proxyRefs,
+  reactive,
+  readonly,
+  ref,
+  resetTracking,
+  shallowReactive,
+  shallowReadonly,
+  shallowRef,
+  stop,
+  toRaw,
+  toRef,
+  toRefs,
+  track,
+  trigger,
+  triggerRef,
+  unref
+} from '@vue/reactivity'
+export { watch, watchEffect } from '@vue/runtime-core'
+```
+
+
+
+## ⚠️框架注意点
+- 不要再使用`this.setData`, 这将导致响应式数据和`this.data`不同步
+
+- 重名合并策略优先级： setup > data > mixins
+
+- 考虑性能问题，onPageScroll一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
+
+- Vue3: ref值 修改时需要加 `.value`，读取值的时候不需要加
+
+- Vue3：当ref值被作为reactive值的属性时，以reactive属性的形式进行修改时，不需要加`.value`
+
+- `this.data$`是被reactive的，所以通过`this.data$.ref`时不需要加`.value`
+
+    ```js
+    // 代码解释
+    Epage({
+      setup() {
+        // 定义ref
+        const refVal = ref(1)
+        // 定义修改ref的方法
+        const changeRefVal = function(num) {
+          // 以下两种修改方式是等价的，推荐使用第一种
+          // 1. 直接修改ref，需要加 .value
+          refVal.value = num
+          // 2. 通过reacitve值访问时，不需要加 .value
+          this.data$.refVal = num
+        }     
+        // 返回值将合并至 data$ 
+        return {
+          refVal,
+          changeRefVal
+        }   
+      } 
+    })
+    ``` 

@@ -1,7 +1,7 @@
 import { isFunction } from './util'
-import { reactive, isRef, toRaw, unref } from '../fork/@vue-reactivity'
+import { reactive, isRef, toRaw, unref } from '@vue/reactivity'
 import { setData } from './setDataEffect'
-import { watch } from '../fork/@vue-runtime-core'
+import { watch } from '@vue/runtime-core'
 export function handlerSetup(
   ctx: PageInstance | ComponentInstance,
   options: LooseObject,

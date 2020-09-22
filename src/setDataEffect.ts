@@ -1,34 +1,28 @@
 import { isFunction } from './util'
-
+type Ctx = PageInstance | ComponentInstance
 // 异步队列
 const setDataQueue: LooseFunction[] = []
 let isFlushing = false
 export let setDataRunning = false
-export function setData(
-  ctx: PageInstance | ComponentInstance,
-  fn: LooseFunction
-) {
+export function setData(ctx: Ctx, fn: LooseFunction): void {
   queueSetDataJob(ctx, fn)
 }
 
-export function queueSetDataJob(
-  ctx: PageInstance | ComponentInstance,
-  job: LooseFunction
-) {
+export function queueSetDataJob(ctx: Ctx, job: LooseFunction) {
   if (!setDataQueue.includes(job)) {
     setDataQueue.push(job)
     queueSetDataFlush(ctx)
   }
 }
 
-function queueSetDataFlush(ctx: PageInstance | ComponentInstance) {
+function queueSetDataFlush(ctx: Ctx) {
   if (!isFlushing) {
     isFlushing = true
     Promise.resolve().then(() => flushSetDataJobs(ctx))
   }
 }
 
-function flushSetDataJobs(ctx: PageInstance | ComponentInstance) {
+function flushSetDataJobs(ctx: Ctx) {
   isFlushing = false
   const res: LooseObject = {}
   while (setDataQueue.length) {
@@ -47,10 +41,7 @@ function flushSetDataJobs(ctx: PageInstance | ComponentInstance) {
   })
 }
 
-export function setDataNextTick(
-  this: PageInstance | ComponentInstance,
-  cb?: LooseFunction
-) {
+export function setDataNextTick(this: Ctx, cb?: LooseFunction) {
   let resolve: LooseFunction
   let promise = new Promise(r => (resolve = r))
   this.$once('setDataRender:done', resolve!)
