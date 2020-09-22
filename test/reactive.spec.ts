@@ -7,6 +7,7 @@ import {
 } from '../fork/@vue-reactivity.js'
 import { Epage } from '@/Epage'
 import { Ecomponent } from '@/Ecomponent'
+import { watch } from '@/main'
 
 describe('响应式处理', () => {
   test('setup返回值，函数绑定至this(methods)上，其他值绑定到data上', () => {
@@ -81,7 +82,7 @@ describe('响应式处理', () => {
     expect(isReactive(page.data$.e)).toBeTruthy()
   })
 
-  test('data值会复制给data$, 但是两者引用并不相等', () => {
+  test('初始的data值会复制给data$, 但是两者引用并不相等', () => {
     const page: any = Epage({
       data: {
         e: {}
@@ -120,14 +121,50 @@ describe('响应式处理', () => {
       }
     })
     a.b = 2
-    done()
-    // page.$nextTick().then(() => {
-    //   expect(page.data.a.b).toBe(2)
-    //   expect(page.data$.a.b).toBe(2)
-    //   done()
-    // })
+    page.$nextTick().then(() => {
+      expect(page.data.a.b).toBe(2)
+      expect(page.data$.a.b).toBe(2)
+      done()
+    })
   })
-  test('reactive数组值通过方法修改会同步至data和data$', () => {})
-  test('初始的data$值修改会同步至至data', () => {})
-  test('setup返回的与data$值修改会同步至至data', () => {})
+  test('reactive数组值通过方法修改会同步至data和data$', done => {
+    let a: any
+    const page: any = Epage({
+      setup() {
+        a = reactive([])
+        return {
+          a
+        }
+      }
+    })
+    a.push(1)
+    page.$nextTick().then(() => {
+      expect(page.data.a).toEqual([1])
+      expect(page.data$.a).toEqual([1])
+      done()
+    })
+  })
+  test('data$修改会同步至data、reactive和ref', done => {
+    let refVal: any
+    let reactiveVal: any
+    const page: any = Epage({
+      setup() {
+        refVal = ref(1)
+        reactiveVal = reactive({ a: 1 })
+        return {
+          refVal,
+          reactiveVal
+        }
+      }
+    })
+    page.data$.refVal = 2
+    page.data$.reactiveVal.a = 2
+    page.$nextTick().then(() => {
+      expect(page.data.refVal).toBe(2)
+      expect(page.data.reactiveVal.a).toBe(2)
+      expect(refVal.value).toBe(2)
+      expect(reactiveVal.a).toBe(2)
+      done()
+    })
+  })
 })
