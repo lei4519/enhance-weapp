@@ -2,7 +2,7 @@
   "name": "enhance-wxapp",
   "version": "1.0.0",
   "description": "增强小程序开发能力，加入vue composition api等特性",
-  "main": "enhancemp.min.js",
+  "main": "dist/enhancemp.min.js",
   "scripts": {
     "build": "NODE_ENV=production npx rollup --config",
     "test:all": "jest",

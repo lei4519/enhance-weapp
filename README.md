@@ -10,10 +10,22 @@
     - <a href="#user-content-框架注意点">框架注意点</a>
 
 
-## 安装
+## 安装与使用
+
+[小程序文档 - npm 支持](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html#Tips)
+
+1. 项目目录中安装模块
 ```js
 cnpm i git+https://gitlab.leju.com/adjs-ljl/enhance-wxapp.git --save
 ```
+2. 点击开发者工具中的菜单栏：工具 --> 构建 npm
+
+![](https://res.wx.qq.com/wxdoc/dist/assets/img/construction.408e13ae.png)
+
+3. 勾选“使用 npm 模块”选项：
+
+![](https://src.leju.com/imp/imp/deal/8b/c8/8/6039dc71ad9d925edfaad82155f_p122_mk169.png)
+
 
 ## 示例
 index.js
