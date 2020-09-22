@@ -1,10 +1,51 @@
 # enhance-wxapp
 
+- 导航
+    - <a href="#user-content-简介">简介</a>
 
-<a href="#API">API</a>
+    - <a href="#user-content-项目调整">项目调整</a>
+
+    - <a href="#user-content-api">API</a>
+
+    - <a href="#user-content-框架注意点">框架注意点</a>
 
 
-## <a name="#1">简介</a>
+## 安装
+```js
+cnpm i git+https://gitlab.leju.com/adjs-ljl/enhance-wxapp.git --save
+```
+
+## 示例
+index.js
+```js
+import {Epage, ref} from 'enhance-wxapp'
+
+function useCount() {
+  const count = ref(0)
+  const add = () => {
+    count.value++
+  }
+  return {
+    count,
+    add
+  }
+}
+
+Epage({
+  setup() {
+    return useCount()
+  }
+})
+```
+index.wxml
+```html
+<view>
+  <view>{{count}}</view>
+  <button bindtap="add">数字 +1</button>
+</view>
+```
+
+## 简介
 
 增强微信小程序运行时框架：保留微信原生框架的性能，通过增加特性来提高开发效率
 
@@ -92,7 +133,7 @@ Epage({
 #### 使用nextTick等待视图渲染完成
  - this.$nextTick (同Vue，可以传入函数或者使用.then)
 
-## 项目相关
+## 项目调整
 
 ### 代码内聚
 
@@ -188,7 +229,7 @@ Epage({
 - 引入vant组件库
 
 
-## <a name="#API">API</a>
+## API
 
 ### 全局混入方法
 
@@ -244,7 +285,7 @@ Epage({
       onShowHooks(function() {
         console.log('show1')
         // 可以嵌套调用
-        onShowHooks(function() { 
+        onShowHooks(function() {
           console.log('show2')
         })
       })
@@ -252,7 +293,7 @@ Epage({
     onShow() {
         console.log('show3')
         // 可以嵌套调用
-        onShowHooks(function() { 
+        onShowHooks(function() {
           console.log('show4')
         })
     }
@@ -357,6 +398,7 @@ export { watch, watchEffect } from '@vue/runtime-core'
 
 
 ## ⚠️框架注意点
+
 - 不要再使用`this.setData`, 这将导致响应式数据和`this.data`不同步
 
 - 重名合并策略优先级： setup > data > mixins
@@ -382,12 +424,12 @@ export { watch, watchEffect } from '@vue/runtime-core'
           refVal.value = num
           // 2. 通过reacitve值访问时，不需要加 .value
           this.data$.refVal = num
-        }     
-        // 返回值将合并至 data$ 
+        }
+        // 返回值将合并至 data$
         return {
           refVal,
           changeRefVal
-        }   
-      } 
+        }
+      }
     })
-    ``` 
+    ```

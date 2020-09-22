@@ -1,8 +1,8 @@
 {
-  "name": "enhance-miniprogram",
+  "name": "enhance-wxapp",
   "version": "1.0.0",
   "description": "增强小程序开发能力，加入vue composition api等特性",
-  "main": "index.js",
+  "main": "enhancemp.min.js",
   "scripts": {
     "build": "NODE_ENV=production npx rollup --config",
     "test:all": "jest",
@@ -12,7 +12,8 @@
     "composition",
     "miniprogram",
     "wxapp",
-    "vue"
+    "vue",
+    "vue3"
   ],
   "author": "lei4519",
   "license": "ISC",
