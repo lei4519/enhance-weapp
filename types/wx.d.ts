@@ -27,6 +27,7 @@ interface PageInstance
   setData: LooseFunction
   $nextTick(cb: LooseFunction): void
   $nextTick(): Promise<void>
+  $ajax: <T>(options: WechatMiniprogram.RequestOption) => Promise<T>
   [key: string]: any
 }
 interface ComponentInstance
@@ -47,6 +48,7 @@ interface ComponentInstance
   setData: LooseFunction
   $nextTick(cb: LooseFunction): void
   $nextTick(): Promise<void>
+  $ajax: <T>(options: WechatMiniprogram.RequestOption) => Promise<T>
   [key: string]: any
 }
 type ComponentHooksName =

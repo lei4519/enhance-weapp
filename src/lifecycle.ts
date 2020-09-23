@@ -7,6 +7,7 @@ import {
 import { initEvents } from './events'
 import { handlerMixins } from './mixins'
 import { handlerSetup } from './reactive'
+import { requestMethod } from './request'
 import { setDataNextTick } from './setDataEffect'
 
 const lc = {
@@ -61,6 +62,8 @@ export function decoratorLifeCycle(
         initHooks(type, ctx)
         // 处理mixins
         handlerMixins(type, ctx)
+        // 处理$ajax
+        this.$ajax = requestMethod
         // nextTick
         ctx.$nextTick = setDataNextTick
         // 处理 setup

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "NODE_ENV=production npx rollup --config",
     "test:all": "jest",
-    "test:single": "jest ./test/setDataEffect.spec.ts"
+    "test:single": "jest ./test/request.spec.ts"
   },
   "keywords": [
     "composition",
