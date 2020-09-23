@@ -1,5 +1,9 @@
+
 export { Ecomponent } from './Ecomponent'
 export { Epage } from './Epage'
+
+export { globalMixins } from './mixins'
+export { interceptors } from './request'
 
 export {
   onLoad as onLoadHooks,
@@ -20,7 +24,6 @@ export {
   onDetached as onDetachedHooks,
   onError as onErrorHooks
 } from './lifecycle'
-export { globalMixins } from './mixins'
 
 export {
   computed,
