@@ -81,7 +81,6 @@ uniapp、trao等框架也可以实现开发效率的提升，但是这些框架�
     - 将 wx.request 代理到 `this.$ajax` 上，加入axios拦截器机制抽离业务逻辑
 - 为this 加入发布订阅方法
     - `this.$on`、`this.$once`、`this.$emit`、`this.$off`
-- 插件机制：多个项目间复用全局混用
 
 ### 响应式
 
@@ -247,6 +246,8 @@ Epage({
 
 #### 使用示例
 ```js
+import { globalMixins } from 'enhance-wxapp'
+
 globalMixins({
   // 生命周期钩子
   hooks: {
@@ -281,6 +282,26 @@ globalMixins({
 })
 ```
 
+### $ajax拦截器
+
+#### 使用方法（同axios）
+```js
+import { interceptors } from 'enhance-wxapp'
+
+// 请求拦截器
+interceptors.request.use(
+  () => {/* resolve 执行 */},
+  () => {/* reject 执行 */}
+)
+
+// 响应拦截器
+interceptors.response.use(
+  () => {/* resolve 执行 */},
+  () => {/* reject 执行 */}
+)
+
+```
+
 ### 生命周期监听钩子
 
 ⚠️不提供onPageScroll钩子监听
@@ -291,6 +312,7 @@ globalMixins({
 
 #### 使用示例
 ```js
+import { onShowHooks } from 'enhance-wxapp'
 // 在setup函数和生命周期函数中调用才能正常运行
 Epage({
     setup() {
@@ -315,17 +337,19 @@ Epage({
 #### Page钩子列表
 
 ```js
-onLoadHooks
-onShowHooks
-onReadyHooks
-onHideHooks
-onUnloadHooks
-onPullDownRefreshHooks
-onReachBottomHooks
-onShareAppMessageHooks
-onTabItemTapHooks
-onResizeHooks
-onAddToFavoritesHooks
+import {
+  onLoadHooks,
+  onShowHooks,
+  onReadyHooks,
+  onHideHooks,
+  onUnloadHooks,
+  onPullDownRefreshHooks,
+  onReachBottomHooks,
+  onShareAppMessageHooks,
+  onTabItemTapHooks,
+  onResizeHooks,
+  onAddToFavoritesHooks
+} from 'enhance-wxapp'
 ```
 
 #### Component钩子列表
@@ -333,17 +357,19 @@ onAddToFavoritesHooks
 ⚠️component ready 名称为 onComponentReadyHooks，避免和page onReadyHooks 冲突
 
 ```js
-onCreatedHooks
-onAttachedHooks
-onComponentReadyHooks
-onMovedHooks
-onDetachedHooks
-onErrorHooks
+import {
+  onCreatedHooks,
+  onAttachedHooks,
+  onComponentReadyHooks,
+  onMovedHooks,
+  onDetachedHooks,
+  onErrorHooks
+} from 'enhance-wxapp'
 ```
 
 #### 监听生命周期执行完成
 
-⚠️生命周期函数的执行是异步的，并且支持递归嵌套执行，如果需要感知生命周期函数全部执行完成后，可以监听'onLoad:done' 'created:done' 等事件
+⚠️生命周期函数的执行是异步的，并且支持递归嵌套执行，如果需要感知生命周期函数全部执行完成后，可以使用 `this.$once`、`this.$on` 监听'onLoad:done' 'created:done' 等事件
 
 ##### 示例
 ```js
@@ -376,7 +402,8 @@ component: [
 
 ### Vue3 Composition API 清单
 ```js
-export {
+import {
+  // @vue/reactivity
   computed,
   customRef,
   effect,
@@ -402,9 +429,11 @@ export {
   track,
   trigger,
   triggerRef,
-  unref
-} from '@vue/reactivity'
-export { watch, watchEffect } from '@vue/runtime-core'
+  unref,
+  // @vue/runtime-core
+  watch,
+  watchEffect
+} from 'enhance-wxapp'
 ```
 
 
