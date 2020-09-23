@@ -1,4 +1,4 @@
-import { disableEnumerable } from './util'
+import { disableEnumerable, isFunction } from './util'
 
 export function initEvents(ctx: PageInstance | ComponentInstance) {
   ctx.__events__ = {} as {
@@ -20,13 +20,16 @@ export function initEvents(ctx: PageInstance | ComponentInstance) {
 
   ctx.$emit = function events$emit(name: string, ...args: any[]) {
     if (ctx.__events__[name]) {
-      ctx.__events__[name].forEach((cb, i: number) => {
-        // off之后会变成null
-        if (cb) {
+      for (let i = 0; i < ctx.__events__[name].length; i++) {
+        const cb = ctx.__events__[name][i]!
+        if (isFunction(cb)) {
           cb.call(ctx, ...args)
-          cb.__once && ctx.$off(name, cb, i)
+          if (cb.__once) {
+            ctx.$off(name, cb, i)
+            i--
+          }
         }
-      })
+      }
     }
   }
 
@@ -40,7 +43,7 @@ export function initEvents(ctx: PageInstance | ComponentInstance) {
       const i =
         offCallbackIndex || ctx.__events__[name].findIndex(fn => fn === cb)
       if (i > -1) {
-        ctx.__events__[name][i] = null
+        ctx.__events__[name].splice(i, 1)
       }
     }
   }
