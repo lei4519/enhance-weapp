@@ -288,6 +288,8 @@ globalMixins({
 ```js
 import { interceptors } from 'enhance-wxapp'
 
+⚠️ 拦截器函数不能使用箭头函数，否则会丢失this指向
+
 // 请求拦截器
 interceptors.request.use(
   () => {/* resolve 执行 */},
@@ -443,6 +445,8 @@ import {
 - 不要再使用`this.setData`, 这将导致响应式数据和`this.data`不同步
 
 - 重名合并策略优先级： setup > data > mixins
+
+- 生命周期函数、拦截器函数不能使用箭头函数，否则会丢失this指向
 
 - 考虑性能问题，onPageScroll一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
 

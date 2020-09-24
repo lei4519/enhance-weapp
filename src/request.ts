@@ -21,7 +21,7 @@ export const interceptors: Interceptors = {
   },
 }
 
-export function requestMethod <T>(options: AjaxOptions): Promise<T> {
+export function requestMethod <T>(this: PageInstance | ComponentInstance, options: AjaxOptions): Promise<T> {
   const _request = () => new Promise<T>((resolve, reject) => {
     options.success = res => resolve(res as any)
     options.fail = res => reject(res)
@@ -36,7 +36,7 @@ export function requestMethod <T>(options: AjaxOptions): Promise<T> {
   })
   let promise = Promise.resolve<any>(options)
   chain.forEach(([onFulfilled, onRejected]) => {
-    promise = promise.then(onFulfilled, onRejected)
+    promise = promise.then(onFulfilled?.bind(this), onRejected?.bind(this))
   })
   return promise
 }
