@@ -61,13 +61,16 @@ function initEvents(ctx) {
             args[_i - 1] = arguments[_i];
         }
         if (ctx.__events__[name]) {
-            ctx.__events__[name].forEach(function (cb, i) {
-                // off之后会变成null
-                if (cb) {
+            for (var i = 0; i < ctx.__events__[name].length; i++) {
+                var cb = ctx.__events__[name][i];
+                if (isFunction(cb)) {
                     cb.call.apply(cb, __spreadArrays([ctx], args));
-                    cb.__once && ctx.$off(name, cb, i);
+                    if (cb.__once) {
+                        ctx.$off(name, cb, i);
+                        i--;
+                    }
                 }
-            });
+            }
         }
     };
     ctx.$off = function events$off(name, cb, offCallbackIndex) {
@@ -75,7 +78,7 @@ function initEvents(ctx) {
             // 传入index减少寻找时间
             var i = offCallbackIndex || ctx.__events__[name].findIndex(function (fn) { return fn === cb; });
             if (i > -1) {
-                ctx.__events__[name][i] = null;
+                ctx.__events__[name].splice(i, 1);
             }
         }
     };
@@ -1656,6 +1659,47 @@ function handlerSetup(ctx, options, type) {
     });
 }
 
+var request = [];
+var response = [];
+var interceptors = {
+    request: {
+        use: function (onFulfilled, onRejected) {
+            var block = [];
+            block.push(isFunction(onFulfilled) ? onFulfilled : function (config) { return config; });
+            block.push(isFunction(onRejected) ? onRejected : function (error) { return error; });
+            request.push(block);
+        }
+    },
+    response: {
+        use: function (onFulfilled, onRejected) {
+            var block = [];
+            isFunction(onFulfilled) && block.push(onFulfilled);
+            isFunction(onRejected) && block.push(onRejected);
+            block.length && response.push(block);
+        }
+    },
+};
+function requestMethod(options) {
+    var _request = function () { return new Promise(function (resolve, reject) {
+        options.success = function (res) { return resolve(res); };
+        options.fail = function (res) { return reject(res); };
+        wx.request(options);
+    }); };
+    var chain = [[_request, void 0]];
+    request.forEach(function (block) {
+        chain.unshift(block);
+    });
+    response.forEach(function (block) {
+        chain.push(block);
+    });
+    var promise = Promise.resolve(options);
+    chain.forEach(function (_a) {
+        var onFulfilled = _a[0], onRejected = _a[1];
+        promise = promise.then(onFulfilled, onRejected);
+    });
+    return promise;
+}
+
 var lc = {
     page: [
         'onLoad',
@@ -1706,6 +1750,8 @@ function decoratorLifeCycle(options, type) {
                 initHooks(type, ctx);
                 // 处理mixins
                 handlerMixins(type, ctx);
+                // 处理$ajax
+                this.$ajax = requestMethod;
                 // nextTick
                 ctx.$nextTick = setDataNextTick;
                 // 处理 setup
@@ -1842,6 +1888,7 @@ exports.customRef = customRef;
 exports.effect = effect;
 exports.enableTracking = enableTracking;
 exports.globalMixins = globalMixins;
+exports.interceptors = interceptors;
 exports.isProxy = isProxy;
 exports.isReactive = isReactive;
 exports.isReadonly = isReadonly;

@@ -42,7 +42,7 @@ function flushSetDataJobs(ctx: Ctx) {
 }
 
 export function setDataNextTick(this: Ctx, cb?: LooseFunction) {
-  let resolve: LooseFunction
+  let resolve: any
   let promise = new Promise(r => (resolve = r))
   this.$once('setDataRender:done', resolve!)
   if (isFunction(cb)) {
