@@ -23,8 +23,8 @@ export const interceptors: Interceptors = {
 
 export function requestMethod <T>(this: PageInstance | ComponentInstance, options: AjaxOptions): Promise<T> {
   const _request = () => new Promise<T>((resolve, reject) => {
-    options.success = res => resolve(res as any)
-    options.fail = res => reject(res)
+    options.success = response => resolve({options, response} as any)
+    options.fail = response => reject({options, response} as any)
     wx.request(options)
   })
   const chain = [[_request, void 0]]
