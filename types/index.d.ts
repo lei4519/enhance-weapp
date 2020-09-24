@@ -4,19 +4,32 @@ interface LooseObject {
 interface LooseFunction extends LooseObject {
   (...args?: any[]): any
 }
-type DecoratorType = 'page' | 'component'
+type DecoratorType =  'app' | 'page' | 'component'
 type HookFn = (opt?: LooseObject) => void
 type HookFn = (opt?: LooseObject) => LooseObject
 type HookFn = (opt?: LooseObject) => Promise<any>
 
 interface GlobalMixins {
-  hooks?: {
-    page?: {
+  app?: {
+    hooks?: {
+      [key in AppLifeTime]?: HookFn[]
+    }
+    data?: LooseObject
+    [key: string]: any
+  }
+  page?: {
+    hooks?: {
       [key in PageLifeTime]?: HookFn[]
     }
-    component?: {
+    data?: LooseObject
+    [key: string]: any
+  }
+  component?: {
+    hooks?: {
       [key in ComponentLifeTime]?: HookFn[]
     }
+    data?: LooseObject
+    [key: string]: any
   }
   data?: LooseObject
   [key: string]: any

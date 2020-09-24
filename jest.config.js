@@ -125,6 +125,7 @@ module.exports = {
   setupFiles: [
     '<rootDir>/env/page.js',
     '<rootDir>/env/component.js',
+    '<rootDir>/env/app.js',
     '<rootDir>/env/wx.js'
   ],
 

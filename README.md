@@ -242,17 +242,46 @@ Epage({
 
 ## API
 
+### 构造器
+
+⚠️ Eapp中不支持使用`setup`，不能使用响应式数据，可以使用全局混入
+```js
+import { Eapp, Epage, Ecomponent } from 'enhance-wxapp'
+```
+
 ### 全局混入方法
+
+全局混入分为命名空间混入和公用混入，命名空间混入只会在对应的实例中生效，公用混入会在所有实例中生效。
+
+- ⚠️ 公用混入优先级最低：setup > data > 命名空间mixins > 公用mixins
 
 #### 使用示例
 ```js
 import { globalMixins } from 'enhance-wxapp'
 
 globalMixins({
-  // 生命周期钩子
-  hooks: {
-    // 页面钩子
-    page: {
+  // 只在App中生效
+  app: {
+    // 生命周期钩子
+    hooks: {
+      onLaunch: [],
+      onShow: [],
+      onHide: [],
+      onError: [],
+      onPageNotFound: [],
+      onUnhandledRejection: [],
+      onThemeChange: []
+    },
+    // 属性
+    data: {},
+    // 方法
+    anyFunction() {}
+  },
+
+  // 只在Page中生效
+  page: {
+    // 生命周期钩子
+    hooks: {
       onLoad: [],
       onShow: [],
       onReady: [],
@@ -265,16 +294,31 @@ globalMixins({
       onResize: [],
       onAddToFavorites: []
     },
-    // 组件钩子
-    component: {
+    // 属性
+    data: {},
+    // 方法
+    anyFunction() {}
+  },
+
+  // 只在 Component 中生效
+  component: {
+    // 生命周期钩子
+    hooks: {
       created: [],
       attached: [],
       ready: [],
       moved: [],
       detached: [],
       error: []
-    }
+    },
+    // 属性
+    data: {},
+    // 方法
+    anyFunction() {}
   },
+
+  // 公用混入
+
   // 属性
   data: {},
   // 方法
@@ -288,7 +332,7 @@ globalMixins({
 ```js
 import { interceptors } from 'enhance-wxapp'
 
-⚠️ 拦截器函数不能使用箭头函数，否则会丢失this指向
+⚠️ 如果要在拦截器中访问this，记得不能使用箭头函数，否则会丢失this指向
 
 // 请求拦截器
 interceptors.request.use(
@@ -306,7 +350,8 @@ interceptors.response.use(
 
 ### 生命周期监听钩子
 
-⚠️不提供onPageScroll钩子监听
+⚠️ 不提供 App 钩子监听
+⚠️ 不提供onPageScroll钩子监听
 
 > 考虑性能问题: 一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
 
@@ -379,6 +424,15 @@ this.$once('onLoad:done', () => console.log('页面onLoad函数全部执行完�
 ```
 ##### 事件清单
 ```js
+app: [
+  'onLaunch:done',
+  'onShow:done',
+  'onHide:done',
+  'onError:done',
+  'onPageNotFound:done',
+  'onUnhandledRejection:done',
+  'onThemeChange:done'
+]
 page: [
     'onLoad:done',
     'onShow:done',
@@ -444,9 +498,11 @@ import {
 
 - 不要再使用`this.setData`, 这将导致响应式数据和`this.data`不同步
 
-- 重名合并策略优先级： setup > data > mixins
+- 重名合并策略优先级： setup > data > 命名空间mixins > 公用mixins
 
-- 生命周期函数、拦截器函数不能使用箭头函数，否则会丢失this指向
+- Eapp中不支持使用`setup`，不能使用响应式数据，可以使用全局混入
+
+- 如果要在拦截器中访问this，记得不能使用箭头函数，否则会丢失this指向
 
 - 考虑性能问题，onPageScroll一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
 

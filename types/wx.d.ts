@@ -1,5 +1,6 @@
 type DataOption = WechatMiniprogram.Page.DataOption
 type CustomOption = WechatMiniprogram.Page.CustomOption
+type AppLifeTime = keyof WechatMiniprogram.App.Option
 type PageLifeTime = keyof Omit<WechatMiniprogram.Page.ILifetime, 'onPageScroll'>
 type ComponentLifeTime = keyof Omit<
   WechatMiniprogram.Component.Lifetimes,

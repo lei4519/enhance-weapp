@@ -9,8 +9,20 @@ import { handlerMixins } from './mixins'
 import { handlerSetup } from './reactive'
 import { requestMethod } from './request'
 import { setDataNextTick } from './setDataEffect'
-
+type Lifetime =
+  | AppLifeTime
+  | PageLifeTime
+  | ComponentLifeTime
 const lc = {
+  app: [
+    'onLaunch',
+    'onShow',
+    'onHide',
+    'onError',
+    'onPageNotFound',
+    'onUnhandledRejection',
+    'onThemeChange'
+  ] as Array<AppLifeTime>,
   page: [
     'onLoad',
     'onShow',
@@ -40,22 +52,22 @@ export function decoratorLifeCycle(
   type: DecoratorType = 'page'
 ) {
   // 循环所有lifeCycle 进行装饰
-  lc[type].forEach((name: PageLifeTime | ComponentLifeTime) => {
+  lc[type].forEach((name: Lifetime) => {
     // 处理component lifetimes
     if (type === 'component' && !isObject(options.lifetimes)) {
       options.lifetimes = {}
     }
     // 保留原函数
     let hook: HookFn | HookFn[]
-    if (type === 'page') {
+    if (type === 'app' || type === 'page') {
       hook = options[name]
     } else {
       hook = options.lifetimes[name] || options[name]
     }
-    const opt = type === 'page' ? options : options.lifetimes
+    const opt = type === 'app' || type === 'page' ? options : options.lifetimes
     opt[name] = function (options: LooseObject) {
       const ctx = this
-      if (name === 'onLoad' || name === 'created') {
+      if (name === 'onLaunch' || name === 'onLoad' || name === 'created') {
         // 初始化事件通信
         initEvents(ctx)
         // 初始化 hooks
@@ -64,12 +76,14 @@ export function decoratorLifeCycle(
         handlerMixins(type, ctx)
         // 处理$ajax
         this.$ajax = requestMethod
-        // nextTick
-        ctx.$nextTick = setDataNextTick
-        // 处理 setup
-        setCurrentCtx(ctx)
-        handlerSetup(ctx, options, type)
-        setCurrentCtx(null)
+        if (name !== 'onLaunch') {
+          // nextTick
+          ctx.$nextTick = setDataNextTick
+          // 处理 setup
+          setCurrentCtx(ctx)
+          handlerSetup(ctx, options, type)
+          setCurrentCtx(null)
+        }
       }
 
       if (hook) {
@@ -113,14 +127,14 @@ function initHooks(type: DecoratorType, ctx: PageInstance | ComponentInstance) {
 
   disableEnumerable(ctx, ['__hooks__'])
 
-  lc[type].forEach((name: PageLifeTime | ComponentLifeTime) => {
+  lc[type].forEach((name: Lifetime) => {
     ctx.__hooks__[name] = []
   })
 }
 
 // 执行钩子
 function callHooks(
-  name: PageLifeTime | ComponentLifeTime,
+  name: Lifetime,
   options: LooseObject,
   ctx: PageInstance | ComponentInstance,
   startIdx: number = 0
@@ -153,7 +167,7 @@ function callHooks(
 }
 
 // 生成添加钩子函数
-function createPushHooks(name: PageLifeTime | ComponentLifeTime) {
+function createPushHooks(name: Lifetime) {
   // 添加钩子函数
   return function pushHooks(cb: HookFn) {
     currentCtx && currentCtx.__hooks__[name].push(cb)
