@@ -86,12 +86,12 @@ function initEvents(ctx) {
 
 var mixins = null;
 function handlerMixins(type, ctx) {
-    if (mixins) {
-        Object.entries(mixins).forEach(function (_a) {
+    if (mixins && isObject(mixins)) {
+        isObject(mixins[type]) && Object.entries(mixins[type]).forEach(function (_a) {
             var key = _a[0], val = _a[1];
             if (key === 'hooks') {
-                if (isObject(val) && isObject(val[type])) {
-                    Object.entries(val[type]).forEach(function (_a) {
+                if (isObject(val)) {
+                    Object.entries(val).forEach(function (_a) {
                         var _b;
                         var lcName = _a[0], hooksFn = _a[1];
                         if (ctx.__hooks__[lcName]) {
@@ -108,7 +108,7 @@ function handlerMixins(type, ctx) {
                         ctx.data = {};
                     Object.entries(val).forEach(function (_a) {
                         var key = _a[0], val = _a[1];
-                        // mixins优先级最低
+                        // mixins优先级比页面定义低
                         if (!ctx.data[key]) {
                             ctx.data[key] = val;
                         }
@@ -116,7 +116,32 @@ function handlerMixins(type, ctx) {
                 }
             }
             else {
-                // mixins优先级最低
+                // mixins优先级比页面定义低
+                if (!ctx[key]) {
+                    ctx[key] = val;
+                }
+            }
+        });
+        // 处理公用mixins
+        Object.entries(mixins).forEach(function (_a) {
+            var key = _a[0], val = _a[1];
+            if (key === 'app' || key === 'page' || key === 'component')
+                return;
+            if (key === 'data') {
+                if (isObject(val)) {
+                    if (!ctx.data)
+                        ctx.data = {};
+                    Object.entries(val).forEach(function (_a) {
+                        var key = _a[0], val = _a[1];
+                        // 公用mixins优先级最低
+                        if (!ctx.data[key]) {
+                            ctx.data[key] = val;
+                        }
+                    });
+                }
+            }
+            else {
+                // 公用mixins优先级最低
                 if (!ctx[key]) {
                     ctx[key] = val;
                 }
@@ -127,38 +152,6 @@ function handlerMixins(type, ctx) {
 function globalMixins(m) {
     mixins = m;
 }
-globalMixins({
-    // 生命周期钩子
-    hooks: {
-        // 页面钩子
-        page: {
-            onLoad: [],
-            onShow: [],
-            onReady: [],
-            onHide: [],
-            onUnload: [],
-            onPullDownRefresh: [],
-            onReachBottom: [],
-            onShareAppMessage: [],
-            onTabItemTap: [],
-            onResize: [],
-            onAddToFavorites: []
-        },
-        // 组件钩子
-        component: {
-            created: [],
-            attached: [],
-            ready: [],
-            moved: [],
-            detached: [],
-            error: []
-        }
-    },
-    // 属性
-    data: {},
-    // 方法
-    anyFunction: function () { }
-});
 
 /**
  * Make a map and return a function for checking if a key
@@ -1680,9 +1673,10 @@ var interceptors = {
     },
 };
 function requestMethod(options) {
+    var _this = this;
     var _request = function () { return new Promise(function (resolve, reject) {
-        options.success = function (res) { return resolve(res); };
-        options.fail = function (res) { return reject(res); };
+        options.success = function (response) { return resolve({ options: options, response: response }); };
+        options.fail = function (response) { return reject({ options: options, response: response }); };
         wx.request(options);
     }); };
     var chain = [[_request, void 0]];
@@ -1695,12 +1689,21 @@ function requestMethod(options) {
     var promise = Promise.resolve(options);
     chain.forEach(function (_a) {
         var onFulfilled = _a[0], onRejected = _a[1];
-        promise = promise.then(onFulfilled, onRejected);
+        promise = promise.then(onFulfilled === null || onFulfilled === void 0 ? void 0 : onFulfilled.bind(_this), onRejected === null || onRejected === void 0 ? void 0 : onRejected.bind(_this));
     });
     return promise;
 }
 
 var lc = {
+    app: [
+        'onLaunch',
+        'onShow',
+        'onHide',
+        'onError',
+        'onPageNotFound',
+        'onUnhandledRejection',
+        'onThemeChange'
+    ],
     page: [
         'onLoad',
         'onShow',
@@ -1734,16 +1737,16 @@ function decoratorLifeCycle(options, type) {
         }
         // 保留原函数
         var hook;
-        if (type === 'page') {
+        if (type === 'app' || type === 'page') {
             hook = options[name];
         }
         else {
             hook = options.lifetimes[name] || options[name];
         }
-        var opt = type === 'page' ? options : options.lifetimes;
+        var opt = type === 'app' || type === 'page' ? options : options.lifetimes;
         opt[name] = function (options) {
             var ctx = this;
-            if (name === 'onLoad' || name === 'created') {
+            if (name === 'onLaunch' || name === 'onLoad' || name === 'created') {
                 // 初始化事件通信
                 initEvents(ctx);
                 // 初始化 hooks
@@ -1752,12 +1755,14 @@ function decoratorLifeCycle(options, type) {
                 handlerMixins(type, ctx);
                 // 处理$ajax
                 this.$ajax = requestMethod;
-                // nextTick
-                ctx.$nextTick = setDataNextTick;
-                // 处理 setup
-                setCurrentCtx(ctx);
-                handlerSetup(ctx, options, type);
-                setCurrentCtx(null);
+                if (name !== 'onLaunch') {
+                    // nextTick
+                    ctx.$nextTick = setDataNextTick;
+                    // 处理 setup
+                    setCurrentCtx(ctx);
+                    handlerSetup(ctx, options, type);
+                    setCurrentCtx(null);
+                }
             }
             if (hook) {
                 // 兼容数组
@@ -1769,7 +1774,10 @@ function decoratorLifeCycle(options, type) {
                         if (isFunction(fn)) {
                             // 在setup中添加的钩子应该于原函数之前执行
                             // 将原函数放入队尾
-                            if (type === 'page') {
+                            if (type === 'app') {
+                                appPushHooks[name](fn);
+                            }
+                            else if (type === 'page') {
                                 pagePushHooks[name](fn);
                             }
                             else {
@@ -1842,6 +1850,18 @@ function createPushHooks(name) {
     };
 }
 // 页面的添加函数
+var appPushHooks = lc.app.reduce(function (res, name) {
+    res[name] = createPushHooks(name);
+    return res;
+}, {});
+var onLaunch = appPushHooks.onLaunch;
+var onAppShow = appPushHooks.onShow;
+var onAppHide = appPushHooks.onHide;
+var onAppError = appPushHooks.onError;
+var onPageNotFound = appPushHooks.onPageNotFound;
+var onUnhandledRejection = appPushHooks.onUnhandledRejection;
+var onThemeChange = appPushHooks.onThemeChange;
+// 页面的添加函数
 var pagePushHooks = lc.page.reduce(function (res, name) {
     res[name] = createPushHooks(name);
     return res;
@@ -1881,6 +1901,12 @@ function Epage(options) {
     return Page(options);
 }
 
+function Eapp(options) {
+    decoratorLifeCycle(options, 'app');
+    return App(options);
+}
+
+exports.Eapp = Eapp;
 exports.Ecomponent = Ecomponent;
 exports.Epage = Epage;
 exports.computed = computed;
@@ -1895,14 +1921,19 @@ exports.isReadonly = isReadonly;
 exports.isRef = isRef;
 exports.markRaw = markRaw;
 exports.onAddToFavoritesHooks = onAddToFavorites;
+exports.onAppErrorHooks = onAppError;
+exports.onAppHideHooks = onAppHide;
+exports.onAppShowHooks = onAppShow;
 exports.onAttachedHooks = onAttached;
 exports.onComponentReadyHooks = onComponentReady;
 exports.onCreatedHooks = onCreated;
 exports.onDetachedHooks = onDetached;
 exports.onErrorHooks = onError;
 exports.onHideHooks = onHide;
+exports.onLaunchHooks = onLaunch;
 exports.onLoadHooks = onLoad;
 exports.onMovedHooks = onMoved;
+exports.onPageNotFoundHooks = onPageNotFound;
 exports.onPullDownRefreshHooks = onPullDownRefresh;
 exports.onReachBottomHooks = onReachBottom;
 exports.onReadyHooks = onReady;
@@ -1910,6 +1941,8 @@ exports.onResizeHooks = onResize;
 exports.onShareAppMessageHooks = onShareAppMessage;
 exports.onShowHooks = onShow;
 exports.onTabItemTapHooks = onTabItemTap;
+exports.onThemeChangeHooks = onThemeChange;
+exports.onUnhandledRejectionHooks = onUnhandledRejection;
 exports.onUnloadHooks = onUnload;
 exports.pauseTracking = pauseTracking;
 exports.proxyRefs = proxyRefs;

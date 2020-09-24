@@ -7,6 +7,13 @@ export { globalMixins } from './mixins'
 export { interceptors } from './request'
 
 export {
+  onLaunch as onLaunchHooks,
+  onAppShow as onAppShowHooks,
+  onAppHide as onAppHideHooks,
+  onAppError as onAppErrorHooks,
+  onPageNotFound as onPageNotFoundHooks,
+  onUnhandledRejection as onUnhandledRejectionHooks,
+  onThemeChange as onThemeChangeHooks,
   onLoad as onLoadHooks,
   onShow as onShowHooks,
   onReady as onReadyHooks,

@@ -95,7 +95,9 @@ export function decoratorLifeCycle(
             if (isFunction(fn)) {
               // 在setup中添加的钩子应该于原函数之前执行
               // 将原函数放入队尾
-              if (type === 'page') {
+              if (type === 'app') {
+                appPushHooks[name as AppLifeTime](fn)
+              } else if (type === 'page') {
                 pagePushHooks[name as PageLifeTime](fn)
               } else {
                 const onName = transformOnName(name)
@@ -173,6 +175,21 @@ function createPushHooks(name: Lifetime) {
     currentCtx && currentCtx.__hooks__[name].push(cb)
   }
 }
+
+// 页面的添加函数
+const appPushHooks = lc.app.reduce((res, name) => {
+  res[name] = createPushHooks(name)
+  return res
+}, {} as { [P in AppLifeTime]: Function })
+
+export const onLaunch = appPushHooks.onLaunch
+export const onAppShow = appPushHooks.onShow
+export const onAppHide = appPushHooks.onHide
+export const onAppError = appPushHooks.onError
+export const onPageNotFound = appPushHooks.onPageNotFound
+export const onUnhandledRejection = appPushHooks.onUnhandledRejection
+export const onThemeChange = appPushHooks.onThemeChange
+
 // 页面的添加函数
 const pagePushHooks = lc.page.reduce((res, name) => {
   res[name] = createPushHooks(name)

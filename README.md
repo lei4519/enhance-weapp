@@ -350,7 +350,6 @@ interceptors.response.use(
 
 ### 生命周期监听钩子
 
-⚠️ 不提供 App 钩子监听
 ⚠️ 不提供onPageScroll钩子监听
 
 > 考虑性能问题: 一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
@@ -379,6 +378,19 @@ Epage({
         })
     }
 })
+```
+
+#### App钩子列表
+```js
+import {
+  onLaunchHooks,
+  onAppShowHooks,
+  onAppHideHooks,
+  onAppErrorHooks,
+  onPageNotFoundHooks,
+  onUnhandledRejectionHooks,
+  onThemeChangeHooks
+} from 'enhance-wxapp'
 ```
 
 #### Page钩子列表

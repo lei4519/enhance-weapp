@@ -6,8 +6,8 @@ export function handlerMixins(
   type: DecoratorType,
   ctx: PageInstance | ComponentInstance
 ) {
-  if (mixins) {
-    Object.entries(mixins[type]!).forEach(([key, val]) => {
+  if (mixins && isObject(mixins)) {
+    isObject(mixins[type]) && Object.entries(mixins[type]!).forEach(([key, val]) => {
       if (key === 'hooks') {
         if (isObject(val)) {
           Object.entries<HookFn | HookFn[]>(val).forEach(
