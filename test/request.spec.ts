@@ -77,12 +77,11 @@ describe('$ajax 测试', () => {
     })
     const config: any = { url: '' }
     const page = Epage({})
-    page.$ajax(config).then((res) => {
-      expect(res).toEqual({
-        a: 1,
-        b: 2,
-        c: 3
-      })
+    page.$ajax(config).then((res: any) => {
+      const options = res.options
+      expect(options.a).toBe(1)
+      expect(options.b).toBe(2)
+      expect(options.c).toBe(3)
       done()
     })
   })
@@ -101,12 +100,11 @@ describe('$ajax 测试', () => {
     })
     const config: any = { url: '' }
     const page = Epage({})
-    page.$ajax(config).then(void 0, (res) => {
-      expect(res).toEqual({
-        a: 1,
-        b: 2,
-        c: 3
-      })
+    page.$ajax(config).then(void 0, (res: any) => {
+      const options = res.options
+      expect(options.a).toBe(1)
+      expect(options.b).toBe(2)
+      expect(options.c).toBe(3)
       done()
     })
   })

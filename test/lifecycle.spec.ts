@@ -2,23 +2,81 @@ import { Epage } from '@/Epage'
 import { Ecomponent } from '@/Ecomponent'
 import { onLoad, onCreated } from '@/lifecycle'
 import { setTimeoutResolve } from '@/util'
+import { Eapp } from '@/Eapp'
 describe('装饰生命周期函数', () => {
-  test('__hooks__属性不可遍历', () => {
-    const pageOptions = {}
-    Epage(pageOptions)
-    expect(Object.keys(pageOptions).findIndex(k => k === '__hooks__')).toBe(-1)
+  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 同步情况', done => {
+    const queue: number[] = []
+    const page = Epage({
+      onLoad: [
+        () => queue.push(1)
+      ],
+      onShow: [
+        () => queue.push(2)
+      ],
+      onReady: [
+        () => queue.push(3)
+      ]
+    })
+    page.$once('onReady:done', () => {
+      expect(queue).toEqual([1,2,3])
+      done()
+    })
   })
 
-  test('Page装饰后生命周期函数不再是之前的函数', () => {
+  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 异步情况', done => {
+    const setTimeoutResolve = (time: number) => new Promise(resolve => setTimeout(resolve, time))
+    const queue: number[] = []
+    const page = Epage({
+      onLoad: [
+        () => setTimeoutResolve(500),
+        () => setTimeoutResolve(500),
+        () => setTimeoutResolve(500),
+        () => queue.push(1)
+      ],
+      onShow: [
+        () => queue.push(2)
+      ],
+      onReady: [
+        () => queue.push(3)
+      ]
+    })
+    page.$once('onReady:done', () => {
+      expect(queue).toEqual([1,2,3])
+      done()
+    })
+  })
+
+
+  test('__hooks__属性不可遍历', () => {
+    const app = Eapp({})
+    const page = Epage({})
+    const comp = Ecomponent({})
+    expect(Object.keys(app).findIndex(k => k === '__hooks__')).toBe(-1)
+    expect(Object.keys(page).findIndex(k => k === '__hooks__')).toBe(-1)
+    expect(Object.keys(comp).findIndex(k => k === '__hooks__')).toBe(-1)
+  })
+
+  test('装饰后生命周期函数不再是之前的函数', () => {
+    const onLaunch = () => {}
+    const appOptions = {
+      onLaunch
+    }
+    Eapp(appOptions)
+    expect(appOptions.onLaunch).not.toEqual(onLaunch)
+
     const onLoad = () => {}
-    const onShow = () => {}
     const pageOptions = {
-      onLoad,
-      onShow
+      onLoad
     }
     Epage(pageOptions)
     expect(pageOptions.onLoad).not.toEqual(onLoad)
-    expect(pageOptions.onShow).not.toEqual(onShow)
+
+    const created = () => {}
+    const componentOptions = {
+      created
+    }
+    const comp = Ecomponent(componentOptions)
+    expect(comp.lifetimes.created).not.toEqual(created)
   })
 
   test('Component装饰后的函数应该在lifetimes上', () => {
@@ -31,24 +89,22 @@ describe('装饰生命周期函数', () => {
     Ecomponent(componentOptions)
     expect(componentOptions.lifetimes.created).toBeTruthy()
     expect(componentOptions.lifetimes.attached).toBeTruthy()
-    expect(componentOptions.lifetimes.created).not.toEqual(created)
-    expect(componentOptions.lifetimes.attached).not.toEqual(attached)
   })
 
   test('装饰后选项上的生命周期函数可以是数组', done => {
-    const onLoad1 = jest.fn()
-    const onLoad2 = jest.fn()
-    const onLoad3 = jest.fn()
-    const onLoad4 = jest.fn()
+    const fn1 = jest.fn()
+    const fn2 = jest.fn()
+    const fn3 = jest.fn()
+    const fn4 = jest.fn()
     const pageOptions: any = {
-      onLoad: [onLoad1, onLoad2, onLoad3, onLoad4]
+      onLoad: [fn1, fn2, fn3, fn4]
     }
     const page: any = Epage(pageOptions)
     page.$once('onLoad:done', () => {
-      expect(onLoad1.mock.calls.length).toBe(1)
-      expect(onLoad2.mock.calls.length).toBe(1)
-      expect(onLoad3.mock.calls.length).toBe(1)
-      expect(onLoad4.mock.calls.length).toBe(1)
+      expect(fn1.mock.calls.length).toBe(1)
+      expect(fn2.mock.calls.length).toBe(1)
+      expect(fn3.mock.calls.length).toBe(1)
+      expect(fn4.mock.calls.length).toBe(1)
       done()
     })
   })

@@ -1789,11 +1789,23 @@ function decoratorLifeCycle(options, type) {
                     setCurrentCtx(null);
                 }
             }
-            // 执行收集的钩子函数
-            callHooks(name, options, ctx).then(function () {
-                // 执行完成 触发事件
-                ctx.$emit(name + ":done");
-            });
+            // 页面的onShow、onReady，应该在onLoad执行完成之后才执行
+            if (type === 'page' && (name === 'onShow' || name === 'onReady')) {
+                ctx.$once('onLoad:done', function () {
+                    // 执行收集的钩子函数
+                    callHooks(name, options, ctx).then(function () {
+                        // 执行完成 触发事件
+                        ctx.$emit(name + ":done");
+                    });
+                });
+            }
+            else {
+                // 执行收集的钩子函数
+                callHooks(name, options, ctx).then(function () {
+                    // 执行完成 触发事件
+                    ctx.$emit(name + ":done");
+                });
+            }
         };
     });
 }

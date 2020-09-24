@@ -6,7 +6,7 @@
   "scripts": {
     "build": "NODE_ENV=production npx rollup --config",
     "test:all": "jest",
-    "test:single": "jest ./test/mixins.spec.ts"
+    "test:single": "jest ./test/lifecycle.spec.ts"
   },
   "keywords": [
     "composition",
