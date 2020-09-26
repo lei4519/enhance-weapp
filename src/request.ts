@@ -24,7 +24,7 @@ export const interceptors: Interceptors = {
 }
 
 export function requestMethod<T = any>(options: AjaxOptions): Promise<T> {
-  const _request = () =>
+  const _request = (options: AjaxOptions) =>
     new Promise<T>((resolve, reject) => {
       options.success = response => resolve({ options, response } as any)
       options.fail = response => reject({ options, response } as any)
