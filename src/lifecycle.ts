@@ -104,34 +104,52 @@ export function decoratorLifeCycle(
         })
         setCurrentCtx(null)
       }
+      const invokeHooks = () => {
+        try {
+          // 执行所有的钩子函数
+          const result = callHooks(name, options, this)
+          // 异步结果
+          if (isFunction(result?.then)) {
+            result
+              .then(() => {
+                this[`__${name}:resolve__`] = true
+                // 执行完成 触发事件
+                this.$emit(`${name}:resolve`)
+              })
+              .catch((err: any) => {
+                this[`__${name}:reject__`] = true
+                if (isFunction(this.catchLifeCycleError))
+                  this.catchLifeCycleError(name, err)
+                // 执行错误 触发事件
+                this.$emit(`${name}:reject`, err)
+              })
+          } else {
+            // 同步结果
+            this[`__${name}:resolve__`] = true
+            // 执行完成 触发事件
+            this.$emit(`${name}:resolve`)
+          }
+        } catch (err) {
+          // 同步错误
+          this[`__${name}:reject__`] = true
+          if (isFunction(this.catchLifeCycleError))
+            this.catchLifeCycleError(name, err)
+          // 执行完成 触发错误事件
+          this.$emit(`${name}:reject`, err)
+        }
+      }
       // Page的onShow、onReady，应该在onLoad执行完成之后才执行
       if (type === 'page' && (name === 'onShow' || name === 'onReady')) {
         // 执行onShow onReady
-        const callShowOrReady = () => {
-          callHooks(name, options, this).then(() => {
-            // 执行完成 触发事件
-            this.$emit(`${name}:resolve`)
-          })
-        }
         if (this['__onLoad:resolve__']) {
           // onLoad已经执行完成
-          callShowOrReady()
+          invokeHooks()
         } else {
           // 监听onLoad执行完成事件
-          this.$once('onLoad:resolve', callShowOrReady)
+          this.$once('onLoad:resolve', invokeHooks)
         }
       } else {
-        // 执行所有的钩子函数
-        callHooks(name, options, this).then(() => {
-          this[`__${name}:resolve__`] = true
-          // 执行完成 触发事件
-          this.$emit(`${name}:resolve`)
-        }).catch((err) => {
-          this[`__${name}:reject__`] = true
-          if (isFunction(this.catchLifeCycleError)) this.catchLifeCycleError(name, err)
-          // 执行完成 触发错误事件
-          this.$emit(`${name}:reject`, err)
-        })
+        invokeHooks()
       }
     }
   })
@@ -169,43 +187,44 @@ function callHooks(
 ) {
   ctx[`__${name}:resolve__`] = false
   ctx[`__${name}:reject__`] = false
-  let promise = Promise.resolve<LooseObject>(options)
-  // 数组中的第一个生命周期函数不应该被放入 Micro tasks 中执行
+  let optOrPromise: any = options
   const lcHooks = ctx.__hooks__[name]
-  if (startIdx === 0) {
-    const syncHookFn = lcHooks.shift()
-    if (syncHookFn) {
-      const result: Promise<any> | any | undefined = syncHookFn.call(ctx, options)
-      if (isFunction(result?.then)) {
-        promise = result
-      } else {
-        promise = Promise.resolve<LooseObject>(result)
-      }
-    }
-  }
   const len = lcHooks.length
   if (len) {
     for (let i = startIdx; i < len; i++) {
-      // 异步微任务执行
-      promise = promise.then(result => {
-        // 每次执行前将当前的ctx推入全局
-        // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
+      if (isFunction(optOrPromise?.then)) {
+        // 异步微任务执行
+        optOrPromise = optOrPromise.then((result: any) => {
+          // 每次执行前将当前的ctx推入全局
+          // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
+          setCurrentCtx(ctx)
+          const res = lcHooks[i].call(ctx, result)
+          setCurrentCtx(null)
+          return res
+        })
+      } else {
+        // 同步任务运行
         setCurrentCtx(ctx)
-        const res = lcHooks[i].call(ctx, result)
+        optOrPromise = lcHooks[i].call(ctx, optOrPromise)
         setCurrentCtx(null)
-        return res
-      }) as Promise<LooseFunction>
+      }
     }
     // 运行期间可以动态添加生命周期, 运行链结束检查是否有新增的钩子函数
-    promise = promise.then(() => {
+    const checkNewHooks = (result: any) => {
       const nowLen = ctx.__hooks__[name].length
       if (nowLen > len) {
         // 如果有，就执行新增的钩子函数
-        return callHooks(name, options, ctx, len)
+        return callHooks(name, result, ctx, len)
       }
-    }) as Promise<LooseFunction>
+      return result
+    }
+    if (isFunction(optOrPromise?.then)) {
+      optOrPromise = optOrPromise.then(checkNewHooks)
+    } else {
+      optOrPromise = checkNewHooks(optOrPromise)
+    }
   }
-  return promise
+  return optOrPromise
 }
 type PushHooksFn = (cb: HookFn) => void
 // 生成添加钩子函数
