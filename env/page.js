@@ -37,12 +37,27 @@ class WxPage {
 
 function Page(config) {
   const page = new WxPage(config)
-  page?.onLoad()
-  setTimeout(() => {
-    page?.onShow()
-  })
-  setTimeout(() => {
-    page?.onReady()
+
+    ;[
+    'onLoad',
+      'onShow',
+      'onReady',
+      'onHide',
+      'onUnload',
+      'onPullDownRefresh',
+      'onReachBottom',
+      'onShareAppMessage',
+      'onTabItemTap',
+      'onResize',
+      'onAddToFavorites'
+    ].forEach((key) => {
+    if (key === 'onLoad') {
+      page?.[key]()
+    } else {
+      setTimeout(() => {
+        page?.[key]()
+      })
+    }
   })
 
   return page

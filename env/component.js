@@ -37,9 +37,23 @@ class WxComponent {
 
 function Component(config) {
   const component = new WxComponent(config)
-  Object.keys(component.lifetimes).forEach(key =>
-    component.lifetimes[key].call(component)
-  )
+
+    ;[
+      'created',
+      'attached',
+      'ready',
+      'moved',
+      'detached',
+      'error'
+    ].forEach((key) => {
+    if (key === 'created') {
+      component.lifetimes?.[key].call(component)
+    } else {
+      setTimeout(() => {
+        component.lifetimes?.[key].call(component)
+      })
+    }
+  })
 
   return component
 }

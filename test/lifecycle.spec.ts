@@ -1,57 +1,9 @@
+import { Eapp } from '@/Eapp'
 import { Epage } from '@/Epage'
 import { Ecomponent } from '@/Ecomponent'
-import { onLoad, onCreated } from '@/lifecycle'
+import { onLoad, onCreated, onLaunch } from '@/lifecycle'
 import { setTimeoutResolve } from '@/util'
-import { Eapp } from '@/Eapp'
 describe('装饰生命周期函数', () => {
-  test('如果没有传入setup，将不会对data、响应式等做增强', () => {
-    const page = Epage({})
-    expect(page.$nextTick).toBeFalsy()
-    expect(page.data$).toBeFalsy()
-  })
-
-  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 同步情况', done => {
-    const queue: number[] = []
-    const page = Epage({
-      onLoad: [() => queue.push(1)],
-      onShow: [() => queue.push(2)],
-      onReady: [() => queue.push(3)]
-    })
-    page.$once('onReady:resolve', () => {
-      expect(queue).toEqual([1, 2, 3])
-      done()
-    })
-  })
-
-  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 异步情况', done => {
-    const setTimeoutResolve = (time: number) =>
-      new Promise(resolve => setTimeout(resolve, time))
-    const queue: number[] = []
-    const page = Epage({
-      onLoad: [
-        () => setTimeoutResolve(500),
-        () => setTimeoutResolve(500),
-        () => setTimeoutResolve(500),
-        () => queue.push(1)
-      ],
-      onShow: [() => queue.push(2)],
-      onReady: [() => queue.push(3)]
-    })
-    page.$once('onReady:resolve', () => {
-      expect(queue).toEqual([1, 2, 3])
-      done()
-    })
-  })
-
-  test('__hooks__属性不可遍历', () => {
-    const app = Eapp({})
-    const page = Epage({})
-    const comp = Ecomponent({})
-    expect(Object.keys(app).findIndex(k => k === '__hooks__')).toBe(-1)
-    expect(Object.keys(page).findIndex(k => k === '__hooks__')).toBe(-1)
-    expect(Object.keys(comp).findIndex(k => k === '__hooks__')).toBe(-1)
-  })
-
   test('装饰后生命周期函数不再是之前的函数', () => {
     const onLaunch = () => {}
     const appOptions = {
@@ -101,6 +53,103 @@ describe('装饰生命周期函数', () => {
       expect(fn2.mock.calls.length).toBe(1)
       expect(fn3.mock.calls.length).toBe(1)
       expect(fn4.mock.calls.length).toBe(1)
+      done()
+    })
+  })
+
+  test('在onLaunch、onLoad、created中初始化events, __events__不可遍历', () => {
+    const app = Eapp({})
+    const page = Epage({})
+    const comp = Ecomponent({})
+    expect(app.__events__).toBeTruthy()
+    expect(page.__events__).toBeTruthy()
+    expect(comp.__events__).toBeTruthy()
+    expect(Object.keys(app).findIndex(k => k === '__events__')).toBe(-1)
+    expect(Object.keys(page).findIndex(k => k === '__events__')).toBe(-1)
+    expect(Object.keys(comp).findIndex(k => k === '__events__')).toBe(-1)
+  })
+
+  test('在onLaunch、onLoad、created中初始化钩子队列, __hooks__属性不可遍历', () => {
+    const app = Eapp({})
+    const page = Epage({})
+    const comp = Ecomponent({})
+    expect(app.__hooks__).toBeTruthy()
+    expect(page.__hooks__).toBeTruthy()
+    expect(comp.__hooks__).toBeTruthy()
+    expect(Object.keys(app).findIndex(k => k === '__hooks__')).toBe(-1)
+    expect(Object.keys(page).findIndex(k => k === '__hooks__')).toBe(-1)
+    expect(Object.keys(comp).findIndex(k => k === '__hooks__')).toBe(-1)
+  })
+
+  test('App 中不处理 setup、data', () => {
+    const app = Eapp({})
+    expect(app.$nextTick).toBeFalsy()
+    expect(app.data$).toBeFalsy()
+  })
+
+  test('如果没有传入setup，将不会对data、响应式等做增强', () => {
+    const page = Epage({})
+    const comp = Ecomponent({})
+    expect(page.$nextTick).toBeFalsy()
+    expect(page.data$).toBeFalsy()
+    expect(comp.$nextTick).toBeFalsy()
+    expect(comp.data$).toBeFalsy()
+  })
+
+  test('选项中定义的生命周期，最后执行', () => {
+    const queue: number[] = []
+    const page = Epage({
+      setup() {
+        onLoad(() => {
+          queue.push(1)
+        })
+      },
+      onLoad() {
+        queue.push(2)
+      }
+    })
+    const comp = Ecomponent({
+      setup() {
+        onCreated(() => {
+          queue.push(3)
+        })
+      },
+      created() {
+        queue.push(4)
+      }
+    })
+    expect(queue).toEqual([1, 2, 3, 4])
+  })
+
+  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 同步情况', done => {
+    const queue: number[] = []
+    const page = Epage({
+      onLoad: [() => queue.push(1)],
+      onShow: [() => queue.push(2)],
+      onReady: [() => queue.push(3)]
+    })
+    page.$once('onReady:resolve', () => {
+      expect(queue).toEqual([1, 2, 3])
+      done()
+    })
+  })
+
+  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 异步情况', done => {
+    const setTimeoutResolve = (time: number) =>
+      new Promise(resolve => setTimeout(resolve, time))
+    const queue: number[] = []
+    const page = Epage({
+      onLoad: [
+        () => setTimeoutResolve(500),
+        () => setTimeoutResolve(500),
+        () => setTimeoutResolve(500),
+        () => queue.push(1)
+      ],
+      onShow: [() => queue.push(2)],
+      onReady: [() => queue.push(3)]
+    })
+    page.$once('onReady:resolve', () => {
+      expect(queue).toEqual([1, 2, 3])
       done()
     })
   })

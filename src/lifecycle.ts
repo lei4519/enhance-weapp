@@ -9,7 +9,22 @@ import { handlerMixins } from './mixins'
 import { handlerSetup } from './reactive'
 import { setDataNextTick } from './setDataEffect'
 type Lifetime = AppLifeTime | PageLifeTime | ComponentLifeTime
-const lc = {
+
+// 生命周期执行顺序
+// onLaunchApp
+// onShowApp
+// createdComp
+// attachedComp
+// onLoadPage
+// onShowPage
+// readyComp
+// onReadyPage
+// onHidePage
+// onHideApp
+// onShowApp
+// onShowPage
+
+export const lc = {
   app: [
     'onLaunch',
     'onShow',

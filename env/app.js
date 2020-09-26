@@ -37,7 +37,25 @@ class WxApp {
 
 function App(config) {
   const app = new WxApp(config)
-  app?.onLaunch()
+
+    ;[
+    'onLaunch',
+      'onShow',
+      'onHide',
+      'onError',
+      'onPageNotFound',
+      'onUnhandledRejection',
+      'onThemeChange'
+    ].forEach((key) => {
+    if (key === 'onLaunch') {
+      app?.[key]()
+    } else {
+      setTimeout(() => {
+        app?.[key]()
+      })
+    }
+  })
+
   return app
 }
 
