@@ -1,7 +1,6 @@
 import { Eapp } from '@/Eapp'
 import { Ecomponent } from '@/Ecomponent'
 import { Epage } from '@/Epage'
-import { initEvents } from '@/events'
 import { globalMixins } from '@/mixins'
 
 describe('全局混入', () => {
@@ -9,9 +8,7 @@ describe('全局混入', () => {
     globalMixins({
       app: {
         hooks: {
-          onLaunch: [
-            () => {}
-          ]
+          onLaunch: [() => {}]
         },
         data: {
           a: 1
@@ -68,7 +65,6 @@ describe('全局混入', () => {
     expect(comp.__hooks__.ready.length).toBe(1)
   })
 
-
   test('公用属性混入', () => {
     globalMixins({
       app: {
@@ -122,7 +118,7 @@ describe('全局混入', () => {
       page: {
         data: {
           a: 1
-        },
+        }
       },
       data: {
         a: 2

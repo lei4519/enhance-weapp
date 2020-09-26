@@ -7,24 +7,19 @@ describe('装饰生命周期函数', () => {
   test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 同步情况', done => {
     const queue: number[] = []
     const page = Epage({
-      onLoad: [
-        () => queue.push(1)
-      ],
-      onShow: [
-        () => queue.push(2)
-      ],
-      onReady: [
-        () => queue.push(3)
-      ]
+      onLoad: [() => queue.push(1)],
+      onShow: [() => queue.push(2)],
+      onReady: [() => queue.push(3)]
     })
     page.$once('onReady:done', () => {
-      expect(queue).toEqual([1,2,3])
+      expect(queue).toEqual([1, 2, 3])
       done()
     })
   })
 
   test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 异步情况', done => {
-    const setTimeoutResolve = (time: number) => new Promise(resolve => setTimeout(resolve, time))
+    const setTimeoutResolve = (time: number) =>
+      new Promise(resolve => setTimeout(resolve, time))
     const queue: number[] = []
     const page = Epage({
       onLoad: [
@@ -33,19 +28,14 @@ describe('装饰生命周期函数', () => {
         () => setTimeoutResolve(500),
         () => queue.push(1)
       ],
-      onShow: [
-        () => queue.push(2)
-      ],
-      onReady: [
-        () => queue.push(3)
-      ]
+      onShow: [() => queue.push(2)],
+      onReady: [() => queue.push(3)]
     })
     page.$once('onReady:done', () => {
-      expect(queue).toEqual([1,2,3])
+      expect(queue).toEqual([1, 2, 3])
       done()
     })
   })
-
 
   test('__hooks__属性不可遍历', () => {
     const app = Eapp({})
@@ -82,7 +72,7 @@ describe('装饰生命周期函数', () => {
   test('Component装饰后的函数应该在lifetimes上', () => {
     const created = () => {}
     const attached = () => {}
-    const componentOptions: any = {
+    const componentOptions: LooseObject = {
       created,
       attached
     }
@@ -96,10 +86,10 @@ describe('装饰生命周期函数', () => {
     const fn2 = jest.fn()
     const fn3 = jest.fn()
     const fn4 = jest.fn()
-    const pageOptions: any = {
+    const pageOptions: LooseObject = {
       onLoad: [fn1, fn2, fn3, fn4]
     }
-    const page: any = Epage(pageOptions)
+    const page = Epage(pageOptions)
     page.$once('onLoad:done', () => {
       expect(fn1.mock.calls.length).toBe(1)
       expect(fn2.mock.calls.length).toBe(1)
@@ -111,7 +101,7 @@ describe('装饰生命周期函数', () => {
 
   test('装饰后生命周期可以正常执行, 并通过监听xxx:done来判断执行完成', () => {
     const onLoad = jest.fn()
-    const page: any = Epage({
+    const page = Epage({
       onLoad
     })
     const pageDone = () => {
@@ -120,7 +110,7 @@ describe('装饰生命周期函数', () => {
       })
     }
     const created = jest.fn()
-    const comp: any = Ecomponent({
+    const comp = Ecomponent({
       created
     })
     const compDone = () => {
@@ -139,7 +129,7 @@ describe('装饰生命周期函数', () => {
     const onLoad1 = function () {
       onLoad(onLoad2)
     }
-    const page: any = Epage({
+    const page = Epage({
       onLoad() {
         onLoad(onLoad1)
       }
@@ -161,7 +151,7 @@ describe('装饰生命周期函数', () => {
     const onLoad3 = function () {
       queue.push(3)
     }
-    const page: any = Epage({
+    const page = Epage({
       onLoad() {
         onLoad(onLoad1)
         onLoad(onLoad2)
@@ -179,24 +169,24 @@ describe('装饰生命周期函数', () => {
     const onLoad1 = function () {
       return new Promise(r => {
         queue.push(1)
-        setTimeout(() => r(2), 1000)
+        setTimeout(() => r(queue), 1000)
       })
     }
-    const onLoad2 = function (i: number) {
+    const onLoad2 = function (queue: number[]) {
       return new Promise(r => {
-        queue.push(i)
-        setTimeout(() => r(3), 1000)
+        queue.push(2)
+        setTimeout(() => r(queue), 1000)
       })
     }
-    const onLoad3 = function (i: number) {
+    const onLoad3 = function (queue: number[]) {
       return new Promise(r => {
         setTimeout(() => {
-          queue.push(i)
+          queue.push(3)
           r()
         }, 1000)
       })
     }
-    const page: any = Epage({
+    const page = Epage({
       onLoad() {
         onLoad(onLoad1)
         onLoad(onLoad2)
@@ -210,22 +200,22 @@ describe('装饰生命周期函数', () => {
   })
 
   test('多个实例生命周期异步穿插运行，动态添加的钩子可以正确指向对应实例', () => {
-    let res: any = null
-    const onCreated1 = function (this: any) {
+    let res: LooseObject
+    const onCreated1 = function (this: LooseObject) {
       res = this.flag
     }
     const onCreated2 = function () {
       onCreated(onCreated1)
       return setTimeoutResolve(null, 1000)
     }
-    const comp1: any = Ecomponent({
+    const comp1 = Ecomponent({
       created() {
         onCreated(onCreated2)
         return setTimeoutResolve(null, 1000)
       }
     })
     comp1.flag = 123
-    const onCreated3 = function (this: any) {
+    const onCreated3 = function () {
       onCreated(function () {
         //
       })

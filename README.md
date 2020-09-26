@@ -10,22 +10,10 @@
     - <a href="#user-content-框架注意点">框架注意点</a>
 
 
-## 安装与使用
-
-[小程序文档 - npm 支持](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html#Tips)
-
-1. 项目目录中安装模块
+## 安装
 ```js
 cnpm i git+https://gitlab.leju.com/adjs-ljl/enhance-wxapp.git --save
 ```
-2. 点击开发者工具中的菜单栏：工具 --> 构建 npm
-
-![](https://res.wx.qq.com/wxdoc/dist/assets/img/construction.408e13ae.png)
-
-3. 勾选“使用 npm 模块”选项：
-
-![](https://src.leju.com/imp/imp/deal/8b/c8/8/6039dc71ad9d925edfaad82155f_p122_mk169.png)
-
 
 ## 示例
 index.js
@@ -326,26 +314,40 @@ globalMixins({
 })
 ```
 
-### $ajax拦截器
+### 微信 Promise API
+
+#### 使用方法
+
+```js
+import { wxp } from 'enhance-wxapp'
+
+wxp.login().then().catch()
+wxp.checkSession().then().catch()
+wxp.showModal().then().catch()
+wxp.pageScrollTo().then().catch()
+```
+
+
+### request拦截器
 
 #### 使用方法（同axios）
 ```js
-import { interceptors } from 'enhance-wxapp'
-
-⚠️ 如果要在拦截器中访问this，记得不能使用箭头函数，否则会丢失this指向
+import { wxp } from 'enhance-wxapp'
 
 // 请求拦截器
-interceptors.request.use(
+wxp.request.interceptors.request.use(
   () => {/* resolve 执行 */},
   () => {/* reject 执行 */}
 )
 
 // 响应拦截器
-interceptors.response.use(
+wxp.request.interceptors.response.use(
   () => {/* resolve 执行 */},
   () => {/* reject 执行 */}
 )
 
+// 使用wxp.request请求时会应用 注册的拦截器
+wxp.request().then().catch().finally()
 ```
 
 ### 生命周期监听钩子
@@ -504,7 +506,9 @@ import {
 } from 'enhance-wxapp'
 ```
 
+### getCurrentCtx
 
+获取生命周期执行中的this值，可能为null
 
 ## ⚠️框架注意点
 
@@ -513,8 +517,6 @@ import {
 - 重名合并策略优先级： setup > data > 命名空间mixins > 公用mixins
 
 - Eapp中不支持使用`setup`，不能使用响应式数据，可以使用全局混入
-
-- 如果要在拦截器中访问this，记得不能使用箭头函数，否则会丢失this指向
 
 - 考虑性能问题，onPageScroll一旦监听，每次滚动两个线程之间都会通信一次，onPageScroll不会进行装饰，没有暴露注册钩子，也不可以在mixins中混入，只能在传入的选项中进行定义
 

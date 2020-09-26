@@ -1,13 +1,14 @@
+declare module 'miniprogram-api-promise'
 interface LooseObject {
   [key: string]: any
 }
 interface LooseFunction extends LooseObject {
-  (...args?: any[]): any
+  (...args: any[]): any
 }
-type DecoratorType =  'app' | 'page' | 'component'
-type HookFn = (opt?: LooseObject) => void
-type HookFn = (opt?: LooseObject) => LooseObject
-type HookFn = (opt?: LooseObject) => Promise<any>
+type DecoratorType = 'app' | 'page' | 'component'
+type HookFn = (opt?: any) => void
+type HookFn = (opt?: any) => any
+type HookFn = (opt?: any) => Promise<any>
 
 interface GlobalMixins {
   app?: {
@@ -37,9 +38,17 @@ interface GlobalMixins {
 type AjaxOptions = WechatMiniprogram.RequestOption & LooseObject
 interface Interceptors {
   request: {
-    use(onFulfilled?: (options: AjaxOptions) => AjaxOptions | Promise<AjaxOptions>, onRejected?: (error?: any) => any)
+    use(
+      onFulfilled?: (
+        options: AjaxOptions
+      ) => AjaxOptions | Promise<AjaxOptions>,
+      onRejected?: (error?: any) => any
+    )
   }
   response: {
-    use(onFulfilled?: (response: any) => any | Promise<any>, onRejected?: (error?: any) => any)
+    use(
+      onFulfilled?: (response: any) => any | Promise<any>,
+      onRejected?: (error?: any) => any
+    )
   }
 }

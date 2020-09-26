@@ -7,7 +7,6 @@ import {
 } from '@vue/reactivity'
 import { Epage } from '@/Epage'
 import { Ecomponent } from '@/Ecomponent'
-import { watch } from '@/main'
 
 describe('响应式处理', () => {
   test('setup返回值，函数绑定至this(methods)上，其他值绑定到data上', () => {
@@ -40,9 +39,6 @@ describe('响应式处理', () => {
     expect(comp.methods.c).toBe(fn)
   })
   test('命名冲突时，setup返回值覆盖data值', () => {
-    const fn = function () {
-      //
-    }
     const page: any = Epage({
       data: {
         a: 1

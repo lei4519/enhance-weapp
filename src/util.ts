@@ -1,10 +1,11 @@
 export function noop() {}
 
-export function disableEnumerable(obj: any, keys: string[]) {
-  keys.forEach((key: string) => {
-    Object.defineProperty(obj, key, {
-      enumerable: false
-    })
+export function definePrivateProp(obj: any, key: string, value?: any) {
+  Object.defineProperty(obj, key, {
+    value,
+    writable: true,
+    configurable: false,
+    enumerable: false
   })
 }
 
@@ -29,7 +30,7 @@ export const isLooseObject = (obj: any) => obj && typeof obj === 'object'
  * @param resolveData promise.resolve 的数据
  * @param timeout 超时时间
  */
-export function setTimeoutResolve(resolveData: any, timeout: number = 0) {
+export function setTimeoutResolve(resolveData: any, timeout = 0) {
   return new Promise(resolve => {
     setTimeout(() => {
       resolve(resolveData)

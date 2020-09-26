@@ -38,8 +38,12 @@ class WxPage {
 function Page(config) {
   const page = new WxPage(config)
   page?.onLoad()
-  page?.onShow()
-  page?.onReady()
+  setTimeout(() => {
+    page?.onShow()
+  })
+  setTimeout(() => {
+    page?.onReady()
+  })
 
   return page
 }

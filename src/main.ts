@@ -1,10 +1,10 @@
-
 export { Ecomponent } from './Ecomponent'
 export { Epage } from './Epage'
 export { Eapp } from './Eapp'
 
 export { globalMixins } from './mixins'
-export { interceptors } from './request'
+export { wxp } from './wxp'
+export { getCurrentCtx } from './lifecycle'
 
 export {
   onLaunch as onLaunchHooks,

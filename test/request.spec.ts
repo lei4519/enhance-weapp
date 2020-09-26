@@ -39,14 +39,11 @@ describe('$ajax 测试', () => {
       queue.push(1)
       return Promise.reject(config)
     })
-    interceptors.request.use(
-      void 0,
-      config => {
-        config.b = 2
-        queue.push(2)
-        return Promise.reject(config)
-      }
-    )
+    interceptors.request.use(void 0, config => {
+      config.b = 2
+      queue.push(2)
+      return Promise.reject(config)
+    })
     interceptors.request.use(config => {
       config.c = 3
       queue.push(3)

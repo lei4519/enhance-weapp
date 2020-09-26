@@ -3,7 +3,6 @@ type Ctx = PageInstance | ComponentInstance
 // 异步队列
 const setDataQueue: LooseFunction[] = []
 let isFlushing = false
-export let setDataRunning = false
 export function setData(ctx: Ctx, fn: LooseFunction): void {
   queueSetDataJob(ctx, fn)
 }
@@ -34,9 +33,7 @@ function flushSetDataJobs(ctx: Ctx) {
   }
   if (Object.keys(res).length === 0) return
   console.log('响应式触发this.setDat，参数: ', res)
-  setDataRunning = true
   ctx.setData(res, () => {
-    setDataRunning = false
     ctx.$emit('setDataRender:done')
   })
 }

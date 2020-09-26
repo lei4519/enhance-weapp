@@ -1,7 +1,5 @@
 import { Epage } from '@/Epage'
-import { handlerSetup } from '@/reactive'
 import { setData } from '@/setDataEffect'
-import { readonly, reactive, ref } from '@vue/reactivity'
 describe('setData', () => {
   test('setData下一微任务执行', done => {
     const fn1 = jest.fn()

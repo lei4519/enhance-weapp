@@ -1,11 +1,7 @@
-import { disableEnumerable, isFunction } from './util'
+import { definePrivateProp, isFunction } from './util'
 
 export function initEvents(ctx: PageInstance | ComponentInstance) {
-  ctx.__events__ = {} as {
-    [key: string]: LooseFunction[]
-  }
-
-  disableEnumerable(ctx, ['__events__'])
+  definePrivateProp(ctx, '__events__', {})
 
   ctx.$on = function events$on(name: string, cb: LooseFunction) {
     if (!ctx.__events__[name]) ctx.__events__[name] = []

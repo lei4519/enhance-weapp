@@ -6,19 +6,20 @@ type ComponentLifeTime = keyof Omit<
   WechatMiniprogram.Component.Lifetimes,
   'lifetimes'
 >
-interface AppOptions extends LooseObject{
+interface AppOptions extends LooseObject {
   [key in AppLifeTime]?: HookFn[]
 }
-interface PageOptions extends LooseObject{
+interface PageOptions extends LooseObject {
   [key in PageLifeTime]?: HookFn[]
 }
-interface ComponentOptions extends  LooseObject{
+interface ComponentOptions extends LooseObject {
   [key in ComponentLifeTime]?: HookFn[]
 }
 type ComponentOptions = WechatMiniprogram.Component.Options<
   DataOption,
   CustomOption
->  & LooseObject
+> &
+  LooseObject
 interface PageInstance
   extends WechatMiniprogram.Page.Instance<DataOption, CustomOption> {
   __events__: {
