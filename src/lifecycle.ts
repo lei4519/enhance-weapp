@@ -170,7 +170,19 @@ function callHooks(
   ctx[`__${name}:resolve__`] = false
   ctx[`__${name}:reject__`] = false
   let promise = Promise.resolve<LooseObject>(options)
+  // 数组中的第一个生命周期函数不应该被放入 Micro tasks 中执行
   const lcHooks = ctx.__hooks__[name]
+  if (startIdx === 0) {
+    const syncHookFn = lcHooks.shift()
+    if (syncHookFn) {
+      const result: Promise<any> | any | undefined = syncHookFn.call(ctx, options)
+      if (isFunction(result?.then)) {
+        promise = result
+      } else {
+        promise = Promise.resolve<LooseObject>(result)
+      }
+    }
+  }
   const len = lcHooks.length
   if (len) {
     for (let i = startIdx; i < len; i++) {
@@ -200,11 +212,14 @@ type PushHooksFn = (cb: HookFn) => void
 function createPushHooks(name: Lifetime): PushHooksFn {
   // 添加钩子函数
   return function pushHooks(cb: HookFn) {
-    let i
-    if ((i = currentCtx) && (i = i.__hooks__[name])) {
-      // 避免onShow、onHide等多次调用的生命周期，重复添加相同的钩子函数
-      if (!i.includes(cb)) {
-        i.push(cb)
+    // 函数才能被推入
+    if (isFunction(cb)) {
+      let i
+      if ((i = currentCtx) && (i = i.__hooks__[name])) {
+        // 避免onShow、onHide等多次调用的生命周期，重复添加相同的钩子函数
+        if (!i.includes(cb)) {
+          i.push(cb)
+        }
       }
     }
   }
