@@ -4,6 +4,12 @@ import { onLoad, onCreated } from '@/lifecycle'
 import { setTimeoutResolve } from '@/util'
 import { Eapp } from '@/Eapp'
 describe('装饰生命周期函数', () => {
+  test('如果没有传入setup，将不会对data、响应式等做增强', () => {
+    const page = Epage({})
+    expect(page.$nextTick).toBeFalsy()
+    expect(page.data$).toBeFalsy()
+  })
+
   test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 同步情况', done => {
     const queue: number[] = []
     const page = Epage({

@@ -512,6 +512,8 @@ import {
 
 ## ⚠️框架注意点
 
+- 当页面没有setup时，只会对页面进行生命周期方面的增强，不会对data进行处理。这是为了兼容老的项目，使其可以正常运行。
+
 - 不要再使用`this.setData`, 这将导致响应式数据和`this.data`不同步
 
 - 重名合并策略优先级： setup > data > 命名空间mixins > 公用mixins

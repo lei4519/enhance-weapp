@@ -72,12 +72,14 @@ export function decoratorLifeCycle(
         handlerMixins(type, this)
         // App 里没有data，没有视图，不需要使用响应式
         if (name !== 'onLaunch') {
-          // nextTick
-          this.$nextTick = setDataNextTick
-          // 处理 setup
-          setCurrentCtx(this)
-          handlerSetup(this, options, type)
-          setCurrentCtx(null)
+          if (isFunction(this.setup)) {
+            // nextTick
+            this.$nextTick = setDataNextTick
+            // 处理 setup
+            setCurrentCtx(this)
+            handlerSetup(this, options, type)
+            setCurrentCtx(null)
+          }
         }
       }
       // 如果用户定义了生命周期函数
