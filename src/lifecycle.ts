@@ -10,19 +10,9 @@ import { handlerSetup } from './reactive'
 import { setDataNextTick } from './setDataEffect'
 type Lifetime = AppLifeTime | PageLifeTime | ComponentLifeTime
 
-// 生命周期执行顺序
-// onLaunchApp
-// onShowApp
-// createdComp
-// attachedComp
-// onLoadPage
-// onShowPage
-// readyComp
-// onReadyPage
-// onHidePage
-// onHideApp
-// onShowApp
-// onShowPage
+// 生命周期事件总线，控制生命周期的正确运行顺序
+const lcEventBus: any = {}
+initEvents(lcEventBus)
 
 export const lc = {
   app: [
@@ -120,52 +110,119 @@ export function decoratorLifeCycle(
         setCurrentCtx(null)
       }
       const invokeHooks = () => {
-        try {
-          // 执行所有的钩子函数
-          const result = callHooks(name, options, this)
-          // 异步结果
-          if (isFunction(result?.then)) {
-            result
-              .then(() => {
-                this[`__${name}:resolve__`] = true
-                // 执行完成 触发事件
-                this.$emit(`${name}:resolve`)
-              })
-              .catch((err: any) => {
-                this[`__${name}:reject__`] = true
-                if (isFunction(this.catchLifeCycleError))
-                  this.catchLifeCycleError(name, err)
-                // 执行错误 触发事件
-                this.$emit(`${name}:reject`, err)
-              })
-          } else {
-            // 同步结果
-            this[`__${name}:resolve__`] = true
-            // 执行完成 触发事件
-            this.$emit(`${name}:resolve`)
-          }
-        } catch (err) {
-          // 同步错误
+        const resolve = (res: any) => {
+          this[`__${name}:resolve__`] = true
+          lcEventBus[`__${type}:${name}:resolve__`] = true
+          // 执行完成 触发事件
+          this.$emit(`${name}:resolve`, res)
+          lcEventBus.$emit(`${type}:${name}:resolve`, res)
+        }
+        const reject = (err: any) => {
           this[`__${name}:reject__`] = true
+          lcEventBus[`__${type}:${name}:reject__`] = true
           if (isFunction(this.catchLifeCycleError))
             this.catchLifeCycleError(name, err)
           // 执行完成 触发错误事件
           this.$emit(`${name}:reject`, err)
+          lcEventBus.$emit(`${type}:${name}:reject`, err)
+        }
+        try {
+          // 执行所有的钩子函数
+          const result = callHooks(type, name, options, this)
+          // 异步结果
+          if (isFunction(result?.then)) {
+            result.then(resolve).catch(reject)
+          } else {
+            // 同步结果
+            resolve(result)
+          }
+        } catch (err) {
+          // 同步错误
+          reject(err)
         }
       }
-      // Page的onShow、onReady，应该在onLoad执行完成之后才执行
-      if (type === 'page' && (name === 'onShow' || name === 'onReady')) {
-        // 执行onShow onReady
-        if (this['__onLoad:resolve__']) {
-          // onLoad已经执行完成
-          invokeHooks()
-        } else {
-          // 监听onLoad执行完成事件
-          this.$once('onLoad:resolve', invokeHooks)
+
+      // 生命周期执行顺序
+      // 初始化
+      // ⬇️ onLaunch App
+      // ⬇️ onShow App
+      // ⬇️ created Comp
+      // ⬇️ attached Comp
+      // ⬇️ onLoad Page
+      // ⬇️ onShow Page
+      // ⬇️ ready Comp
+      // ⬇️ onReady Page
+
+      // 切后台
+      // ⬇️ onHide Page
+      // ⬇️ onHide App
+      // ⬇️ onShow App
+      // ⬇️ onShow Page
+
+      if (type === 'app') {
+        if (name === 'onShow') {
+          // App的onShow，应该在App onLaunch执行完成之后执行
+          this['__onLaunch:resolve__']
+            ? invokeHooks()
+            : this.$once('onLaunch:resolve', invokeHooks)
+          return
+        } else if (name === 'onHide') {
+          // App的onHide，应该在Page onHide执行完成之后执行
+          lcEventBus['__page:onHide:resolve__']
+            ? invokeHooks()
+            : lcEventBus.$once('page:onHide:resolve', invokeHooks)
+          return
         }
-      } else {
-        invokeHooks()
+      } else if (type === 'page') {
+        if (name === 'onLoad') {
+          // Page的onLoad，应该在App onShow执行完成之后执行
+          lcEventBus['__app:onShow:resolve__']
+            ? invokeHooks()
+            : lcEventBus.$once('app:onShow:resolve', invokeHooks)
+          return
+        } else if (name === 'onShow') {
+          // Page的onShow
+          // 初始化时应该在Page onLoad执行完成之后执行
+          // 切前台时应该在App onShow执行完成之后执行
+          this['__onLoad:resolve__'] && lcEventBus['__app:onShow:resolve__']
+            ? // 都成功直接调用
+              invokeHooks()
+            : // 已经onLoad（onLoad肯定在app:onShow之后执行），说明是切后台逻辑
+            this['__onLoad:resolve__']
+            ? // 监听app:onShow
+              lcEventBus.$once('app:onShow:resolve', invokeHooks)
+            : // 初始化逻辑，监听onLoad
+              this.$once('onLoad:resolve', invokeHooks)
+          return
+        } else if (name === 'onReady') {
+          // Page的onReady，应该在Page onShow执行完成之后执行
+          this['__onShow:resolve__']
+            ? invokeHooks()
+            : this.$once('onShow:resolve', invokeHooks)
+          return
+        }
+      } else if (type === 'component') {
+        if (name === 'created') {
+          // Component的created，应该在App onShow执行完成之后执行
+          lcEventBus['__app:onShow:resolve__']
+            ? invokeHooks()
+            : lcEventBus.$once('app:onShow:resolve', invokeHooks)
+          return
+        } else if (name === 'attached') {
+          // Component的attached，应该在Component created执行完成之后执行
+          this['__created:resolve__']
+            ? invokeHooks()
+            : this.$once('created:resolve', invokeHooks)
+          return
+        } else if (name === 'ready') {
+          // Component的ready，应该在Component attached执行完成之后执行
+          this['__attached:resolve__']
+            ? invokeHooks()
+            : this.$once('attached:resolve', invokeHooks)
+          return
+        }
       }
+      invokeHooks()
     }
   })
 }
@@ -189,12 +246,15 @@ function initHooks(type: DecoratorType, ctx: PageInstance | ComponentInstance) {
     // 标志生命周期是否执行完成
     definePrivateProp(ctx, `__${name}:resolve__`, false)
     definePrivateProp(ctx, `__${name}:reject__`, false)
+    lcEventBus[`__${type}:${name}:resolve__`] = false
+    lcEventBus[`__${type}:${name}:reject__`] = false
     ctx.__hooks__[name] = []
   })
 }
 
 // 执行钩子
 function callHooks(
+  type: DecoratorType,
   name: Lifetime,
   options: LooseObject,
   ctx: PageInstance | ComponentInstance,
@@ -202,6 +262,8 @@ function callHooks(
 ) {
   ctx[`__${name}:resolve__`] = false
   ctx[`__${name}:reject__`] = false
+  lcEventBus[`__${type}:${name}:resolve__`] = false
+  lcEventBus[`__${type}:${name}:reject__`] = false
   let optOrPromise: any = options
   const lcHooks = ctx.__hooks__[name]
   const len = lcHooks.length
@@ -229,7 +291,7 @@ function callHooks(
       const nowLen = ctx.__hooks__[name].length
       if (nowLen > len) {
         // 如果有，就执行新增的钩子函数
-        return callHooks(name, result, ctx, len)
+        return callHooks(type, name, result, ctx, len)
       }
       return result
     }

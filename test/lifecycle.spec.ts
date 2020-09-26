@@ -96,8 +96,9 @@ describe('装饰生命周期函数', () => {
     expect(comp.data$).toBeFalsy()
   })
 
-  test('选项中定义的生命周期，最后执行', () => {
+  test('选项中定义的生命周期，最后执行', done => {
     const queue: number[] = []
+    Eapp({})
     const page = Epage({
       setup() {
         onLoad(() => {
@@ -118,44 +119,15 @@ describe('装饰生命周期函数', () => {
         queue.push(4)
       }
     })
-    expect(queue).toEqual([1, 2, 3, 4])
-  })
-
-  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 同步情况', done => {
-    const queue: number[] = []
-    const page = Epage({
-      onLoad: [() => queue.push(1)],
-      onShow: [() => queue.push(2)],
-      onReady: [() => queue.push(3)]
-    })
-    page.$once('onReady:resolve', () => {
-      expect(queue).toEqual([1, 2, 3])
-      done()
-    })
-  })
-
-  test('Page 生命周期onShow、onReady，应该在onLoad执行完成之后才执行: 异步情况', done => {
-    const setTimeoutResolve = (time: number) =>
-      new Promise(resolve => setTimeout(resolve, time))
-    const queue: number[] = []
-    const page = Epage({
-      onLoad: [
-        () => setTimeoutResolve(500),
-        () => setTimeoutResolve(500),
-        () => setTimeoutResolve(500),
-        () => queue.push(1)
-      ],
-      onShow: [() => queue.push(2)],
-      onReady: [() => queue.push(3)]
-    })
-    page.$once('onReady:resolve', () => {
-      expect(queue).toEqual([1, 2, 3])
+    comp.$once('created:resolve', () => {
+      expect(queue).toEqual([1, 2, 3, 4])
       done()
     })
   })
 
   test('装饰后生命周期可以正常执行, 并通过监听xxx:resolve来判断执行完成', () => {
     const onLoad = jest.fn()
+    Eapp({})
     const page = Epage({
       onLoad
     })
@@ -184,6 +156,7 @@ describe('装饰生命周期函数', () => {
     const onLoad1 = function () {
       onLoad(onLoad2)
     }
+    Eapp({})
     const page = Epage({
       onLoad() {
         onLoad(onLoad1)
@@ -196,6 +169,7 @@ describe('装饰生命周期函数', () => {
   })
 
   test('使用onX添加的生命周期函数, 会依次执行', done => {
+    Eapp({})
     const queue: number[] = []
     const onLoad1 = function () {
       queue.push(1)
@@ -290,6 +264,215 @@ describe('装饰生命周期函数', () => {
         expect(res).toEqual(123)
         r()
       })
+    })
+  })
+
+  test('生命周期应该按照顺序执行: 初始化 - 同步情况', done => {
+    // 生命周期执行顺序
+    // 初始化
+    // ⬇️ onLaunch App
+    // ⬇️ onShow App
+    // App的onShow，应该在App onLaunch执行完成之后执行
+
+    // ⬇️ created Comp
+    // Component的created，应该在App onShow执行完成之后执行
+
+    // ⬇️ attached Comp
+    // Component的attached，应该在Component created执行完成之后执行
+
+    // ⬇️ ready Comp
+    // Component的ready，应该在Component attached执行完成之后执行
+
+    // ⬇️ onLoad Page
+    // Page的onLoad，应该在App onShow执行完成之后执行
+
+    // ⬇️ onShow Page
+    // Page的onShow 应该在Page onLoad执行完成之后执行
+
+    // ⬇️ onReady Page
+    // Page的onReady，应该在Page onShow执行完成之后执行
+
+    const queue: any[] = []
+    const genFn = (names: string[]) =>
+      names.reduce(
+        (res, name) => ((res[name] = () => queue.push(name)), res),
+        {} as any
+      )
+    const app = Eapp(genFn(['onLaunch', 'onShow']))
+    const page = Epage(genFn(['onLoad', 'onShow', 'onReady']))
+    const comp = Ecomponent(genFn(['created', 'attached', 'ready']))
+    comp.$once('ready:resolve', () => {
+      expect(queue).toEqual([
+        'onLaunch',
+        'onShow',
+        'onLoad',
+        'created',
+        'onShow',
+        'onReady',
+        'attached',
+        'ready'
+      ])
+      done()
+    })
+  })
+
+  test('生命周期应该按照顺序执行: 切后台 - 同步情况', done => {
+    // 生命周期执行顺序
+    // 切后台
+    // ⬇️ onHide Page
+    // ⬇️ onHide App
+    // App的onHide，应该在Page onHide执行完成之后执行
+
+    const queue: any[] = []
+    const genFn = (names: string[]) => ({
+      [names[0]]: () => queue.push(names[1])
+    })
+    const app = Eapp(genFn(['onHide', 'onHide:app']))
+    const page = Epage(genFn(['onHide', 'onHide:page']))
+    app.$once('onHide:resolve', () => {
+      expect(queue).toEqual(['onHide:page', 'onHide:app'])
+      done()
+    })
+  })
+
+  test('生命周期应该按照顺序执行: 切前台 - 同步情况', done => {
+    // 生命周期执行顺序
+    // 切前台
+    // ⬇️ onShow App
+    // ⬇️ onShow Page
+    // Page的onShow  应该在App onShow执行完成之后执行
+
+    const queue: any[] = []
+    const genFn = (names: string[]) => ({
+      [names[0]]: () => queue.push(names[1])
+    })
+    const app = Eapp(genFn(['onShow', 'onShow:app']))
+    const page = Epage(genFn(['onShow', 'onShow:page']))
+    page.$once('onShow:resolve', () => {
+      expect(queue).toEqual(['onShow:app', 'onShow:page'])
+      done()
+    })
+  })
+
+  test('生命周期应该按照顺序执行: 初始化 - 异步情况', done => {
+    // 生命周期执行顺序
+    // 初始化
+    // ⬇️ onLaunch App
+    // ⬇️ onShow App
+    // App的onShow，应该在App onLaunch执行完成之后执行
+
+    // ⬇️ created Comp
+    // Component的created，应该在App onShow执行完成之后执行
+
+    // ⬇️ attached Comp
+    // Component的attached，应该在Component created执行完成之后执行
+
+    // ⬇️ ready Comp
+    // Component的ready，应该在Component attached执行完成之后执行
+
+    // ⬇️ onLoad Page
+    // Page的onLoad，应该在App onShow执行完成之后执行
+
+    // ⬇️ onShow Page
+    // Page的onShow 应该在Page onLoad执行完成之后执行
+
+    // ⬇️ onReady Page
+    // Page的onReady，应该在Page onShow执行完成之后执行
+
+    const queue: any[] = []
+    let ms = 100
+    const setTimeoutResolveFn = (fn: any) => {
+      return new Promise(r => {
+        setTimeout(() => {
+          fn()
+          r()
+        }, (ms = ms - 10))
+      })
+    }
+    const genFn = (names: string[]) =>
+      names.reduce(
+        (res, name) => (
+          (res[name] = () => setTimeoutResolveFn(() => queue.push(name))), res
+        ),
+        {} as any
+      )
+    const app = Eapp(genFn(['onLaunch', 'onShow']))
+    const page = Epage(genFn(['onLoad', 'onShow', 'onReady']))
+    const comp = Ecomponent(genFn(['created', 'attached', 'ready']))
+
+    let r1: any, r2: any
+    const p1 = new Promise(r => (r1 = r))
+    const p2 = new Promise(r => (r2 = r))
+    page.$once('onReady:resolve', r1)
+    comp.$once('ready:resolve', r2)
+    Promise.all([p1, p2]).then(() => {
+      expect(queue).toEqual([
+        'onLaunch',
+        'onShow',
+        'created',
+        'onLoad',
+        'onShow',
+        'attached',
+        'ready',
+        'onReady'
+      ])
+      done()
+    })
+  })
+
+  test('生命周期应该按照顺序执行: 切后台 - 异步情况', done => {
+    // 生命周期执行顺序
+    // 切后台
+    // ⬇️ onHide Page
+    // ⬇️ onHide App
+    // App的onHide，应该在Page onHide执行完成之后执行
+
+    const queue: any[] = []
+    let ms = 100
+    const setTimeoutResolveFn = (fn: any) => {
+      return new Promise(r => {
+        setTimeout(() => {
+          fn()
+          r()
+        }, (ms = ms - 50))
+      })
+    }
+    const genFn = (names: string[]) => ({
+      [names[0]]: () => setTimeoutResolveFn(() => queue.push(names[1]))
+    })
+    const app = Eapp(genFn(['onHide', 'onHide:app']))
+    const page = Epage(genFn(['onHide', 'onHide:page']))
+    app.$once('onHide:resolve', () => {
+      expect(queue).toEqual(['onHide:page', 'onHide:app'])
+      done()
+    })
+  })
+
+  test('生命周期应该按照顺序执行: 切前台 - 异步情况', done => {
+    // 生命周期执行顺序
+    // 切前台
+    // ⬇️ onShow App
+    // ⬇️ onShow Page
+    // Page的onShow  应该在App onShow执行完成之后执行
+
+    const queue: any[] = []
+    let ms = 100
+    const setTimeoutResolveFn = (fn: any) => {
+      return new Promise(r => {
+        setTimeout(() => {
+          fn()
+          r()
+        }, (ms = ms - 50))
+      })
+    }
+    const genFn = (names: string[]) => ({
+      [names[0]]: () => setTimeoutResolveFn(() => queue.push(names[1]))
+    })
+    const app = Eapp(genFn(['onShow', 'onShow:app']))
+    const page = Epage(genFn(['onShow', 'onShow:page']))
+    page.$once('onShow:resolve', () => {
+      expect(queue).toEqual(['onShow:app', 'onShow:page'])
+      done()
     })
   })
 })

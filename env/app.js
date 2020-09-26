@@ -1,5 +1,6 @@
 class WxApp {
   constructor(config = {}) {
+    this.background = false
     Object.keys(config).forEach(key => {
       this[key] = config[key]
     })
@@ -10,7 +11,13 @@ class WxApp {
         //
       })
   }
-
+  toggleBackground(){
+    const task = this.background ? this.onShow : this.onHide
+    setTimeout(() => {
+      task.call(this)
+    })
+    this.background = !this.background
+  }
   setData(data, fn) {
     Object.keys(data).forEach(key => {
       const keys = key.split('.')
