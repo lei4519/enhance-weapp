@@ -17,7 +17,7 @@ describe('装饰生命周期函数', () => {
       onShow: [() => queue.push(2)],
       onReady: [() => queue.push(3)]
     })
-    page.$once('onReady:done', () => {
+    page.$once('onReady:resolve', () => {
       expect(queue).toEqual([1, 2, 3])
       done()
     })
@@ -37,7 +37,7 @@ describe('装饰生命周期函数', () => {
       onShow: [() => queue.push(2)],
       onReady: [() => queue.push(3)]
     })
-    page.$once('onReady:done', () => {
+    page.$once('onReady:resolve', () => {
       expect(queue).toEqual([1, 2, 3])
       done()
     })
@@ -96,7 +96,7 @@ describe('装饰生命周期函数', () => {
       onLoad: [fn1, fn2, fn3, fn4]
     }
     const page = Epage(pageOptions)
-    page.$once('onLoad:done', () => {
+    page.$once('onLoad:resolve', () => {
       expect(fn1.mock.calls.length).toBe(1)
       expect(fn2.mock.calls.length).toBe(1)
       expect(fn3.mock.calls.length).toBe(1)
@@ -105,14 +105,14 @@ describe('装饰生命周期函数', () => {
     })
   })
 
-  test('装饰后生命周期可以正常执行, 并通过监听xxx:done来判断执行完成', () => {
+  test('装饰后生命周期可以正常执行, 并通过监听xxx:resolve来判断执行完成', () => {
     const onLoad = jest.fn()
     const page = Epage({
       onLoad
     })
     const pageDone = () => {
       return new Promise(r => {
-        page.$once('onLoad:done', r)
+        page.$once('onLoad:resolve', r)
       })
     }
     const created = jest.fn()
@@ -121,7 +121,7 @@ describe('装饰生命周期函数', () => {
     })
     const compDone = () => {
       return new Promise(r => {
-        comp.$once('created:done', r)
+        comp.$once('created:resolve', r)
       })
     }
     return Promise.all([pageDone(), compDone()]).then(() => {
@@ -140,7 +140,7 @@ describe('装饰生命周期函数', () => {
         onLoad(onLoad1)
       }
     })
-    page.$once('onLoad:done', () => {
+    page.$once('onLoad:resolve', () => {
       expect(onLoad2.mock.calls.length).toBe(1)
       done()
     })
@@ -164,7 +164,7 @@ describe('装饰生命周期函数', () => {
         onLoad(onLoad3)
       }
     })
-    page.$once('onLoad:done', () => {
+    page.$once('onLoad:resolve', () => {
       expect(queue).toEqual([1, 2, 3])
       done()
     })
@@ -199,7 +199,7 @@ describe('装饰生命周期函数', () => {
         onLoad(onLoad3)
       }
     })
-    page.$once('onLoad:done', () => {
+    page.$once('onLoad:resolve', () => {
       expect(queue).toEqual([1, 2, 3])
       done()
     })
@@ -237,7 +237,7 @@ describe('装饰生命周期函数', () => {
       }
     })
     return new Promise(r => {
-      comp1.$once('created:done', () => {
+      comp1.$once('created:resolve', () => {
         expect(res).toEqual(123)
         r()
       })

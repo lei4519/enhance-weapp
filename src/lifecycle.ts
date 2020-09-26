@@ -110,22 +110,27 @@ export function decoratorLifeCycle(
         const callShowOrReady = () => {
           callHooks(name, options, this).then(() => {
             // 执行完成 触发事件
-            this.$emit(`${name}:done`)
+            this.$emit(`${name}:resolve`)
           })
         }
-        if (this['__onLoad:done__']) {
+        if (this['__onLoad:resolve__']) {
           // onLoad已经执行完成
           callShowOrReady()
         } else {
           // 监听onLoad执行完成事件
-          this.$once('onLoad:done', callShowOrReady)
+          this.$once('onLoad:resolve', callShowOrReady)
         }
       } else {
         // 执行所有的钩子函数
         callHooks(name, options, this).then(() => {
-          this[`__${name}:done__`] = true
+          this[`__${name}:resolve__`] = true
           // 执行完成 触发事件
-          this.$emit(`${name}:done`)
+          this.$emit(`${name}:resolve`)
+        }).catch((err) => {
+          this[`__${name}:reject__`] = true
+          if (isFunction(this.catchLifeCycleError)) this.catchLifeCycleError(name, err)
+          // 执行完成 触发错误事件
+          this.$emit(`${name}:reject`, err)
         })
       }
     }
@@ -149,7 +154,8 @@ function initHooks(type: DecoratorType, ctx: PageInstance | ComponentInstance) {
 
   lc[type].forEach((name: Lifetime) => {
     // 标志生命周期是否执行完成
-    definePrivateProp(ctx, `__${name}:done__`, false)
+    definePrivateProp(ctx, `__${name}:resolve__`, false)
+    definePrivateProp(ctx, `__${name}:reject__`, false)
     ctx.__hooks__[name] = []
   })
 }
@@ -161,7 +167,8 @@ function callHooks(
   ctx: PageInstance | ComponentInstance,
   startIdx = 0
 ) {
-  ctx[`__${name}:done__`] = false
+  ctx[`__${name}:resolve__`] = false
+  ctx[`__${name}:reject__`] = false
   let promise = Promise.resolve<LooseObject>(options)
   const lcHooks = ctx.__hooks__[name]
   const len = lcHooks.length

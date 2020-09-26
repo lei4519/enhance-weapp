@@ -1029,13 +1029,13 @@ function flushSetDataJobs(ctx) {
         return;
     console.log('响应式触发this.setDat，参数: ', res);
     ctx.setData(res, function () {
-        ctx.$emit('setDataRender:done');
+        ctx.$emit('setDataRender:resolve');
     });
 }
 function setDataNextTick(cb) {
     var resolve;
     var promise = new Promise(function (r) { return (resolve = r); });
-    this.$once('setDataRender:done', resolve);
+    this.$once('setDataRender:resolve', resolve);
     if (isFunction(cb)) {
         promise = promise.then(cb);
     }
@@ -1754,24 +1754,24 @@ function decoratorLifeCycle(options, type) {
                 var callShowOrReady = function () {
                     callHooks(name, options, _this).then(function () {
                         // 执行完成 触发事件
-                        _this.$emit(name + ":done");
+                        _this.$emit(name + ":resolve");
                     });
                 };
-                if (this['__onLoad:done__']) {
+                if (this['__onLoad:resolve__']) {
                     // onLoad已经执行完成
                     callShowOrReady();
                 }
                 else {
                     // 监听onLoad执行完成事件
-                    this.$once('onLoad:done', callShowOrReady);
+                    this.$once('onLoad:resolve', callShowOrReady);
                 }
             }
             else {
                 // 执行所有的钩子函数
                 callHooks(name, options, this).then(function () {
-                    _this["__" + name + ":done__"] = true;
+                    _this["__" + name + ":resolve__"] = true;
                     // 执行完成 触发事件
-                    _this.$emit(name + ":done");
+                    _this.$emit(name + ":resolve");
                 });
             }
         };
@@ -1792,14 +1792,14 @@ function initHooks(type, ctx) {
     definePrivateProp(ctx, '__hooks__', {});
     lc[type].forEach(function (name) {
         // 标志生命周期是否执行完成
-        definePrivateProp(ctx, "__" + name + ":done__", false);
+        definePrivateProp(ctx, "__" + name + ":resolve__", false);
         ctx.__hooks__[name] = [];
     });
 }
 // 执行钩子
 function callHooks(name, options, ctx, startIdx) {
     if (startIdx === void 0) { startIdx = 0; }
-    ctx["__" + name + ":done__"] = false;
+    ctx["__" + name + ":resolve__"] = false;
     var promise = Promise.resolve(options);
     var lcHooks = ctx.__hooks__[name];
     var len = lcHooks.length;

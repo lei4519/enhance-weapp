@@ -34,14 +34,14 @@ function flushSetDataJobs(ctx: Ctx) {
   if (Object.keys(res).length === 0) return
   console.log('响应式触发this.setDat，参数: ', res)
   ctx.setData(res, () => {
-    ctx.$emit('setDataRender:done')
+    ctx.$emit('setDataRender:resolve')
   })
 }
 
 export function setDataNextTick(this: Ctx, cb?: LooseFunction) {
   let resolve: any
   let promise = new Promise(r => (resolve = r))
-  this.$once('setDataRender:done', resolve!)
+  this.$once('setDataRender:resolve', resolve!)
   if (isFunction(cb)) {
     promise = promise.then(cb)
   }

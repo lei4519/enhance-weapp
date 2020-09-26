@@ -430,44 +430,75 @@ import {
 
 #### 监听生命周期执行完成
 
-⚠️生命周期函数的执行是异步的，并且支持递归嵌套执行，如果需要感知生命周期函数全部执行完成后，可以使用 `this.$once`、`this.$on` 监听'onLoad:done' 'created:done' 等事件
+⚠️生命周期函数的执行是异步的，并且支持递归嵌套执行，如果需要感知生命周期函数全部执行完成后，可以使用 `this.$once`、`this.$on` 监听'onLoad:resolve' 'created:resolve' 等事件
 
 ##### 示例
 ```js
-this.$once('onLoad:done', () => console.log('页面onLoad函数全部执行完毕'))
+this.$once('onLoad:resolve', () => console.log('页面onLoad函数全部执行完毕'))
 ```
 ##### 事件清单
 ```js
 app: [
-  'onLaunch:done',
-  'onShow:done',
-  'onHide:done',
-  'onError:done',
-  'onPageNotFound:done',
-  'onUnhandledRejection:done',
-  'onThemeChange:done'
+  'onLaunch:resolve',
+  'onShow:resolve',
+  'onHide:resolve',
+  'onError:resolve',
+  'onPageNotFound:resolve',
+  'onUnhandledRejection:resolve',
+  'onThemeChange:resolve'
 ]
 page: [
-    'onLoad:done',
-    'onShow:done',
-    'onReady:done',
-    'onHide:done',
-    'onUnload:done',
-    'onPullDownRefresh:done',
-    'onReachBottom:done',
-    'onShareAppMessage:done',
-    'onTabItemTap:done',
-    'onResize:done',
-    'onAddToFavorites:done',
+    'onLoad:resolve',
+    'onShow:resolve',
+    'onReady:resolve',
+    'onHide:resolve',
+    'onUnload:resolve',
+    'onPullDownRefresh:resolve',
+    'onReachBottom:resolve',
+    'onShareAppMessage:resolve',
+    'onTabItemTap:resolve',
+    'onResize:resolve',
+    'onAddToFavorites:resolve',
 ]
 component: [
-    'created:done',
-    'attached:done',
-    'ready:done',
-    'moved:done',
-    'detached:done',
-    'error:done',
+    'created:resolve',
+    'attached:resolve',
+    'ready:resolve',
+    'moved:resolve',
+    'detached:resolve',
+    'error:resolve',
 ]
+```
+
+
+#### 监听生命周期执行失败
+
+⚠️ 如果在onLoad中检查到用户没有登录，那有可能需要将页面重定向到登录页，可以在生命周期函数中 return Promise.reject。
+
+然后通过以下两种方式进行监听：
+
+1. 通过`this.$once`、`this.$on` 监听'onLoad:reject' 'created:reject' 等事件, 事件名称等同于上面的成功事件，只是将`resolve`换成了`reject`
+
+2. 在选项中定义`catchLifeCycleError`函数，当任何生命周期执行失败时都会尝试调用此函数，然后将生命周期名称和reject reason传入
+
+##### 示例
+```js
+Epage({
+  setup() {
+    onLoad(() => {
+      this.$once('onLoad:reject', ({code}) => {
+        code === 403 && 跳转登录页
+      })
+      return Promise.reject({
+        code: 403,
+        msg: '用户未登录'
+      })
+    })
+  },
+  catchLifeCycleError(name, err) {
+    err.code === 403 && 跳转登录页
+  }
+})
 ```
 
 ### Vue3 Composition API 清单
