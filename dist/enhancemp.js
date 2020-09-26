@@ -2,11 +2,12 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function disableEnumerable(obj, keys) {
-    keys.forEach(function (key) {
-        Object.defineProperty(obj, key, {
-            enumerable: false
-        });
+function definePrivateProp(obj, key, value) {
+    Object.defineProperty(obj, key, {
+        value: value,
+        writable: true,
+        configurable: false,
+        enumerable: false
     });
 }
 var transformOnName = function (name) {
@@ -42,8 +43,7 @@ function __spreadArrays() {
 }
 
 function initEvents(ctx) {
-    ctx.__events__ = {};
-    disableEnumerable(ctx, ['__events__']);
+    definePrivateProp(ctx, '__events__', {});
     ctx.$on = function events$on(name, cb) {
         if (!ctx.__events__[name])
             ctx.__events__[name] = [];
@@ -87,41 +87,42 @@ function initEvents(ctx) {
 var mixins = null;
 function handlerMixins(type, ctx) {
     if (mixins && isObject(mixins)) {
-        isObject(mixins[type]) && Object.entries(mixins[type]).forEach(function (_a) {
-            var key = _a[0], val = _a[1];
-            if (key === 'hooks') {
-                if (isObject(val)) {
-                    Object.entries(val).forEach(function (_a) {
-                        var _b;
-                        var lcName = _a[0], hooksFn = _a[1];
-                        if (ctx.__hooks__[lcName]) {
-                            if (!Array.isArray(hooksFn))
-                                hooksFn = [hooksFn];
-                            (_b = ctx.__hooks__[lcName]).push.apply(_b, hooksFn);
-                        }
-                    });
+        isObject(mixins[type]) &&
+            Object.entries(mixins[type]).forEach(function (_a) {
+                var key = _a[0], val = _a[1];
+                if (key === 'hooks') {
+                    if (isObject(val)) {
+                        Object.entries(val).forEach(function (_a) {
+                            var _b;
+                            var lcName = _a[0], hooksFn = _a[1];
+                            if (ctx.__hooks__[lcName]) {
+                                if (!Array.isArray(hooksFn))
+                                    hooksFn = [hooksFn];
+                                (_b = ctx.__hooks__[lcName]).push.apply(_b, hooksFn);
+                            }
+                        });
+                    }
                 }
-            }
-            else if (key === 'data') {
-                if (isObject(val)) {
-                    if (!ctx.data)
-                        ctx.data = {};
-                    Object.entries(val).forEach(function (_a) {
-                        var key = _a[0], val = _a[1];
-                        // mixins优先级比页面定义低
-                        if (!ctx.data[key]) {
-                            ctx.data[key] = val;
-                        }
-                    });
+                else if (key === 'data') {
+                    if (isObject(val)) {
+                        if (!ctx.data)
+                            ctx.data = {};
+                        Object.entries(val).forEach(function (_a) {
+                            var key = _a[0], val = _a[1];
+                            // mixins优先级比页面定义低
+                            if (!ctx.data[key]) {
+                                ctx.data[key] = val;
+                            }
+                        });
+                    }
                 }
-            }
-            else {
-                // mixins优先级比页面定义低
-                if (!ctx[key]) {
-                    ctx[key] = val;
+                else {
+                    // mixins优先级比页面定义低
+                    if (!ctx[key]) {
+                        ctx[key] = val;
+                    }
                 }
-            }
-        });
+            });
         // 处理公用mixins
         Object.entries(mixins).forEach(function (_a) {
             var key = _a[0], val = _a[1];
@@ -1652,48 +1653,6 @@ function handlerSetup(ctx, options, type) {
     });
 }
 
-var request = [];
-var response = [];
-var interceptors = {
-    request: {
-        use: function (onFulfilled, onRejected) {
-            var block = [];
-            block.push(isFunction(onFulfilled) ? onFulfilled : function (config) { return config; });
-            block.push(isFunction(onRejected) ? onRejected : function (error) { return error; });
-            request.push(block);
-        }
-    },
-    response: {
-        use: function (onFulfilled, onRejected) {
-            var block = [];
-            isFunction(onFulfilled) && block.push(onFulfilled);
-            isFunction(onRejected) && block.push(onRejected);
-            block.length && response.push(block);
-        }
-    },
-};
-function requestMethod(options) {
-    var _this = this;
-    var _request = function () { return new Promise(function (resolve, reject) {
-        options.success = function (response) { return resolve({ options: options, response: response }); };
-        options.fail = function (response) { return reject({ options: options, response: response }); };
-        wx.request(options);
-    }); };
-    var chain = [[_request, void 0]];
-    request.forEach(function (block) {
-        chain.unshift(block);
-    });
-    response.forEach(function (block) {
-        chain.push(block);
-    });
-    var promise = Promise.resolve(options);
-    chain.forEach(function (_a) {
-        var onFulfilled = _a[0], onRejected = _a[1];
-        promise = promise.then(onFulfilled === null || onFulfilled === void 0 ? void 0 : onFulfilled.bind(_this), onRejected === null || onRejected === void 0 ? void 0 : onRejected.bind(_this));
-    });
-    return promise;
-}
-
 var lc = {
     app: [
         'onLaunch',
@@ -1735,99 +1694,115 @@ function decoratorLifeCycle(options, type) {
         if (type === 'component' && !isObject(options.lifetimes)) {
             options.lifetimes = {};
         }
-        // 保留原函数
-        var hook;
+        // 保留用户定义的生命周期函数
+        var userHooks;
         if (type === 'app' || type === 'page') {
-            hook = options[name];
+            userHooks = options[name];
         }
         else {
-            hook = options.lifetimes[name] || options[name];
+            // lifetimes 优先级高于选项
+            userHooks = options.lifetimes[name] || options[name];
         }
         var opt = type === 'app' || type === 'page' ? options : options.lifetimes;
         opt[name] = function (options) {
-            var ctx = this;
+            var _this = this;
             if (name === 'onLaunch' || name === 'onLoad' || name === 'created') {
                 // 初始化事件通信
-                initEvents(ctx);
+                initEvents(this);
                 // 初始化 hooks
-                initHooks(type, ctx);
+                initHooks(type, this);
                 // 处理mixins
-                handlerMixins(type, ctx);
-                // 处理$ajax
-                this.$ajax = requestMethod;
+                handlerMixins(type, this);
+                // App 里没有data，没有视图，不需要使用响应式
                 if (name !== 'onLaunch') {
                     // nextTick
-                    ctx.$nextTick = setDataNextTick;
+                    this.$nextTick = setDataNextTick;
                     // 处理 setup
-                    setCurrentCtx(ctx);
-                    handlerSetup(ctx, options, type);
+                    setCurrentCtx(this);
+                    handlerSetup(this, options, type);
                     setCurrentCtx(null);
                 }
             }
-            if (hook) {
-                // 兼容数组
-                if (isFunction(hook))
-                    hook = [hook];
-                if (Array.isArray(hook)) {
-                    setCurrentCtx(ctx);
-                    hook.forEach(function (fn) {
-                        if (isFunction(fn)) {
-                            // 在setup中添加的钩子应该于原函数之前执行
-                            // 将原函数放入队尾
-                            if (type === 'app') {
-                                appPushHooks[name](fn);
-                            }
-                            else if (type === 'page') {
-                                pagePushHooks[name](fn);
-                            }
-                            else {
-                                var onName = transformOnName(name);
-                                componentPushHooks[onName](fn);
-                            }
+            // 如果用户定义了生命周期函数
+            if (userHooks) {
+                // 统一处理为数组
+                if (!Array.isArray(userHooks))
+                    userHooks = [userHooks];
+                setCurrentCtx(this);
+                userHooks.forEach(function (fn) {
+                    if (isFunction(fn)) {
+                        // 在setup中添加的钩子应该于原函数之前执行
+                        // 将原函数放入队尾
+                        if (type === 'app') {
+                            appPushHooks[name](fn);
                         }
-                    });
-                    setCurrentCtx(null);
-                }
-            }
-            // 页面的onShow、onReady，应该在onLoad执行完成之后才执行
-            if (type === 'page' && (name === 'onShow' || name === 'onReady')) {
-                ctx.$once('onLoad:done', function () {
-                    // 执行收集的钩子函数
-                    callHooks(name, options, ctx).then(function () {
-                        // 执行完成 触发事件
-                        ctx.$emit(name + ":done");
-                    });
+                        else if (type === 'page') {
+                            pagePushHooks[name](fn);
+                        }
+                        else {
+                            // create -> onCreate
+                            var onName = transformOnName(name);
+                            componentPushHooks[onName](fn);
+                        }
+                    }
                 });
+                setCurrentCtx(null);
+            }
+            // Page的onShow、onReady，应该在onLoad执行完成之后才执行
+            if (type === 'page' && (name === 'onShow' || name === 'onReady')) {
+                // 执行onShow onReady
+                var callShowOrReady = function () {
+                    callHooks(name, options, _this).then(function () {
+                        // 执行完成 触发事件
+                        _this.$emit(name + ":done");
+                    });
+                };
+                if (this['__onLoad:done__']) {
+                    // onLoad已经执行完成
+                    callShowOrReady();
+                }
+                else {
+                    // 监听onLoad执行完成事件
+                    this.$once('onLoad:done', callShowOrReady);
+                }
             }
             else {
-                // 执行收集的钩子函数
-                callHooks(name, options, ctx).then(function () {
+                // 执行所有的钩子函数
+                callHooks(name, options, this).then(function () {
+                    _this["__" + name + ":done__"] = true;
                     // 执行完成 触发事件
-                    ctx.$emit(name + ":done");
+                    _this.$emit(name + ":done");
                 });
             }
         };
     });
 }
-// 全局保留上下文，添加钩子函数时需要用到
+// 全局保留上下文，添加钩子函数时使用
 var currentCtx = null;
 function setCurrentCtx(ctx) {
     currentCtx = ctx;
 }
+// TODO ts app实例类型
+function getCurrentCtx() {
+    return currentCtx;
+}
 // 初始化钩子
 function initHooks(type, ctx) {
-    ctx.__hooks__ = {};
-    disableEnumerable(ctx, ['__hooks__']);
+    // 保存所有的生命周期钩子
+    definePrivateProp(ctx, '__hooks__', {});
     lc[type].forEach(function (name) {
+        // 标志生命周期是否执行完成
+        definePrivateProp(ctx, "__" + name + ":done__", false);
         ctx.__hooks__[name] = [];
     });
 }
 // 执行钩子
 function callHooks(name, options, ctx, startIdx) {
     if (startIdx === void 0) { startIdx = 0; }
+    ctx["__" + name + ":done__"] = false;
     var promise = Promise.resolve(options);
-    var callbacks = ctx.__hooks__[name];
-    var len = callbacks.length;
+    var lcHooks = ctx.__hooks__[name];
+    var len = lcHooks.length;
     if (len) {
         var _loop_1 = function (i) {
             // 异步微任务执行
@@ -1835,7 +1810,7 @@ function callHooks(name, options, ctx, startIdx) {
                 // 每次执行前将当前的ctx推入全局
                 // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
                 setCurrentCtx(ctx);
-                var res = callbacks[i].call(ctx, result);
+                var res = lcHooks[i].call(ctx, result);
                 setCurrentCtx(null);
                 return res;
             });
@@ -1858,10 +1833,16 @@ function callHooks(name, options, ctx, startIdx) {
 function createPushHooks(name) {
     // 添加钩子函数
     return function pushHooks(cb) {
-        currentCtx && currentCtx.__hooks__[name].push(cb);
+        var i;
+        if ((i = currentCtx) && (i = i.__hooks__[name])) {
+            // 避免onShow、onHide等多次调用的生命周期，重复添加相同的钩子函数
+            if (!i.includes(cb)) {
+                i.push(cb);
+            }
+        }
     };
 }
-// 页面的添加函数
+// App的添加函数
 var appPushHooks = lc.app.reduce(function (res, name) {
     res[name] = createPushHooks(name);
     return res;
@@ -1873,7 +1854,7 @@ var onAppError = appPushHooks.onError;
 var onPageNotFound = appPushHooks.onPageNotFound;
 var onUnhandledRejection = appPushHooks.onUnhandledRejection;
 var onThemeChange = appPushHooks.onThemeChange;
-// 页面的添加函数
+// Page的添加函数
 var pagePushHooks = lc.page.reduce(function (res, name) {
     res[name] = createPushHooks(name);
     return res;
@@ -1889,7 +1870,7 @@ var onShareAppMessage = pagePushHooks.onShareAppMessage;
 var onTabItemTap = pagePushHooks.onTabItemTap;
 var onResize = pagePushHooks.onResize;
 var onAddToFavorites = pagePushHooks.onAddToFavorites;
-// 组件的添加函数
+// Component的添加函数
 var componentPushHooks = lc.component.reduce(function (res, name) {
     // created => onCreated | ready => onReady
     var onName = transformOnName(name);
@@ -1918,6 +1899,245 @@ function Eapp(options) {
     return App(options);
 }
 
+const asyncMethods = [
+  'canvasGetImageData',
+  'canvasPutImageData',
+  'canvasToTempFilePath',
+  'setEnableDebug',
+  'startAccelerometer',
+  'stopAccelerometer',
+  'getBatteryInfo',
+  'getClipboardData',
+  'setClipboardData',
+  'startCompass',
+  'stopCompass',
+  'addPhoneContact',
+  'startGyroscope',
+  'stopGyroscope',
+  'startBeaconDiscovery',
+  'stopBeaconDiscovery',
+  'getBeacons',
+  'startLocalServiceDiscovery',
+  'stopLocalServiceDiscovery',
+  'startDeviceMotionListening',
+  'stopDeviceMotionListening',
+  'getNetworkType',
+  'makePhoneCall',
+  'scanCode',
+  'getSystemInfo',
+  'vibrateShort',
+  'vibrateLong',
+  'getExtConfig',
+  'chooseLocation',
+  'getLocation',
+  'openLocation',
+  'chooseMessageFile',
+  'loadFontFace',
+  'chooseImage',
+  'previewImage',
+  'getImageInfo',
+  'saveImageToPhotosAlbum',
+  'compressImage',
+  'chooseVideo',
+  'saveVideoToPhotosAlbum',
+  'downloadFile',
+  'request',
+  'connectSocket',
+  'closeSocket',
+  'sendSocketMessage',
+  'uploadFile',
+  'login',
+  'checkSession',
+  'chooseAddress',
+  'authorize',
+  'addCard',
+  'openCard',
+  'chooseInvoice',
+  'chooseInvoiceTitle',
+  'getUserInfo',
+  'requestPayment',
+  'getWeRunData',
+  'showModal',
+  'showToast',
+  'hideToast',
+  'showLoading',
+  'hideLoading',
+  'showActionSheet',
+  'pageScrollTo',
+  'startPullDownRefresh',
+  'stopPullDownRefresh',
+  'setBackgroundColor',
+  'setBackgroundTextStyle',
+  'setTabBarBadge',
+  'removeTabBarBadge',
+  'showTabBarRedDot',
+  'hideTabBarRedDot',
+  'showTabBar',
+  'hideTabBar',
+  'setTabBarStyle',
+  'setTabBarItem',
+  'setTopBarText',
+  'saveFile',
+  'openDocument',
+  'getSavedFileList',
+  'getSavedFileInfo',
+  'removeSavedFile',
+  'getFileInfo',
+  'getStorage',
+  'setStorage',
+  'removeStorage',
+  'clearStorage',
+  'getStorageInfo',
+  'closeBLEConnection',
+  'closeBluetoothAdapter',
+  'createBLEConnection',
+  'getBLEDeviceCharacteristics',
+  'getBLEDeviceServices',
+  'getBluetoothAdapterState',
+  'getBluetoothDevices',
+  'getConnectedBluetoothDevices',
+  'notifyBLECharacteristicValueChange',
+  'openBluetoothAdapter',
+  'readBLECharacteristicValue',
+  'startBluetoothDevicesDiscovery',
+  'stopBluetoothDevicesDiscovery',
+  'writeBLECharacteristicValue',
+  'getHCEState',
+  'sendHCEMessage',
+  'startHCE',
+  'stopHCE',
+  'getScreenBrightness',
+  'setKeepScreenOn',
+  'setScreenBrightness',
+  'connectWifi',
+  'getConnectedWifi',
+  'getWifiList',
+  'setWifiList',
+  'startWifi',
+  'stopWifi',
+  'getBackgroundAudioPlayerState',
+  'playBackgroundAudio',
+  'pauseBackgroundAudio',
+  'seekBackgroundAudio',
+  'stopBackgroundAudio',
+  'getAvailableAudioSources',
+  'startRecord',
+  'stopRecord',
+  'setInnerAudioOption',
+  'playVoice',
+  'pauseVoice',
+  'stopVoice',
+  'getSetting',
+  'openSetting',
+  'getShareInfo',
+  'hideShareMenu',
+  'showShareMenu',
+  'updateShareMenu',
+  'checkIsSoterEnrolledInDevice',
+  'checkIsSupportSoterAuthentication',
+  'startSoterAuthentication',
+  'navigateBackMiniProgram',
+  'navigateToMiniProgram',
+  'setNavigationBarTitle',
+  'showNavigationBarLoading',
+  'hideNavigationBarLoading',
+  'setNavigationBarColor',
+  'redirectTo',
+  'reLaunch',
+  'navigateTo',
+  'switchTab',
+  'navigateBack'
+];
+
+function hasCallback(args) {
+  if (!args || typeof args !== 'object') return false
+
+  const callback = ['success', 'fail', 'complete'];
+  for (const m of callback) {
+    if (typeof args[m] === 'function') return true
+  }
+  return false
+}
+
+function _promisify(func) {
+  if (typeof func !== 'function') return fn
+  return (args = {}) =>
+    new Promise((resolve, reject) => {
+      func(
+        Object.assign(args, {
+          success: resolve,
+          fail: reject
+        })
+      );
+    })
+}
+
+function promisifyAll(wx = {}, wxp = {}) {
+  Object.keys(wx).forEach(key => {
+    const fn = wx[key];
+    if (typeof fn === 'function' && asyncMethods.indexOf(key) >= 0) {
+      wxp[key] = args => {
+        if (hasCallback(args)) {
+          fn(args);
+        } else {
+          return _promisify(fn)(args)
+        }
+      };
+    } else {
+      wxp[key] = fn;
+    }
+  });
+}
+
+var request = [];
+var response = [];
+var interceptors = {
+    request: {
+        use: function (onFulfilled, onRejected) {
+            var block = [];
+            block.push(isFunction(onFulfilled) ? onFulfilled : function (config) { return config; });
+            block.push(isFunction(onRejected) ? onRejected : function (error) { return error; });
+            request.push(block);
+        }
+    },
+    response: {
+        use: function (onFulfilled, onRejected) {
+            var block = [];
+            isFunction(onFulfilled) && block.push(onFulfilled);
+            isFunction(onRejected) && block.push(onRejected);
+            block.length && response.push(block);
+        }
+    }
+};
+function requestMethod(options) {
+    var _this = this;
+    var _request = function () {
+        return new Promise(function (resolve, reject) {
+            options.success = function (response) { return resolve({ options: options, response: response }); };
+            options.fail = function (response) { return reject({ options: options, response: response }); };
+            wx.request(options);
+        });
+    };
+    var chain = [[_request, void 0]];
+    request.forEach(function (block) {
+        chain.unshift(block);
+    });
+    response.forEach(function (block) {
+        chain.push(block);
+    });
+    var promise = Promise.resolve(options);
+    chain.forEach(function (_a) {
+        var onFulfilled = _a[0], onRejected = _a[1];
+        promise = promise.then(onFulfilled === null || onFulfilled === void 0 ? void 0 : onFulfilled.bind(_this), onRejected === null || onRejected === void 0 ? void 0 : onRejected.bind(_this));
+    });
+    return promise;
+}
+
+var wxp = {};
+promisifyAll(wx, wxp);
+wxp.request = requestMethod;
+wxp.request.interceptors = interceptors;
+
 exports.Eapp = Eapp;
 exports.Ecomponent = Ecomponent;
 exports.Epage = Epage;
@@ -1925,8 +2145,8 @@ exports.computed = computed;
 exports.customRef = customRef;
 exports.effect = effect;
 exports.enableTracking = enableTracking;
+exports.getCurrentCtx = getCurrentCtx;
 exports.globalMixins = globalMixins;
-exports.interceptors = interceptors;
 exports.isProxy = isProxy;
 exports.isReactive = isReactive;
 exports.isReadonly = isReadonly;
@@ -1975,3 +2195,4 @@ exports.triggerRef = triggerRef;
 exports.unref = unref;
 exports.watch = watch;
 exports.watchEffect = watchEffect;
+exports.wxp = wxp;
