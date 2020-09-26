@@ -1,9 +1,9 @@
-import { Epage } from '@/main'
-import { interceptors } from '@/request'
-describe('$ajax 测试', () => {
-  test('$ajax 返回promise', done => {
-    const page = Epage({})
-    page.$ajax({ url: '' }).then(done)
+import { interceptors, requestMethod } from '@/request'
+describe('requestMethod 测试', () => {
+  test('requestMethod 返回promise', done => {
+    requestMethod({ url: '' }).then(() => {
+      done()
+    })
   })
   test('请求拦截器resolve', done => {
     const queue: number[] = []
@@ -23,8 +23,7 @@ describe('$ajax 测试', () => {
       return config
     })
     const config: any = { url: '' }
-    const page = Epage({})
-    page.$ajax(config).then(() => {
+    requestMethod(config).then(() => {
       expect(queue).toEqual([3, 2, 1])
       expect(config.c).toBe(3)
       expect(config.b).toBe(2)
@@ -50,8 +49,7 @@ describe('$ajax 测试', () => {
       return Promise.reject(config)
     })
     const config: any = { url: '' }
-    const page = Epage({})
-    page.$ajax(config).then(() => {
+    requestMethod(config).then(() => {
       expect(queue).toEqual([3, 2, 1])
       expect(config.c).toBe(3)
       expect(config.b).toBe(2)
@@ -73,8 +71,7 @@ describe('$ajax 测试', () => {
       return res
     })
     const config: any = { url: '' }
-    const page = Epage({})
-    page.$ajax(config).then((res: any) => {
+    requestMethod(config).then((res: any) => {
       const options = res.options
       expect(options.a).toBe(1)
       expect(options.b).toBe(2)
@@ -96,8 +93,7 @@ describe('$ajax 测试', () => {
       return Promise.reject(res)
     })
     const config: any = { url: '' }
-    const page = Epage({})
-    page.$ajax(config).then(void 0, (res: any) => {
+    requestMethod(config).then(void 0, (res: any) => {
       const options = res.options
       expect(options.a).toBe(1)
       expect(options.b).toBe(2)
