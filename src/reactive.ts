@@ -23,6 +23,8 @@ export function handlerSetup(
   // 同步合并后的值到渲染层
   ctx.setData(ctx.data)
   ctx.data$ = reactive(ctx.data$)
+  // TODO 页面在unLoad中移除watch
+  // TODO 组件在detached 中移除watch attached时重新监听
   watch(ctx.data$, (data: any) => {
     // TODO: 数据diff
     const newData = JSON.parse(JSON.stringify(data))
