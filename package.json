@@ -1,5 +1,5 @@
 {
-  "name": "enhance-wxapp",
+  "name": "enhance-weapp",
   "version": "1.0.0",
   "description": "增强小程序开发能力，加入vue composition api等特性",
   "main": "dist/enhancemp.min.js",
@@ -11,7 +11,7 @@
   "keywords": [
     "composition",
     "miniprogram",
-    "wxapp",
+    "weapp",
     "vue",
     "vue3"
   ],

@@ -1,4 +1,4 @@
-# enhance-wxapp
+# enhance-weapp
 
 - 导航
     - <a href="#user-content-简介">简介</a>
@@ -18,7 +18,7 @@ cnpm i git+https://gitlab.leju.com/librarys/enhance-weapp.git
 ## 示例
 index.js
 ```js
-import {Epage, ref} from 'enhance-wxapp'
+import {Epage, ref} from 'enhance-weapp'
 
 function useCount() {
   const count = ref(0)
@@ -234,7 +234,7 @@ Epage({
 
 ⚠️ Eapp中不支持使用`setup`，不能使用响应式数据，可以使用全局混入
 ```js
-import { Eapp, Epage, Ecomponent } from 'enhance-wxapp'
+import { Eapp, Epage, Ecomponent } from 'enhance-weapp'
 ```
 
 ### 全局混入方法
@@ -245,7 +245,7 @@ import { Eapp, Epage, Ecomponent } from 'enhance-wxapp'
 
 #### 使用示例
 ```js
-import { globalMixins } from 'enhance-wxapp'
+import { globalMixins } from 'enhance-weapp'
 
 globalMixins({
   // 只在App中生效
@@ -319,7 +319,7 @@ globalMixins({
 #### 使用方法
 
 ```js
-import { wxp } from 'enhance-wxapp'
+import { wxp } from 'enhance-weapp'
 
 wxp.login().then().catch()
 wxp.checkSession().then().catch()
@@ -332,7 +332,7 @@ wxp.pageScrollTo().then().catch()
 
 #### 使用方法（同axios）
 ```js
-import { wxp } from 'enhance-wxapp'
+import { wxp } from 'enhance-weapp'
 
 // 请求拦截器
 wxp.request.interceptors.request.use(
@@ -360,7 +360,7 @@ wxp.request().then().catch().finally()
 
 #### 使用示例
 ```js
-import { onShowHooks } from 'enhance-wxapp'
+import { onShowHooks } from 'enhance-weapp'
 // 在setup函数和生命周期函数中调用才能正常运行
 Epage({
     setup() {
@@ -392,7 +392,7 @@ import {
   onPageNotFoundHooks,
   onUnhandledRejectionHooks,
   onThemeChangeHooks
-} from 'enhance-wxapp'
+} from 'enhance-weapp'
 ```
 
 #### Page钩子列表
@@ -410,7 +410,7 @@ import {
   onTabItemTapHooks,
   onResizeHooks,
   onAddToFavoritesHooks
-} from 'enhance-wxapp'
+} from 'enhance-weapp'
 ```
 
 #### Component钩子列表
@@ -425,7 +425,7 @@ import {
   onMovedHooks,
   onDetachedHooks,
   onErrorHooks
-} from 'enhance-wxapp'
+} from 'enhance-weapp'
 ```
 
 #### 监听生命周期执行完成
@@ -534,7 +534,7 @@ import {
   // @vue/runtime-core
   watch,
   watchEffect
-} from 'enhance-wxapp'
+} from 'enhance-weapp'
 ```
 
 ### getCurrentCtx
