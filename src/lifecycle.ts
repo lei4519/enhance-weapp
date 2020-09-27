@@ -199,8 +199,8 @@ export function decoratorLifeCycle(
         }
       } else if (type === 'component') {
         if (name === 'created') {
-          // Component的created，应该在App onShow执行完成之后执行
-          return waitHook(lcEventBus, 'app:onShow:resolve')
+          // Component的created，应该在Page onShow执行完成之后执行
+          return waitHook(lcEventBus, 'page:onShow:resolve')
         } else if (name === 'attached') {
           // Component的attached，应该在Component created执行完成之后执行
           return waitHook(this, 'created:resolve')

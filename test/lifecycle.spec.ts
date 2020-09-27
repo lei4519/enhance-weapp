@@ -275,7 +275,7 @@ describe('装饰生命周期函数', () => {
     // App的onShow，应该在App onLaunch执行完成之后执行
 
     // ⬇️ created Comp
-    // Component的created，应该在App onShow执行完成之后执行
+    // Component的created，应该在Page onShow执行完成之后执行
 
     // ⬇️ attached Comp
     // Component的attached，应该在Component created执行完成之后执行
@@ -306,8 +306,8 @@ describe('装饰生命周期函数', () => {
         'onLaunch',
         'onShow',
         'onLoad',
-        'created',
         'onShow',
+        'created',
         'onReady',
         'attached',
         'ready'
@@ -362,7 +362,7 @@ describe('装饰生命周期函数', () => {
     // App的onShow，应该在App onLaunch执行完成之后执行
 
     // ⬇️ created Comp
-    // Component的created，应该在App onShow执行完成之后执行
+    // Component的created，应该在Page onShow执行完成之后执行
 
     // ⬇️ attached Comp
     // Component的attached，应该在Component created执行完成之后执行
@@ -409,12 +409,12 @@ describe('装饰生命周期函数', () => {
       expect(queue).toEqual([
         'onLaunch',
         'onShow',
-        'created',
         'onLoad',
         'onShow',
+        'created',
+        'onReady',
         'attached',
-        'ready',
-        'onReady'
+        'ready'
       ])
       done()
     })
