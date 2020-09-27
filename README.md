@@ -12,7 +12,7 @@
 
 ## 安装
 ```js
-cnpm i git+https://gitlab.leju.com/librarys/enhance-weapp.git
+cnpm i git+https://gitlab.leju.com/librarys/enhance-weapp.git --save
 ```
 
 ## 示例
