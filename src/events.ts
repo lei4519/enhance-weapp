@@ -1,6 +1,6 @@
 import { definePrivateProp, isFunction } from './util'
 
-export function initEvents(ctx: PageInstance | ComponentInstance) {
+export function initEvents(ctx: LooseObject) {
   definePrivateProp(ctx, '__events__', {})
 
   ctx.$on = function events$on(name: string, cb: LooseFunction) {
@@ -37,7 +37,8 @@ export function initEvents(ctx: PageInstance | ComponentInstance) {
     if (ctx.__events__[name]) {
       // 传入index减少寻找时间
       const i =
-        offCallbackIndex || ctx.__events__[name].findIndex(fn => fn === cb)
+        offCallbackIndex ||
+        ctx.__events__[name].findIndex((fn: LooseFunction) => fn === cb)
       if (i > -1) {
         ctx.__events__[name].splice(i, 1)
       }

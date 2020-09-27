@@ -109,6 +109,13 @@ export function decoratorLifeCycle(
         })
         setCurrentCtx(null)
       }
+
+      const waitHook = (eventBus: LooseObject, eventName: string) => {
+        eventBus[`__${eventName}__`]
+          ? invokeHooks()
+          : eventBus.$once(eventName, invokeHooks)
+      }
+
       const invokeHooks = () => {
         const resolve = (res: any) => {
           this[`__${name}:resolve__`] = true
@@ -162,24 +169,16 @@ export function decoratorLifeCycle(
       if (type === 'app') {
         if (name === 'onShow') {
           // App的onShow，应该在App onLaunch执行完成之后执行
-          this['__onLaunch:resolve__']
-            ? invokeHooks()
-            : this.$once('onLaunch:resolve', invokeHooks)
+          return waitHook(this, 'onLaunch:resolve')
           return
         } else if (name === 'onHide') {
           // App的onHide，应该在Page onHide执行完成之后执行
-          lcEventBus['__page:onHide:resolve__']
-            ? invokeHooks()
-            : lcEventBus.$once('page:onHide:resolve', invokeHooks)
-          return
+          return waitHook(lcEventBus, 'page:onHide:resolve')
         }
       } else if (type === 'page') {
         if (name === 'onLoad') {
           // Page的onLoad，应该在App onShow执行完成之后执行
-          lcEventBus['__app:onShow:resolve__']
-            ? invokeHooks()
-            : lcEventBus.$once('app:onShow:resolve', invokeHooks)
-          return
+          return waitHook(lcEventBus, 'app:onShow:resolve')
         } else if (name === 'onShow') {
           // Page的onShow
           // 初始化时应该在Page onLoad执行完成之后执行
@@ -196,30 +195,18 @@ export function decoratorLifeCycle(
           return
         } else if (name === 'onReady') {
           // Page的onReady，应该在Page onShow执行完成之后执行
-          this['__onShow:resolve__']
-            ? invokeHooks()
-            : this.$once('onShow:resolve', invokeHooks)
-          return
+          return waitHook(this, 'onShow:resolve')
         }
       } else if (type === 'component') {
         if (name === 'created') {
           // Component的created，应该在App onShow执行完成之后执行
-          lcEventBus['__app:onShow:resolve__']
-            ? invokeHooks()
-            : lcEventBus.$once('app:onShow:resolve', invokeHooks)
-          return
+          return waitHook(lcEventBus, 'app:onShow:resolve')
         } else if (name === 'attached') {
           // Component的attached，应该在Component created执行完成之后执行
-          this['__created:resolve__']
-            ? invokeHooks()
-            : this.$once('created:resolve', invokeHooks)
-          return
+          return waitHook(this, 'created:resolve')
         } else if (name === 'ready') {
           // Component的ready，应该在Component attached执行完成之后执行
-          this['__attached:resolve__']
-            ? invokeHooks()
-            : this.$once('attached:resolve', invokeHooks)
-          return
+          return waitHook(this, 'attached:resolve')
         }
       }
       invokeHooks()
