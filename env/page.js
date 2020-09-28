@@ -59,7 +59,7 @@ function Page(config) {
       'onAddToFavorites'
     ].forEach((key) => {
     if (key === 'onLoad') {
-      page?.[key]()
+      page?.[key]({query: 1})
     } else {
       setTimeout(() => {
         page?.[key]()

@@ -3,6 +3,7 @@ import { Epage } from '@/Epage'
 import { Ecomponent } from '@/Ecomponent'
 import { onLoad, onCreated, onLaunch } from '@/lifecycle'
 import { setTimeoutResolve } from '@/util'
+import { globalMixins } from '@/mixins'
 describe('装饰生命周期函数', () => {
   test('装饰后生命周期函数不再是之前的函数', () => {
     const onLaunch = () => {}
@@ -193,7 +194,49 @@ describe('装饰生命周期函数', () => {
     })
   })
 
-  test('使用onX添加的生命周期函数, 返回Promise，会阻塞后续代码执行', done => {
+  test('微信传入生命周期的参数为默认值，生命周期函数如果返回值为undefined, 在之后的函数中依然可以接收到默认值', done => {
+    globalMixins({
+      page: {
+        hooks: {
+          onLoad: [() => {}, () => {}, () => {}]
+        }
+      }
+    })
+    let res: any
+    Eapp({})
+    const page = Epage({
+      onLoad(options: any) {
+        res = options
+      }
+    })
+    page.$once('onLoad:resolve', () => {
+      expect(res).toEqual({ query: 1 })
+      done()
+    })
+  })
+
+  test('生命周期函数如果有返回值并且不为undefined, 默认值会更新为此值，在之后的函数中可以接收到这个默认值', done => {
+    globalMixins({
+      page: {
+        hooks: {
+          onLoad: [() => {}, () => null, () => {}]
+        }
+      }
+    })
+    let res: any
+    Eapp({})
+    const page = Epage({
+      onLoad(options: any) {
+        res = options
+      }
+    })
+    page.$once('onLoad:resolve', () => {
+      expect(res).toEqual(null)
+      done()
+    })
+  })
+
+  test('生命周期函数如果返回Promise，会阻塞后续代码执行，Promise结果如果为undefined，遵循上面两条测试逻辑', done => {
     const queue: number[] = []
     const onLoad1 = function () {
       return new Promise(r => {
@@ -472,6 +515,27 @@ describe('装饰生命周期函数', () => {
     const page = Epage(genFn(['onShow', 'onShow:page']))
     page.$once('onShow:resolve', () => {
       expect(queue).toEqual(['onShow:app', 'onShow:page'])
+      done()
+    })
+  })
+
+  test('生命周期函数如果返回undefined或者不写return, 在下一个函数中依然可以接收到options', done => {
+    globalMixins({
+      page: {
+        hooks: {
+          onLoad: [() => {}, () => {}, () => {}]
+        }
+      }
+    })
+    let res: any = null
+    Eapp({})
+    const page = Epage({
+      onLoad(options: any) {
+        res = options
+      }
+    })
+    page.$once('onLoad:resolve', () => {
+      expect(res).toEqual({ query: 1 })
       done()
     })
   })

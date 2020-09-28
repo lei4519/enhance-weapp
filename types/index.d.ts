@@ -6,7 +6,6 @@ interface LooseFunction extends LooseObject {
   (...args: any[]): any
 }
 type DecoratorType = 'app' | 'page' | 'component'
-type HookFn = (opt?: any) => void
 type HookFn = (opt?: any) => any
 type HookFn = (opt?: any) => Promise<any>
 

@@ -48,6 +48,11 @@ export const lc = {
   ] as Array<ComponentLifeTime>
 }
 
+/**
+ * @description 装饰小程序生命周期
+ * @param options 用户给构造函数传入的选项
+ * @param type App | Page | Component
+ */
 export function decoratorLifeCycle(
   options: PageOptions | ComponentOptions,
   type: DecoratorType = 'page'
@@ -67,13 +72,15 @@ export function decoratorLifeCycle(
       userHooks = options.lifetimes[name] || options[name]
     }
     const opt = type === 'app' || type === 'page' ? options : options.lifetimes
+    // 定义装饰函数
     opt[name] = function (options: LooseObject) {
+      // 初始化事件
       if (name === 'onLaunch' || name === 'onLoad' || name === 'created') {
         // 初始化事件通信
         initEvents(this)
         // 初始化 hooks
         initHooks(type, this)
-        // 处理mixins
+        // 处理 mixins
         handlerMixins(type, this)
         // App 里没有data，没有视图，不需要使用响应式
         if (name !== 'onLaunch') {
@@ -109,14 +116,9 @@ export function decoratorLifeCycle(
         })
         setCurrentCtx(null)
       }
-
-      const waitHook = (eventBus: LooseObject, eventName: string) => {
-        eventBus[`__${eventName}__`]
-          ? invokeHooks()
-          : eventBus.$once(eventName, invokeHooks)
-      }
-
+      // 调用保存的生命周期函数
       const invokeHooks = () => {
+        // 执行成功
         const resolve = (res: any) => {
           this[`__${name}:resolve__`] = true
           lcEventBus[`__${type}:${name}:resolve__`] = true
@@ -124,6 +126,7 @@ export function decoratorLifeCycle(
           this.$emit(`${name}:resolve`, res)
           lcEventBus.$emit(`${type}:${name}:resolve`, res)
         }
+        // 执行失败
         const reject = (err: any) => {
           this[`__${name}:reject__`] = true
           lcEventBus[`__${type}:${name}:reject__`] = true
@@ -134,7 +137,7 @@ export function decoratorLifeCycle(
           lcEventBus.$emit(`${type}:${name}:reject`, err)
         }
         try {
-          // 执行所有的钩子函数
+          // 执行保存的钩子函数
           const result = callHooks(type, name, options, this)
           // 异步结果
           if (isFunction(result?.then)) {
@@ -148,15 +151,21 @@ export function decoratorLifeCycle(
           reject(err)
         }
       }
+      // 等待别的生命周期执行完成后调用
+      const waitHook = (eventBus: LooseObject, eventName: string) => {
+        eventBus[`__${eventName}__`]
+          ? invokeHooks()
+          : eventBus.$once(eventName, invokeHooks)
+      }
 
       // 生命周期执行顺序
       // 初始化
       // ⬇️ onLaunch App
       // ⬇️ onShow App
-      // ⬇️ created Comp
-      // ⬇️ attached Comp
       // ⬇️ onLoad Page
       // ⬇️ onShow Page
+      // ⬇️ created Comp
+      // ⬇️ attached Comp
       // ⬇️ ready Comp
       // ⬇️ onReady Page
 
@@ -170,7 +179,6 @@ export function decoratorLifeCycle(
         if (name === 'onShow') {
           // App的onShow，应该在App onLaunch执行完成之后执行
           return waitHook(this, 'onLaunch:resolve')
-          return
         } else if (name === 'onHide') {
           // App的onHide，应该在Page onHide执行完成之后执行
           return waitHook(lcEventBus, 'page:onHide:resolve')
@@ -254,11 +262,25 @@ function callHooks(
   let optOrPromise: any = options
   const lcHooks = ctx.__hooks__[name]
   const len = lcHooks.length
+  /**
+   * 设置/更新默认值
+   * 在函数返回值为undefined时，保证之后的函数依然可以接受到参数
+   */
+  const setDefaultValue = (val: any) => {
+    if (val === void 0) {
+      // 更新默认值
+      val = options
+    } else {
+      // 同步默认值
+      options = val
+    }
+  }
   if (len) {
     for (let i = startIdx; i < len; i++) {
       if (isFunction(optOrPromise?.then)) {
         // 异步微任务执行
         optOrPromise = optOrPromise.then((result: any) => {
+          setDefaultValue(result)
           // 每次执行前将当前的ctx推入全局
           // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
           setCurrentCtx(ctx)
@@ -270,11 +292,13 @@ function callHooks(
         // 同步任务运行
         setCurrentCtx(ctx)
         optOrPromise = lcHooks[i].call(ctx, optOrPromise)
+        setDefaultValue(optOrPromise)
         setCurrentCtx(null)
       }
     }
     // 运行期间可以动态添加生命周期, 运行链结束检查是否有新增的钩子函数
     const checkNewHooks = (result: any) => {
+      setDefaultValue(result)
       const nowLen = ctx.__hooks__[name].length
       if (nowLen > len) {
         // 如果有，就执行新增的钩子函数
