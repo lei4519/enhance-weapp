@@ -1690,6 +1690,11 @@ var lc = {
         'error'
     ]
 };
+/**
+ * @description 装饰小程序生命周期
+ * @param options 用户给构造函数传入的选项
+ * @param type App | Page | Component
+ */
 function decoratorLifeCycle(options, type) {
     if (type === void 0) { type = 'page'; }
     // 循环所有lifeCycle 进行装饰
@@ -1708,14 +1713,16 @@ function decoratorLifeCycle(options, type) {
             userHooks = options.lifetimes[name] || options[name];
         }
         var opt = type === 'app' || type === 'page' ? options : options.lifetimes;
+        // 定义装饰函数
         opt[name] = function (options) {
             var _this = this;
+            // 初始化事件
             if (name === 'onLaunch' || name === 'onLoad' || name === 'created') {
                 // 初始化事件通信
                 initEvents(this);
                 // 初始化 hooks
                 initHooks(type, this);
-                // 处理mixins
+                // 处理 mixins
                 handlerMixins(type, this);
                 // App 里没有data，没有视图，不需要使用响应式
                 if (name !== 'onLaunch') {
@@ -1754,12 +1761,9 @@ function decoratorLifeCycle(options, type) {
                 });
                 setCurrentCtx(null);
             }
-            var waitHook = function (eventBus, eventName) {
-                eventBus["__" + eventName + "__"]
-                    ? invokeHooks()
-                    : eventBus.$once(eventName, invokeHooks);
-            };
+            // 调用保存的生命周期函数
             var invokeHooks = function () {
+                // 执行成功
                 var resolve = function (res) {
                     _this["__" + name + ":resolve__"] = true;
                     lcEventBus["__" + type + ":" + name + ":resolve__"] = true;
@@ -1767,6 +1771,7 @@ function decoratorLifeCycle(options, type) {
                     _this.$emit(name + ":resolve", res);
                     lcEventBus.$emit(type + ":" + name + ":resolve", res);
                 };
+                // 执行失败
                 var reject = function (err) {
                     _this["__" + name + ":reject__"] = true;
                     lcEventBus["__" + type + ":" + name + ":reject__"] = true;
@@ -1777,7 +1782,7 @@ function decoratorLifeCycle(options, type) {
                     lcEventBus.$emit(type + ":" + name + ":reject", err);
                 };
                 try {
-                    // 执行所有的钩子函数
+                    // 执行保存的钩子函数
                     var result = callHooks(type, name, options, _this);
                     // 异步结果
                     if (isFunction(result === null || result === void 0 ? void 0 : result.then)) {
@@ -1793,14 +1798,20 @@ function decoratorLifeCycle(options, type) {
                     reject(err);
                 }
             };
+            // 等待别的生命周期执行完成后调用
+            var waitHook = function (eventBus, eventName) {
+                eventBus["__" + eventName + "__"]
+                    ? invokeHooks()
+                    : eventBus.$once(eventName, invokeHooks);
+            };
             // 生命周期执行顺序
             // 初始化
             // ⬇️ onLaunch App
             // ⬇️ onShow App
-            // ⬇️ created Comp
-            // ⬇️ attached Comp
             // ⬇️ onLoad Page
             // ⬇️ onShow Page
+            // ⬇️ created Comp
+            // ⬇️ attached Comp
             // ⬇️ ready Comp
             // ⬇️ onReady Page
             // 切后台
@@ -1893,11 +1904,26 @@ function callHooks(type, name, options, ctx, startIdx) {
     var optOrPromise = options;
     var lcHooks = ctx.__hooks__[name];
     var len = lcHooks.length;
+    /**
+     * 设置/更新默认值
+     * 在函数返回值为undefined时，保证之后的函数依然可以接受到参数
+     */
+    var setDefaultValue = function (val) {
+        if (val === void 0) {
+            // 更新默认值
+            val = options;
+        }
+        else {
+            // 同步默认值
+            options = val;
+        }
+    };
     if (len) {
         var _loop_1 = function (i) {
             if (isFunction(optOrPromise === null || optOrPromise === void 0 ? void 0 : optOrPromise.then)) {
                 // 异步微任务执行
                 optOrPromise = optOrPromise.then(function (result) {
+                    setDefaultValue(result);
                     // 每次执行前将当前的ctx推入全局
                     // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
                     setCurrentCtx(ctx);
@@ -1910,6 +1936,7 @@ function callHooks(type, name, options, ctx, startIdx) {
                 // 同步任务运行
                 setCurrentCtx(ctx);
                 optOrPromise = lcHooks[i].call(ctx, optOrPromise);
+                setDefaultValue(optOrPromise);
                 setCurrentCtx(null);
             }
         };
@@ -1918,6 +1945,7 @@ function callHooks(type, name, options, ctx, startIdx) {
         }
         // 运行期间可以动态添加生命周期, 运行链结束检查是否有新增的钩子函数
         var checkNewHooks = function (result) {
+            setDefaultValue(result);
             var nowLen = ctx.__hooks__[name].length;
             if (nowLen > len) {
                 // 如果有，就执行新增的钩子函数
