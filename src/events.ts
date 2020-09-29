@@ -5,17 +5,21 @@ export function initEvents(ctx: LooseObject) {
 
   ctx.$on = function events$on(name: string, cb: LooseFunction) {
     if (!ctx.__events__[name]) ctx.__events__[name] = []
-    ctx.__events__[name].push(cb)
+    if (isFunction(cb)) {
+      ctx.__events__[name].push(cb)
+    }
   }
 
   ctx.$once = function events$once(name: string, cb: LooseFunction) {
     if (!ctx.__events__[name]) ctx.__events__[name] = []
-    cb.__once = true
-    ctx.__events__[name].push(cb)
+    if (isFunction(cb)) {
+      cb.__once = true
+      ctx.__events__[name].push(cb)
+    }
   }
 
   ctx.$emit = function events$emit(name: string, ...args: any[]) {
-    if (ctx.__events__[name]) {
+    if (ctx.__events__[name]?.length) {
       for (let i = 0; i < ctx.__events__[name].length; i++) {
         const cb = ctx.__events__[name][i]!
         if (isFunction(cb)) {
@@ -34,7 +38,7 @@ export function initEvents(ctx: LooseObject) {
     cb: LooseFunction,
     offCallbackIndex?: number
   ) {
-    if (ctx.__events__[name]) {
+    if (ctx.__events__[name]?.length) {
       // 传入index减少寻找时间
       const i =
         offCallbackIndex ||
