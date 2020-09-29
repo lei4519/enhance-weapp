@@ -59,9 +59,12 @@ export function decoratorLifeCycle(
 ): void {
   // 循环所有lifeCycle 进行装饰
   lc[type].forEach((name: Lifetime) => {
-    // 处理component lifetimes
-    if (type === 'component' && !isObject(options.lifetimes)) {
-      options.lifetimes = {}
+    if (type === 'component') {
+      // 处理component lifetimes
+      !isObject(options.lifetimes) && (options.lifetimes = {})
+      // 组件的方法必须定义到methods中才会被初始化到this身上
+      !isObject(options.methods) && (options.methods = {})
+      isFunction(options.setup) && (options.methods.setup = options.setup)
     }
     // 保留用户定义的生命周期函数
     let userHooks: HookFn | HookFn[]
