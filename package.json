@@ -7,7 +7,7 @@
   "scripts": {
     "build": "NODE_ENV=production npx rollup --config",
     "test:all": "jest",
-    "test:single": "jest ./test/lifecycle.spec.ts"
+    "test:single": "jest test/automator.spec.js"
   },
   "keywords": [
     "composition",
@@ -43,6 +43,7 @@
     "husky": "^4.3.0",
     "jest": "^26.4.2",
     "lint-staged": "^10.4.0",
+    "miniprogram-automator": "^0.10.0",
     "prettier": "^2.1.2",
     "rollup": "^2.27.1",
     "rollup-plugin-terser": "^7.0.2",
