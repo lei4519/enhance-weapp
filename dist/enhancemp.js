@@ -47,20 +47,25 @@ function initEvents(ctx) {
     ctx.$on = function events$on(name, cb) {
         if (!ctx.__events__[name])
             ctx.__events__[name] = [];
-        ctx.__events__[name].push(cb);
+        if (isFunction(cb)) {
+            ctx.__events__[name].push(cb);
+        }
     };
     ctx.$once = function events$once(name, cb) {
         if (!ctx.__events__[name])
             ctx.__events__[name] = [];
-        cb.__once = true;
-        ctx.__events__[name].push(cb);
+        if (isFunction(cb)) {
+            cb.__once = true;
+            ctx.__events__[name].push(cb);
+        }
     };
     ctx.$emit = function events$emit(name) {
+        var _a;
         var args = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
-        if (ctx.__events__[name]) {
+        if ((_a = ctx.__events__[name]) === null || _a === void 0 ? void 0 : _a.length) {
             for (var i = 0; i < ctx.__events__[name].length; i++) {
                 var cb = ctx.__events__[name][i];
                 if (isFunction(cb)) {
@@ -74,7 +79,8 @@ function initEvents(ctx) {
         }
     };
     ctx.$off = function events$off(name, cb, offCallbackIndex) {
-        if (ctx.__events__[name]) {
+        var _a;
+        if ((_a = ctx.__events__[name]) === null || _a === void 0 ? void 0 : _a.length) {
             // 传入index减少寻找时间
             var i = offCallbackIndex ||
                 ctx.__events__[name].findIndex(function (fn) { return fn === cb; });
@@ -1627,22 +1633,43 @@ function handlerSetup(ctx, options, type) {
     if (!ctx.data)
         ctx.data = {};
     ctx.data$ = JSON.parse(JSON.stringify(ctx.data));
-    var setupData = ctx.setup(options) || {};
-    if (type === 'component' && !ctx.methods)
-        ctx.methods = {};
-    Object.keys(setupData).forEach(function (key) {
-        var val = setupData[key];
-        if (isFunction(val)) {
-            (type === 'page' ? ctx : ctx.methods)[key] = val;
-        }
-        else {
-            ctx.data$[key] = val;
-            ctx.data[key] = isRef(val) ? unref(val) : toRaw(val);
-        }
-    });
+    var setupData = ctx.setup(options);
+    if (isObject(setupData)) {
+        if (type === 'component' && !ctx.methods)
+            ctx.methods = {};
+        Object.keys(setupData).forEach(function (key) {
+            var val = setupData[key];
+            if (isFunction(val)) {
+                (type === 'page' ? ctx : ctx.methods)[key] = val;
+            }
+            else {
+                ctx.data$[key] = val;
+                ctx.data[key] = isRef(val) ? unref(val) : toRaw(val);
+            }
+        });
+    }
     // 同步合并后的值到渲染层
-    ctx.setData(ctx.data);
-    ctx.data$ = reactive(ctx.data$);
+    if (type === 'page') {
+        ctx.data$ = reactive(ctx.data$);
+        ctx.setData(ctx.data);
+    }
+    else {
+        // 组件的setData在attached时才可以用
+        // 保证于其他钩子执行前执行
+        ctx.__hooks__.attached.unshift(function initComponentSetData() {
+            ctx.data$ = reactive(ctx.data$);
+            ctx.setData(ctx.data);
+        });
+        // 推出setData，只执行一次
+        var shift = function () {
+            var _a, _b;
+            if (((_b = (_a = ctx.__hooks__.attached) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.name) === 'initComponentSetData') {
+                ctx.__hooks__.attached.shift();
+            }
+        };
+        ctx.$once('attached:resolve', shift);
+        ctx.$once('attached:reject', shift);
+    }
     // TODO 页面在unLoad中移除watch
     // TODO 组件在detached 中移除watch attached时重新监听
     watch(ctx.data$, function (data) {
@@ -1699,9 +1726,12 @@ function decoratorLifeCycle(options, type) {
     if (type === void 0) { type = 'page'; }
     // 循环所有lifeCycle 进行装饰
     lc[type].forEach(function (name) {
-        // 处理component lifetimes
-        if (type === 'component' && !isObject(options.lifetimes)) {
-            options.lifetimes = {};
+        if (type === 'component') {
+            // 处理component lifetimes
+            !isObject(options.lifetimes) && (options.lifetimes = {});
+            // 组件的方法必须定义到methods中才会被初始化到this身上
+            !isObject(options.methods) && (options.methods = {});
+            isFunction(options.setup) && (options.methods.setup = options.setup);
         }
         // 保留用户定义的生命周期函数
         var userHooks;
