@@ -1,7 +1,7 @@
-import { definePrivateProp, isFunction } from './util'
+import { defineReadonlyProp, isFunction } from './util'
 
-export function initEvents(ctx: LooseObject) {
-  definePrivateProp(ctx, '__events__', {})
+export function initEvents(ctx: LooseObject = {}): EnhanceEvents {
+  defineReadonlyProp(ctx, '__events__', {})
 
   ctx.$on = function events$on(name: string, cb: LooseFunction) {
     if (!ctx.__events__[name]) ctx.__events__[name] = []
@@ -22,12 +22,10 @@ export function initEvents(ctx: LooseObject) {
     if (ctx.__events__[name]?.length) {
       for (let i = 0; i < ctx.__events__[name].length; i++) {
         const cb = ctx.__events__[name][i]!
-        if (isFunction(cb)) {
-          cb.call(ctx, ...args)
-          if (cb.__once) {
-            ctx.$off(name, cb, i)
-            i--
-          }
+        cb.call(ctx, ...args)
+        if (cb.__once) {
+          ctx.$off(name, cb, i)
+          i--
         }
       }
     }
@@ -48,4 +46,5 @@ export function initEvents(ctx: LooseObject) {
       }
     }
   }
+  return ctx as LooseObject & EnhanceEvents
 }

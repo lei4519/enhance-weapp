@@ -6,8 +6,9 @@
   "types": "./types/index.d.ts",
   "scripts": {
     "build": "NODE_ENV=production npx rollup --config",
+    "build:test": "NODE_ENV=test npx rollup --config",
     "test:all": "jest",
-    "test:single": "jest test/automator.spec.js"
+    "test:single": "jest test/diffData.spec.ts"
   },
   "keywords": [
     "composition",

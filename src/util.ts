@@ -1,12 +1,35 @@
+import { isRef, toRaw, unref } from '@vue/reactivity'
+
 export function noop() {}
 
-export function definePrivateProp(obj: any, key: string, value?: any) {
-  Object.defineProperty(obj, key, {
+/**
+ * @description 定义属性，不可修改，不可遍历，不可删除
+ */
+export function defineReadonlyProp(
+  obj: any,
+  key: string | symbol | number,
+  value?: any
+) {
+  const descriptor = {
+    value,
+    writable: false,
+    configurable: false,
+    enumerable: process.env.NODE_ENV === 'production'
+  }
+  return Object.defineProperty(obj, key, descriptor)
+}
+
+/**
+ * @description 定义不可遍历属性
+ */
+export function disabledEnumerable(obj: any, key: string, value?: any) {
+  const descriptor = {
     value,
     writable: true,
-    configurable: false,
-    enumerable: false
-  })
+    configurable: true,
+    enumerable: process.env.NODE_ENV === 'production'
+  }
+  return Object.defineProperty(obj, key, descriptor)
 }
 
 export const transformOnName = (name: string) =>
@@ -23,6 +46,9 @@ export const isFunction = isType('Function')
 
 export const isSymbol = isType('Symbol')
 
+// 是否是基本类型的值
+export const isPrimitive = (val: any) => typeof val !== 'object' || val === null
+
 export const isLooseObject = (obj: any) => obj && typeof obj === 'object'
 
 /**
@@ -36,4 +62,30 @@ export function setTimeoutResolve(resolveData: any, timeout = 0) {
       resolve(resolveData)
     }, timeout)
   })
+}
+
+export function getType(val: any): string {
+  return Object.prototype.toString.call(val).match(/\s(\w+)/)![1]
+}
+
+export function getRawData(data: LooseObject): LooseObject {
+  return isPrimitive(data)
+    ? data
+    : isRef<LooseObject>(data)
+    ? unref(data)
+    : toRaw(data)
+}
+
+export function cloneDeepRawData(data: LooseObject): LooseObject {
+  return isPrimitive(data)
+    ? data
+    : JSON.parse(
+        JSON.stringify(data, (key, val) => {
+          return getRawData(val)
+        })
+      )
+}
+
+export function cloneDeep(data: LooseObject): LooseObject {
+  return JSON.parse(JSON.stringify(data))
 }

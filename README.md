@@ -132,102 +132,6 @@ Epage({
 #### 使用nextTick等待视图渲染完成
  - this.$nextTick (同Vue，可以传入函数或者使用.then)
 
-## 项目调整
-
-### 代码内聚
-
-> 逻辑、样式等相关性的东西应该是集中的，而不是分散不同的文件夹中
-
-1. config中的检查移至每个页面中, 全局混入onLoad处理
-  ```js
-  // 页面
-  Epage({
-    config: {
-      setting: true
-    }
-  })
-  // 混入onLoad
-  globalMixins({
-    hook: {
-      page: {
-        onLoad: [
-          function checkToken() {
-            if (this.config.token) {}
-          },
-          function checkSetting() {
-            if (this.config.setting) {}
-          },
-          function checkUcenter() {
-            if (this.config.ucenter) {}
-          },
-        ]
-      }
-    }
-  })
-  ```
-
-2. urls.js 文件不再需要，在拦截器中进行统一处理
-  ```js
-    // 页面
-    this.$ajax({
-      host: 'xcx',
-      url: '/api/list'
-    })
-
-    // 拦截器
-    function interceptor(config) {
-      const host = {
-        dev: {
-          xcx: 'xcxbch'
-        },
-        prop: {
-          xcx: 'xcx'
-        }
-      }
-      config.url = host[isDev ? 'dev' : 'prod'][config.host] + config.url
-    }
-  ```
-
-3. sass文件放置每个页面/组件的文件夹中，使用脚本或者编辑器插件进行编译
-  - 使用脚本编译，解决sass编译css时重复@import
-
-4. 雪碧图使用iconfont代替
-
-5. 使用Git版本控制
-
-### 开发相关
-
-禁止：
-  1. 随意新增、修改、删除globalData值
-  2. 通过getCurrentPages 获取页面实例修改属性
-  3. ...
-
-以上行为会导致页面状态无法追踪，项目可维护性变差。
-
-- 状态可追踪
-  - 在数据的上下文文件中是否可以搜索到
-  - 是否可以通过打断点调试到
-
-- 全局状态管理
-  - 旧项目给globalData加入get、set函数，修改值时需要调用函数来保证数据的可追踪性/可调式性（约定不直接修改数据）
-  - 新项目直接加入redux（无法直接数据）
-
-- 封装布局组件，每个页面都需要引入
-  ```
-    <Layout>
-      <view></view>
-    </Layout>
-  ```
-  1. 提供全局视图层的复用机会（如登录弹窗组件）
-    - 布局组件复用视图层，全局mixins onLoad和data 复用逻辑层
-  2. 解决自定义顶导底导滚动不固定问题
-    - 顶导底导封装至布局组件中，页面内容使用scrollview包裹。如果有坑可以给一个开关来控制scrollview。
-
-- promise化微信api，搭配async/await 提高代码阅读性
-
-- 引入vant组件库
-
-
 ## API
 
 ### 构造器
@@ -298,7 +202,10 @@ globalMixins({
       ready: [],
       moved: [],
       detached: [],
-      error: []
+      error: [],
+      show: [],
+      hide: [],
+      resize: []
     },
     // 属性
     data: {},
@@ -425,7 +332,10 @@ import {
   onComponentReadyHooks,
   onMovedHooks,
   onDetachedHooks,
-  onErrorHooks
+  onErrorHooks,
+  onPageShow,
+  onPageHide,
+  onPageResize
 } from 'enhance-weapp'
 ```
 
@@ -471,7 +381,6 @@ component: [
 ]
 ```
 
-
 #### 监听生命周期执行失败
 
 ⚠️ 如果在onLoad中检查到用户没有登录，那有可能需要将页面重定向到登录页，可以在生命周期函数中 return Promise.reject。
@@ -500,6 +409,94 @@ Epage({
     err.code === 403 && 跳转登录页
   }
 })
+```
+
+#### notControlLifecycle
+
+解除生命周期顺序控制，详见框架注意点
+
+#### customControlLifecycle
+
+调用此函数，传入自定义生命周期顺序控制函数，详见框架注意点
+
+```js
+customControlLifecycle(() => {}/*生命周期顺序控制函数*/)
+```
+
+##### 生命周期顺序控制函数 类型定义
+
+```ts
+/** 生命周期的控制函数 */
+type ControlLifecycleFn = (
+  /** 类型：APP / Page / Component */
+  type: DecoratorType,
+  // 生命周期的名称
+  name: AppLifeTime | PageLifeTime | ComponentLifeTime,
+  // 当前的this
+  ctx: EnhanceRuntime,
+  // 全局的生命周期事件总线，记录当前所有的生命周期运行情况
+  lcEventBus: EnhanceEvents,
+  // 等待指定生命周期执行成功后 调用当前生命周期
+  waitHook: WaitHookFn,
+  // 调用执行当前生命周期
+  invokeHooks: LooseFunction
+) => void
+```
+
+##### 默认生命周期顺序控制函数的实现
+
+```ts
+let controlLifecycle: ControlLifecycleFn = (
+  type,
+  name,
+  ctx,
+  lcEventBus,
+  waitHook,
+  invokeHooks
+) => {
+  if (type === 'app') {
+    if (name === 'onShow') {
+      // App的onShow，应该在App onLaunch执行完成之后执行
+      return waitHook(ctx, 'onLaunch:resolve')
+    } else if (name === 'onHide') {
+      // App的onHide，应该在Page onHide执行完成之后执行
+      return waitHook(lcEventBus, 'page:onHide:resolve')
+    }
+  } else if (type === 'page') {
+    if (name === 'onLoad') {
+      // Page的onLoad，应该在App onShow执行完成之后执行
+      return waitHook(lcEventBus, 'app:onShow:resolve')
+    } else if (name === 'onShow') {
+      // Page的onShow
+      // 初始化时应该在Page onLoad执行完成之后执行
+      // 切前台时应该在App onShow执行完成之后执行
+      ctx['__onLoad:resolve__'] && lcEventBus['__app:onShow:resolve__']
+        ? // 都成功直接调用
+          invokeHooks()
+        : // 已经onLoad（onLoad肯定在app:onShow之后执行），说明是切后台逻辑
+        ctx['__onLoad:resolve__']
+        ? // 监听app:onShow
+          lcEventBus.$once('app:onShow:resolve', invokeHooks)
+        : // 初始化逻辑，监听onLoad
+          ctx.$once('onLoad:resolve', invokeHooks)
+      return
+    } else if (name === 'onReady') {
+      // Page的onReady，应该在Page onShow执行完成之后执行
+      return waitHook(ctx, 'onShow:resolve')
+    }
+  } else if (type === 'component') {
+    if (name === 'created') {
+      // Component的created，应该在Page onShow执行完成之后执行
+      return waitHook(lcEventBus, 'page:onShow:resolve')
+    } else if (name === 'attached') {
+      // Component的attached，应该在Component created执行完成之后执行
+      return waitHook(ctx, 'created:resolve')
+    } else if (name === 'ready') {
+      // Component的ready，应该在Component attached执行完成之后执行
+      return waitHook(ctx, 'attached:resolve')
+    }
+  }
+}
 ```
 
 ### Vue3 Composition API 清单
@@ -543,6 +540,30 @@ import {
 获取生命周期执行中的this值，可能为null
 
 ## ⚠️框架注意点
+
+- 默认情况下，生命周期执行顺序会被控制
+    ```text
+      初始化阶段：
+      App:onLaunch -> App:onShow
+                                \
+                                 \ -> Page:onLoad -> Page:onShow -> Page:onReady
+                                                                  \
+                                                                   \ -> Comp:created -> Comp:created -> Comp:attached -> Comp:ready
+    
+      切换后台：
+      Page:onHide -> App:onHide
+      App:onShow -> Page:onShow
+  
+      以上的生命周期即使是异步函数，也会按照上述顺序进行执行。
+      一个实际的业务场景就是我们会在页面onLoad时获取用户的token，再之后的请求中将token带上，如果不对初始化的生命周期进行控制的话，就会导致token还在获取中，但页面和组件中的请求方法就已经全部被调用了。
+  
+      其他的生命周期不会做处理，按照微信原本的调用顺序执行。
+  
+      如果你不希望对生命周期的顺序进行控制，可以调用 notControlLifecycle 来取消控制，这将使生命周期函数恢复微信本身的调用顺序。
+      如果你觉得默认的生命周期控制顺序不符合你的要求，可以调用 customControlLifecycle 来定制你自己的顺序。
+    ```
+    
+- 不要在组件的methods中定义setup函数，会被options.setup覆盖
 
 - 混入的生命周期钩子应该总是将自己接受到的参数通过return传递下去，否则后续钩子将接受不到参数值
 

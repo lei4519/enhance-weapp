@@ -1,6 +1,6 @@
 import { decoratorLifeCycle } from './lifecycle'
 
-export function Epage(options: PageOptions): PageInstance {
+export const Epage: EpageFn = options => {
   decoratorLifeCycle(options, 'page')
-  return (Page(options) as unknown) as PageInstance
+  Page(options)
 }

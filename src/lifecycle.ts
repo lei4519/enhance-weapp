@@ -1,5 +1,6 @@
 import {
-  definePrivateProp,
+  defineReadonlyProp,
+  disabledEnumerable,
   isFunction,
   isObject,
   transformOnName
@@ -10,10 +11,72 @@ import { handlerSetup } from './reactive'
 import { setDataNextTick } from './setDataEffect'
 type Lifetime = AppLifeTime | PageLifeTime | ComponentLifeTime
 
-// 生命周期事件总线，控制生命周期的正确运行顺序
-const lcEventBus: any = {}
-initEvents(lcEventBus)
+let isControlLifecycle = true
+/** 不控制生命周期的运行顺序 */
+export const notControlLifecycle = () => {
+  isControlLifecycle = false
+}
 
+let controlLifecycle: ControlLifecycleFn = (
+  type,
+  name,
+  ctx,
+  lcEventBus,
+  waitHook,
+  invokeHooks
+) => {
+  if (type === 'app') {
+    if (name === 'onShow') {
+      // App的onShow，应该在App onLaunch执行完成之后执行
+      return waitHook(ctx, 'onLaunch:resolve')
+    } else if (name === 'onHide') {
+      // App的onHide，应该在Page onHide执行完成之后执行
+      return waitHook(lcEventBus, 'page:onHide:resolve')
+    }
+  } else if (type === 'page') {
+    if (name === 'onLoad') {
+      // Page的onLoad，应该在App onShow执行完成之后执行
+      return waitHook(lcEventBus, 'app:onShow:resolve')
+    } else if (name === 'onShow') {
+      // Page的onShow
+      // 初始化时应该在Page onLoad执行完成之后执行
+      // 切前台时应该在App onShow执行完成之后执行
+      ctx['__onLoad:resolve__'] && lcEventBus['__app:onShow:resolve__']
+        ? // 都成功直接调用
+          invokeHooks()
+        : // 已经onLoad（onLoad肯定在app:onShow之后执行），说明是切后台逻辑
+        ctx['__onLoad:resolve__']
+        ? // 监听app:onShow
+          lcEventBus.$once('app:onShow:resolve', invokeHooks)
+        : // 初始化逻辑，监听onLoad
+          ctx.$once('onLoad:resolve', invokeHooks)
+      return
+    } else if (name === 'onReady') {
+      // Page的onReady，应该在Page onShow执行完成之后执行
+      return waitHook(ctx, 'onShow:resolve')
+    }
+  } else if (type === 'component') {
+    if (name === 'created') {
+      // Component的created，应该在Page onShow执行完成之后执行
+      return waitHook(lcEventBus, 'page:onShow:resolve')
+    } else if (name === 'attached') {
+      // Component的attached，应该在Component created执行完成之后执行
+      return waitHook(ctx, 'created:resolve')
+    } else if (name === 'ready') {
+      // Component的ready，应该在Component attached执行完成之后执行
+      return waitHook(ctx, 'attached:resolve')
+    }
+  }
+}
+
+export const customControlLifecycle = (fn: ControlLifecycleFn) => {
+  controlLifecycle = fn
+}
+
+// 生命周期事件总线，控制生命周期的正确运行顺序
+const lcEventBus = initEvents()
+
+// 需要装饰的所有生命周期
 export const lc = {
   app: [
     'onLaunch',
@@ -44,7 +107,10 @@ export const lc = {
     'ready',
     'moved',
     'detached',
-    'error'
+    'error',
+    'show',
+    'hide',
+    'resize'
   ] as Array<ComponentLifeTime>
 }
 
@@ -54,29 +120,45 @@ export const lc = {
  * @param type App | Page | Component
  */
 export function decoratorLifeCycle(
-  options: PageOptions | ComponentOptions,
+  options: LooseObject = {},
   type: DecoratorType = 'page'
-): void {
+): LooseObject {
+  // 组件要做额外处理
+  if (type === 'component') {
+    // 处理component pageLifetimes
+    !isObject(options.pageLifetimes) && (options.pageLifetimes = {})
+    // 处理component lifetimes
+    !isObject(options.lifetimes) && (options.lifetimes = {})
+    // 组件的方法必须定义到methods中才会被初始化到this身上
+    !isObject(options.methods) && (options.methods = {})
+    isFunction(options.setup) && (options.methods.setup = options.setup)
+  }
+
+  // 组件的pageLifetimes生命周期列表
+  const pageLifetimes = ['show', 'hide', 'resize']
+
   // 循环所有lifeCycle 进行装饰
   lc[type].forEach((name: Lifetime) => {
-    if (type === 'component') {
-      // 处理component lifetimes
-      !isObject(options.lifetimes) && (options.lifetimes = {})
-      // 组件的方法必须定义到methods中才会被初始化到this身上
-      !isObject(options.methods) && (options.methods = {})
-      isFunction(options.setup) && (options.methods.setup = options.setup)
-    }
+    // 是否为组件的页面生命周期
+    const isPageLC = pageLifetimes.includes(name)
+
+    // 找到要装饰的生命周期函数所处的对象
+    const decoratorOptions =
+      type === 'component'
+        ? isPageLC
+          ? options.pageLifetimes
+          : options.lifetimes
+        : options
+
     // 保留用户定义的生命周期函数
-    let userHooks: HookFn | HookFn[]
-    if (type === 'app' || type === 'page') {
-      userHooks = options[name]
-    } else {
-      // lifetimes 优先级高于选项
-      userHooks = options.lifetimes[name] || options[name]
-    }
-    const opt = type === 'app' || type === 'page' ? options : options.lifetimes
+    let userHooks: HookFn | HookFn[] =
+      type === 'component' && !isPageLC
+        ? // 组件的生命周期可以定义在lifetimes 和 options中, lifetimes 优先级高于 options
+          decoratorOptions[name] || options[name]
+        : decoratorOptions[name]
+
     // 定义装饰函数
-    opt[name] = function (options: LooseObject) {
+    decoratorOptions[name] = function decoratorLC(options: LooseObject) {
       // 初始化事件
       if (name === 'onLaunch' || name === 'onLoad' || name === 'created') {
         // 初始化事件通信
@@ -87,6 +169,7 @@ export function decoratorLifeCycle(
         handlerMixins(type, this)
         // App 里没有data，没有视图，不需要使用响应式
         if (name !== 'onLaunch') {
+          // 只有定义了setup才会进行响应式处理，这是为了兼容老项目
           if (isFunction(this.setup)) {
             // nextTick
             this.$nextTick = setDataNextTick
@@ -119,6 +202,7 @@ export function decoratorLifeCycle(
         })
         setCurrentCtx(null)
       }
+
       // 调用保存的生命周期函数
       const invokeHooks = () => {
         // 执行成功
@@ -128,6 +212,9 @@ export function decoratorLifeCycle(
           // 执行完成 触发事件
           this.$emit(`${name}:resolve`, res)
           lcEventBus.$emit(`${type}:${name}:resolve`, res)
+
+          this.$emit(`${name}:finally`, res)
+          lcEventBus.$emit(`${type}:${name}:finally`, res)
         }
         // 执行失败
         const reject = (err: any) => {
@@ -138,7 +225,11 @@ export function decoratorLifeCycle(
           // 执行完成 触发错误事件
           this.$emit(`${name}:reject`, err)
           lcEventBus.$emit(`${type}:${name}:reject`, err)
+
+          this.$emit(`${name}:finally`, err)
+          lcEventBus.$emit(`${type}:${name}:finally`, err)
         }
+
         try {
           // 执行保存的钩子函数
           const result = callHooks(type, name, options, this)
@@ -154,8 +245,9 @@ export function decoratorLifeCycle(
           reject(err)
         }
       }
-      // 等待别的生命周期执行完成后调用
-      const waitHook = (eventBus: LooseObject, eventName: string) => {
+
+      // 等待指定生命周期执行成功后 调用当前生命周期
+      const waitHook: WaitHookFn = (eventBus, eventName) => {
         eventBus[`__${eventName}__`]
           ? invokeHooks()
           : eventBus.$once(eventName, invokeHooks)
@@ -178,92 +270,66 @@ export function decoratorLifeCycle(
       // ⬇️ onShow App
       // ⬇️ onShow Page
 
-      if (type === 'app') {
-        if (name === 'onShow') {
-          // App的onShow，应该在App onLaunch执行完成之后执行
-          return waitHook(this, 'onLaunch:resolve')
-        } else if (name === 'onHide') {
-          // App的onHide，应该在Page onHide执行完成之后执行
-          return waitHook(lcEventBus, 'page:onHide:resolve')
-        }
-      } else if (type === 'page') {
-        if (name === 'onLoad') {
-          // Page的onLoad，应该在App onShow执行完成之后执行
-          return waitHook(lcEventBus, 'app:onShow:resolve')
-        } else if (name === 'onShow') {
-          // Page的onShow
-          // 初始化时应该在Page onLoad执行完成之后执行
-          // 切前台时应该在App onShow执行完成之后执行
-          this['__onLoad:resolve__'] && lcEventBus['__app:onShow:resolve__']
-            ? // 都成功直接调用
-              invokeHooks()
-            : // 已经onLoad（onLoad肯定在app:onShow之后执行），说明是切后台逻辑
-            this['__onLoad:resolve__']
-            ? // 监听app:onShow
-              lcEventBus.$once('app:onShow:resolve', invokeHooks)
-            : // 初始化逻辑，监听onLoad
-              this.$once('onLoad:resolve', invokeHooks)
-          return
-        } else if (name === 'onReady') {
-          // Page的onReady，应该在Page onShow执行完成之后执行
-          return waitHook(this, 'onShow:resolve')
-        }
-      } else if (type === 'component') {
-        if (name === 'created') {
-          // Component的created，应该在Page onShow执行完成之后执行
-          return waitHook(lcEventBus, 'page:onShow:resolve')
-        } else if (name === 'attached') {
-          // Component的attached，应该在Component created执行完成之后执行
-          return waitHook(this, 'created:resolve')
-        } else if (name === 'ready') {
-          // Component的ready，应该在Component attached执行完成之后执行
-          return waitHook(this, 'attached:resolve')
-        }
+      // 控制生命周期执行顺序
+      if (isControlLifecycle) {
+        controlLifecycle(type, name, this, lcEventBus, waitHook, invokeHooks)
       }
+      // 其他的生命周期直接调用
       invokeHooks()
     }
   })
+
+  return options
 }
 
 // 全局保留上下文，添加钩子函数时使用
-let currentCtx: PageInstance | ComponentInstance | null = null
-function setCurrentCtx(ctx: PageInstance | ComponentInstance | null) {
+let currentCtx: EnhanceRuntime | null = null
+function setCurrentCtx(ctx: EnhanceRuntime | null) {
   currentCtx = ctx
 }
-// TODO ts app实例类型
-export function getCurrentCtx(): PageInstance | ComponentInstance | null {
+// 获取生命周期执行是的this值，可能为null
+export function getCurrentCtx(): EnhanceRuntime | null {
   return currentCtx
 }
 
-// 初始化钩子
-function initHooks(type: DecoratorType, ctx: PageInstance | ComponentInstance) {
+/**
+ * 初始化生命周期钩子相关属性
+ */
+export function initHooks(
+  type: DecoratorType,
+  ctx: EnhanceRuntime
+): EnhanceRuntime {
   // 保存所有的生命周期钩子
-  definePrivateProp(ctx, '__hooks__', {})
+  defineReadonlyProp(ctx, '__hooks__', {})
 
   lc[type].forEach((name: Lifetime) => {
     // 标志生命周期是否执行完成
-    definePrivateProp(ctx, `__${name}:resolve__`, false)
-    definePrivateProp(ctx, `__${name}:reject__`, false)
-    lcEventBus[`__${type}:${name}:resolve__`] = false
-    lcEventBus[`__${type}:${name}:reject__`] = false
+    disabledEnumerable(ctx, `__${name}:resolve__`, false)
+    disabledEnumerable(ctx, `__${name}:reject__`, false)
     ctx.__hooks__[name] = []
   })
+  return ctx
 }
 
-// 执行钩子
+/** 执行队列中的钩子函数 */
 function callHooks(
   type: DecoratorType,
   name: Lifetime,
   options: LooseObject,
-  ctx: PageInstance | ComponentInstance,
+  ctx: EnhanceRuntime,
   startIdx = 0
 ) {
+  // 将运行标识位全部置为false
   ctx[`__${name}:resolve__`] = false
   ctx[`__${name}:reject__`] = false
   lcEventBus[`__${type}:${name}:resolve__`] = false
   lcEventBus[`__${type}:${name}:reject__`] = false
+
+  // 生命周期函数执行时接受到的参数，可能是对象，也可能是上一个函数返回的promise
   let optOrPromise: any = options
+  // 拿到当前要执行的钩子队列
   const lcHooks = ctx.__hooks__[name]
+  // 记录当前的队列长度，因为在钩子执行过程中有可能还会向队列中推值
   const len = lcHooks.length
   /**
    * 设置/更新默认值
@@ -278,6 +344,7 @@ function callHooks(
       options = val
     }
   }
+
   if (len) {
     for (let i = startIdx; i < len; i++) {
       if (isFunction(optOrPromise?.then)) {
@@ -317,8 +384,10 @@ function callHooks(
   }
   return optOrPromise
 }
+
 type PushHooksFn = (cb: HookFn) => void
-// 生成添加钩子函数
+
+// 生成添加钩子的函数
 function createPushHooks(name: Lifetime): PushHooksFn {
   // 添加钩子函数
   return function pushHooks(cb: HookFn) {
@@ -381,3 +450,6 @@ export const onComponentReady = componentPushHooks.onReady
 export const onMoved = componentPushHooks.onMoved
 export const onDetached = componentPushHooks.onDetached
 export const onError = componentPushHooks.onError
+export const onPageShow = componentPushHooks.onShow
+export const onPageHide = componentPushHooks.onHide
+export const onPageResize = componentPushHooks.onResize

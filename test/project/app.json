@@ -1,6 +1,7 @@
 {
   "pages": [
-    "pages/lifecycle/lifecycle"
+    "pages/lifecycle/lifecycle",
+    "pages/componentLifecycle/componentLifecycle"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -4,7 +4,11 @@ export { Eapp } from './Eapp'
 
 export { globalMixins } from './mixins'
 export { wxp } from './wxp'
-export { getCurrentCtx } from './lifecycle'
+export {
+  getCurrentCtx,
+  notControlLifecycle,
+  customControlLifecycle
+} from './lifecycle'
 
 export {
   onLaunch as onLaunchHooks,
@@ -30,7 +34,10 @@ export {
   onComponentReady as onComponentReadyHooks,
   onMoved as onMovedHooks,
   onDetached as onDetachedHooks,
-  onError as onErrorHooks
+  onError as onErrorHooks,
+  onPageShow,
+  onPageHide,
+  onPageResize
 } from './lifecycle'
 
 export {

@@ -1,8 +1,6 @@
 import { decoratorLifeCycle } from './lifecycle'
 
-export function Eapp<T = any>(
-  options: AppOptions
-): WechatMiniprogram.App.Instance<T> {
+export const Eapp: EappFn = options => {
   decoratorLifeCycle(options, 'app')
-  return (App(options) as unknown) as WechatMiniprogram.App.Instance<T>
+  App(options)
 }

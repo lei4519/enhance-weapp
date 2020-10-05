@@ -10,11 +10,15 @@ export default {
   input: 'src/main.ts',
   output: [
     {
-      file: 'dist/enhancemp.js',
+      file:
+        env === 'test' ? 'test/project/libs/enhancemp.js' : 'dist/enhancemp.js',
       format: 'cjs'
     },
     {
-      file: 'dist/enhancemp.min.js',
+      file:
+        env === 'test'
+          ? 'test/project/libs/enhancemp.min.js'
+          : 'dist/enhancemp.min.js',
       format: 'cjs',
       plugins: [terser()]
     }
@@ -26,6 +30,5 @@ export default {
     replace({
       'process.env.NODE_ENV': JSON.stringify(env)
     })
-    // commonjs(),
   ]
 }

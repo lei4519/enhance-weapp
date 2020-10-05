@@ -1,6 +1,6 @@
 import { decoratorLifeCycle } from './lifecycle'
 
-export function Ecomponent(options: ComponentOptions): ComponentInstance {
+export const Ecomponent: EcomponentFn = options => {
   decoratorLifeCycle(options, 'component')
-  return (Component(options) as unknown) as ComponentInstance
+  Component(options)
 }
