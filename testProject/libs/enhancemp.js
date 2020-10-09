@@ -999,22 +999,22 @@ function __spreadArrays() {
 function initEvents(ctx) {
     if (ctx === void 0) { ctx = {}; }
     defineReadonlyProp(ctx, '__events__', {});
-    ctx.$on = function events$on(name, cb) {
+    disabledEnumerable(ctx, '$on', function events$on(name, cb) {
         if (!ctx.__events__[name])
             ctx.__events__[name] = [];
         if (isFunction$1(cb)) {
             ctx.__events__[name].push(cb);
         }
-    };
-    ctx.$once = function events$once(name, cb) {
+    });
+    disabledEnumerable(ctx, '$once', function events$once(name, cb) {
         if (!ctx.__events__[name])
             ctx.__events__[name] = [];
         if (isFunction$1(cb)) {
             cb.__once = true;
             ctx.__events__[name].push(cb);
         }
-    };
-    ctx.$emit = function events$emit(name) {
+    });
+    disabledEnumerable(ctx, '$emit', function events$emit(name) {
         var _a;
         var args = [];
         for (var _i = 1; _i < arguments.length; _i++) {
@@ -1030,8 +1030,8 @@ function initEvents(ctx) {
                 }
             }
         }
-    };
-    ctx.$off = function events$off(name, cb, offCallbackIndex) {
+    });
+    disabledEnumerable(ctx, '$off', function events$off(name, cb, offCallbackIndex) {
         var _a;
         if ((_a = ctx.__events__[name]) === null || _a === void 0 ? void 0 : _a.length) {
             // 传入index减少寻找时间
@@ -1041,7 +1041,7 @@ function initEvents(ctx) {
                 ctx.__events__[name].splice(i, 1);
             }
         }
-    };
+    });
     return ctx;
 }
 
@@ -1119,10 +1119,11 @@ function handlerMixins(type, ctx) {
  */
 function diffData(oldRootData, newRootData) {
     // 更新对象，最终传给this.setData的值
-    var updateObject = {};
+    var updateObject = null;
     var diffQueue = [];
-    // 设置新值
-    var setNewVal = function (key, val) {
+    // 添加更新对象
+    var addUpdateData = function (key, val) {
+        !updateObject && (updateObject = {});
         // 基本类型直接赋值，引用类型解除引用
         updateObject[key] = isPrimitive(val) ? val : cloneDeepRawData(val);
     };
@@ -1148,13 +1149,14 @@ function diffData(oldRootData, newRootData) {
     if (newRootKeys.length) {
         newRootKeys.forEach(function (key) {
             // 将新增值加入更新对象
-            setNewVal(key, newRootData[key]);
+            addUpdateData(key, newRootData[key]);
         });
     }
     var _loop_1 = function () {
         var _a = diffQueue.shift(), oldData = _a[0], proxyData = _a[1], keyPath = _a[2];
         // 获取原始值
         var newData = getRawData(proxyData);
+        // 如果相等，代表是基本类型
         if (oldData === newData) {
             return "continue";
         }
@@ -1164,14 +1166,13 @@ function diffData(oldRootData, newRootData) {
         var newType = getType(newData);
         // 类型不等，直接重设
         if (oldType !== newType) {
-            setNewVal(keyPath, newData);
+            addUpdateData(keyPath, newData);
             return "continue";
         }
         // 基本类型（JSON中没有函数正则等数据类型）
         if (newType !== 'Object' && newType !== 'Array') {
-            if (oldData !== newData) {
-                setNewVal(keyPath, newData);
-            }
+            // 如果能走到这，说明肯定不相等
+            addUpdateData(keyPath, newData);
             return "continue";
         }
         // 数组
@@ -1179,7 +1180,7 @@ function diffData(oldRootData, newRootData) {
             // 长度不等，直接重设
             // 数组和对象不同，无法根据key值来判断哪些值是新增的，哪些值是删除的
             if (oldData.length !== newData.length) {
-                setNewVal(keyPath, newData);
+                addUpdateData(keyPath, newData);
                 return "continue";
             }
             // 长度相等，将数组的每一项推入diff队列中
@@ -1195,7 +1196,7 @@ function diffData(oldRootData, newRootData) {
         var newKeys = Object.keys(newData);
         // 旧长新短：删除操作，直接重设
         if (oldKeys.length > newKeys.length) {
-            setNewVal(keyPath, newData);
+            addUpdateData(keyPath, newData);
             return "continue";
         }
         /**
@@ -1216,7 +1217,7 @@ function diffData(oldRootData, newRootData) {
              * newData: {a: 1, b: 1, d: 1}
              */
             if (keyIndex === -1) {
-                setNewVal(keyPath, newData);
+                addUpdateData(keyPath, newData);
                 return "continue-diffQueueLoop";
             }
             // 从newKeys中去除当前key，这样在遍历结束后，newKeys中还存在的key，就是新增的key
@@ -1232,7 +1233,7 @@ function diffData(oldRootData, newRootData) {
         // 有新增的值
         if (newKeys.length) {
             newKeys.forEach(function (key) {
-                setNewVal(keyPath + "." + key, newData[key]);
+                addUpdateData(keyPath + "." + key, newData[key]);
             });
         }
         if (diffChild.length) {
@@ -1270,10 +1271,9 @@ function setDataQueueFlush() {
 function flushSetDataJobs() {
     setDataCtxQueue.forEach(function (ctx) {
         var res = diffData(ctx.data, ctx.data$);
-        debugger
-        if (Object.keys(res).length === 0)
-            return;
-        console.log('响应式触发this.setData，参数: ', res);
+        if (!res)
+            return ctx.$emit('setDataRender:resolve');
+        // console.log('响应式触发this.setData，参数: ', res)
         ctx.setData(res, function () {
             ctx.$emit('setDataRender:resolve');
         });
@@ -2221,18 +2221,18 @@ function isClassComponent(value) {
 
 function handlerSetup(ctx, options, type) {
     // 解除与ctx.data的引用关系，创建响应式data$
+    !ctx.data && (ctx.data = {});
     ctx.data$ = reactive(cloneDeep(ctx.data));
     // 初始化属性，判断数据是否正在被watch
     disabledEnumerable(ctx, '__watching__', false);
+    disabledEnumerable(ctx, '__stopWatchFn__', null);
     // 执行setup
     var setupData = ctx.setup(options);
     if (isObject$1(setupData)) {
-        if (type === 'component' && !ctx.methods)
-            ctx.methods = {};
         Object.keys(setupData).forEach(function (key) {
             var val = setupData[key];
             if (isFunction$1(val)) {
-                (type === 'page' ? ctx : ctx.methods)[key] = val;
+                ctx[key] = val;
             }
             else {
                 ctx.data$[key] = val;
@@ -2252,10 +2252,8 @@ function handlerSetup(ctx, options, type) {
             });
             // 推出setData，只执行一次
             ctx.$once('attached:finally', function () {
-                var _a, _b;
-                if (((_b = (_a = ctx.__hooks__.attached) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.name) === 'initComponentSetData') {
-                    ctx.__hooks__.attached.shift();
-                }
+                var delIdx = ctx.__hooks__.attached.findIndex(function (fn) { return fn.name === 'initComponentSetData'; });
+                ctx.__hooks__.attached.splice(delIdx, 1);
             });
         }
     }
@@ -2282,26 +2280,25 @@ function handlerSetup(ctx, options, type) {
     return setupData;
 }
 function createWatching(ctx) {
-    return function () {
+    return function watching() {
         // 如果已经被监控了，就直接退出
         if (ctx.__watching__)
             return;
         ctx.__watching__ = true;
         // 保留取消监听的函数
-        ctx.__stopWatching__ = watch(ctx.data$, function () {
+        ctx.__stopWatchFn__ = watch(ctx.data$, function () {
             setDataQueueJob(ctx);
         });
     };
 }
 function createStopWatching(ctx) {
-    return function () {
-        var _a;
+    return function stopWatching() {
         // 如果已经取消监听了，就直接退出
         if (!ctx.__watching__)
             return;
         ctx.__watching__ = false;
         // 执行取消监听
-        (_a = ctx.__stopWatching__) === null || _a === void 0 ? void 0 : _a.call(ctx);
+        ctx.__stopWatchFn__();
     };
 }
 
@@ -2310,7 +2307,23 @@ var isControlLifecycle = true;
 var notControlLifecycle = function () {
     isControlLifecycle = false;
 };
-var controlLifecycle = function (type, name, ctx, lcEventBus, waitHook, invokeHooks) {
+var controlLifecycle = function (_a) {
+    // 生命周期执行顺序
+    // 初始化
+    // ⬇️ onLaunch App
+    // ⬇️ onShow App
+    // ⬇️ onLoad Page
+    // ⬇️ onShow Page
+    // ⬇️ created Comp
+    // ⬇️ attached Comp
+    // ⬇️ ready Comp
+    // ⬇️ onReady Page
+    var type = _a.type, name = _a.name, ctx = _a.ctx, lcEventBus = _a.lcEventBus, waitHook = _a.waitHook, invokeHooks = _a.invokeHooks;
+    // 切后台
+    // ⬇️ onHide Page
+    // ⬇️ onHide App
+    // ⬇️ onShow App
+    // ⬇️ onShow Page
     if (type === 'app') {
         if (name === 'onShow') {
             // App的onShow，应该在App onLaunch执行完成之后执行
@@ -2320,11 +2333,21 @@ var controlLifecycle = function (type, name, ctx, lcEventBus, waitHook, invokeHo
             // App的onHide，应该在Page onHide执行完成之后执行
             return waitHook(lcEventBus, 'page:onHide:resolve');
         }
+        else {
+            // 其他的生命周期直接调用
+            invokeHooks();
+        }
     }
     else if (type === 'page') {
         if (name === 'onLoad') {
-            // Page的onLoad，应该在App onShow执行完成之后执行
-            return waitHook(lcEventBus, 'app:onShow:resolve');
+            // 没有App说明是独立分包情况，不需要等待
+            if (getApp()) {
+                // Page的onLoad，应该在App onShow执行完成之后执行
+                return waitHook(lcEventBus, 'app:onShow:resolve');
+            }
+            else {
+                return invokeHooks();
+            }
         }
         else if (name === 'onShow') {
             // Page的onShow
@@ -2345,6 +2368,10 @@ var controlLifecycle = function (type, name, ctx, lcEventBus, waitHook, invokeHo
             // Page的onReady，应该在Page onShow执行完成之后执行
             return waitHook(ctx, 'onShow:resolve');
         }
+        else {
+            // 其他的生命周期直接调用
+            invokeHooks();
+        }
     }
     else if (type === 'component') {
         if (name === 'created') {
@@ -2358,6 +2385,10 @@ var controlLifecycle = function (type, name, ctx, lcEventBus, waitHook, invokeHo
         else if (name === 'ready') {
             // Component的ready，应该在Component attached执行完成之后执行
             return waitHook(ctx, 'attached:resolve');
+        }
+        else {
+            // 其他的生命周期直接调用
+            invokeHooks();
         }
     }
 };
@@ -2449,6 +2480,27 @@ function decoratorLifeCycle(options, type) {
                 initHooks(type, this);
                 // 处理 mixins
                 handlerMixins(type, this);
+                // 页面卸载时需要重置变量
+                if (type === 'app') {
+                    this.__hooks__.onHide.push(function () {
+                        lcEventBus['__app:onShow:resolve__'] = lcEventBus['__app:onShow:reject__'] = _this['__onShow:resolve__'] = _this['__onShow:reject__'] = false;
+                    });
+                }
+                else if (type === 'page') {
+                    this.__hooks__.onHide.push(function () {
+                        lcEventBus['__page:onShow:resolve__'] = lcEventBus['__page:onShow:reject__'] = _this['__onShow:resolve__'] = _this['__onShow:reject__'] = false;
+                    });
+                    this.__hooks__.onUnload.push(function () {
+                        lc.page.forEach(function (name) {
+                            lcEventBus["__page:" + name + ":resolve__"] = lcEventBus["__page:" + name + ":reject__"] = false;
+                        });
+                    });
+                }
+                else {
+                    this.__hooks__.hide.push(function () {
+                        _this['__show:resolve__'] = _this['__show:reject__'] = false;
+                    });
+                }
                 // App 里没有data，没有视图，不需要使用响应式
                 if (name !== 'onLaunch') {
                     // 只有定义了setup才会进行响应式处理，这是为了兼容老项目
@@ -2534,27 +2586,21 @@ function decoratorLifeCycle(options, type) {
                     ? invokeHooks()
                     : eventBus.$once(eventName, invokeHooks);
             };
-            // 生命周期执行顺序
-            // 初始化
-            // ⬇️ onLaunch App
-            // ⬇️ onShow App
-            // ⬇️ onLoad Page
-            // ⬇️ onShow Page
-            // ⬇️ created Comp
-            // ⬇️ attached Comp
-            // ⬇️ ready Comp
-            // ⬇️ onReady Page
-            // 切后台
-            // ⬇️ onHide Page
-            // ⬇️ onHide App
-            // ⬇️ onShow App
-            // ⬇️ onShow Page
             // 控制生命周期执行顺序
             if (isControlLifecycle) {
-                controlLifecycle(type, name, this, lcEventBus, waitHook, invokeHooks);
+                controlLifecycle({
+                    type: type,
+                    name: name,
+                    ctx: this,
+                    lcEventBus: lcEventBus,
+                    waitHook: waitHook,
+                    invokeHooks: invokeHooks
+                });
             }
-            // 其他的生命周期直接调用
-            invokeHooks();
+            else {
+                // 没有控制直接调用
+                invokeHooks();
+            }
         };
     });
     return options;
@@ -2603,11 +2649,11 @@ function callHooks(type, name, options, ctx, startIdx) {
     var setDefaultValue = function (val) {
         if (val === void 0) {
             // 更新默认值
-            val = options;
+            return (val = options);
         }
         else {
             // 同步默认值
-            options = val;
+            return (options = val);
         }
     };
     if (len) {
@@ -2615,7 +2661,7 @@ function callHooks(type, name, options, ctx, startIdx) {
             if (isFunction$1(optOrPromise === null || optOrPromise === void 0 ? void 0 : optOrPromise.then)) {
                 // 异步微任务执行
                 optOrPromise = optOrPromise.then(function (result) {
-                    setDefaultValue(result);
+                    result = setDefaultValue(result);
                     // 每次执行前将当前的ctx推入全局
                     // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
                     setCurrentCtx(ctx);
@@ -2627,8 +2673,7 @@ function callHooks(type, name, options, ctx, startIdx) {
             else {
                 // 同步任务运行
                 setCurrentCtx(ctx);
-                optOrPromise = lcHooks[i].call(ctx, optOrPromise);
-                setDefaultValue(optOrPromise);
+                optOrPromise = setDefaultValue(lcHooks[i].call(ctx, optOrPromise));
                 setCurrentCtx(null);
             }
         };
@@ -2637,7 +2682,7 @@ function callHooks(type, name, options, ctx, startIdx) {
         }
         // 运行期间可以动态添加生命周期, 运行链结束检查是否有新增的钩子函数
         var checkNewHooks = function (result) {
-            setDefaultValue(result);
+            result = setDefaultValue(result);
             var nowLen = ctx.__hooks__[name].length;
             if (nowLen > len) {
                 // 如果有，就执行新增的钩子函数
@@ -2717,17 +2762,17 @@ var onPageResize = componentPushHooks.onResize;
 
 var Ecomponent = function (options) {
     decoratorLifeCycle(options, 'component');
-    Component(options);
+    return Component(options);
 };
 
 var Epage = function (options) {
     decoratorLifeCycle(options, 'page');
-    Page(options);
+    return Page(options);
 };
 
 var Eapp = function (options) {
     decoratorLifeCycle(options, 'app');
-    App(options);
+    return App(options);
 };
 
 const asyncMethods = [
@@ -2925,18 +2970,24 @@ var response = [];
 var interceptors = {
     request: {
         use: function (onFulfilled, onRejected) {
-            var block = [];
-            block.push(isFunction$1(onFulfilled) ? onFulfilled : function (config) { return config; });
-            block.push(isFunction$1(onRejected) ? onRejected : function (error) { return error; });
-            request.push(block);
+            onFulfilled = isFunction$1(onFulfilled)
+                ? onFulfilled
+                : function (config) { return config; };
+            onRejected = isFunction$1(onRejected)
+                ? onRejected
+                : function (error) { return Promise.reject(error); };
+            request.push([onFulfilled, onRejected]);
         }
     },
     response: {
         use: function (onFulfilled, onRejected) {
-            var block = [];
-            isFunction$1(onFulfilled) && block.push(onFulfilled);
-            isFunction$1(onRejected) && block.push(onRejected);
-            block.length && response.push(block);
+            onFulfilled = isFunction$1(onFulfilled)
+                ? onFulfilled
+                : function (config) { return config; };
+            onRejected = isFunction$1(onRejected)
+                ? onRejected
+                : function (error) { return Promise.reject(error); };
+            response.push([onFulfilled, onRejected]);
         }
     }
 };
@@ -2997,10 +3048,10 @@ exports.onHideHooks = onHide;
 exports.onLaunchHooks = onLaunch;
 exports.onLoadHooks = onLoad;
 exports.onMovedHooks = onMoved;
-exports.onPageHide = onPageHide;
+exports.onPageHideHooks = onPageHide;
 exports.onPageNotFoundHooks = onPageNotFound;
-exports.onPageResize = onPageResize;
-exports.onPageShow = onPageShow;
+exports.onPageResizeHooks = onPageResize;
+exports.onPageShowHooks = onPageShow;
 exports.onPullDownRefreshHooks = onPullDownRefresh;
 exports.onReachBottomHooks = onReachBottom;
 exports.onReadyHooks = onReady;

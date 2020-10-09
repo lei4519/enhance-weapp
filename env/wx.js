@@ -1,5 +1,9 @@
 global.wx = {
   request(obj) {
-    obj.success()
+    setTimeout(() => {
+      obj.success()
+    })
   }
 }
+
+global.getApp = () => true

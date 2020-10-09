@@ -15,17 +15,18 @@ export function handlerSetup(
   type: DecoratorType
 ) {
   // 解除与ctx.data的引用关系，创建响应式data$
+  !ctx.data && (ctx.data = {})
   ctx.data$ = reactive(cloneDeep(ctx.data))
   // 初始化属性，判断数据是否正在被watch
   disabledEnumerable(ctx, '__watching__', false)
+  disabledEnumerable(ctx, '__stopWatchFn__', null)
   // 执行setup
   const setupData = ctx.setup(options)
   if (isObject(setupData)) {
-    if (type === 'component' && !ctx.methods) ctx.methods = {}
     Object.keys(setupData).forEach(key => {
       const val = setupData[key]
       if (isFunction(val)) {
-        ;(type === 'page' ? ctx : ctx.methods)[key] = val
+        ctx[key] = val
       } else {
         ctx.data$[key] = val
       }
@@ -43,9 +44,10 @@ export function handlerSetup(
       })
       // 推出setData，只执行一次
       ctx.$once('attached:finally', () => {
-        if (ctx.__hooks__.attached?.[0]?.name === 'initComponentSetData') {
-          ctx.__hooks__.attached.shift()
-        }
+        const delIdx = ctx.__hooks__.attached.findIndex(
+          fn => fn.name === 'initComponentSetData'
+        )
+        ctx.__hooks__.attached.splice(delIdx, 1)
       })
     }
   }
@@ -72,23 +74,23 @@ export function handlerSetup(
 }
 
 function createWatching(ctx: EnhanceRuntime) {
-  return () => {
+  return function watching() {
     // 如果已经被监控了，就直接退出
     if (ctx.__watching__) return
     ctx.__watching__ = true
     // 保留取消监听的函数
-    ctx.__stopWatching__ = watch(ctx.data$, () => {
+    ctx.__stopWatchFn__ = watch(ctx.data$, () => {
       setDataQueueJob(ctx)
     })
   }
 }
 
 function createStopWatching(ctx: EnhanceRuntime) {
-  return () => {
+  return function stopWatching() {
     // 如果已经取消监听了，就直接退出
     if (!ctx.__watching__) return
     ctx.__watching__ = false
     // 执行取消监听
-    ctx.__stopWatching__?.()
+    ctx.__stopWatchFn__()
   }
 }

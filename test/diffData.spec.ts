@@ -21,7 +21,7 @@ describe('diff新旧数据', () => {
       }
     }
     const newData = JSON.parse(JSON.stringify(oldData))
-    expect(diffData(oldData, newData)).toEqual({})
+    expect(diffData(oldData, newData)).toEqual(null)
   })
   test('根对象新增值', () => {
     const oldData = {
@@ -41,7 +41,7 @@ describe('diff新旧数据', () => {
     const newData = {
       a: 1
     }
-    expect(diffData(oldData, newData)).toEqual({})
+    expect(diffData(oldData, newData)).toEqual(null)
   })
   test('类型不相等', () => {
     const oldData = {

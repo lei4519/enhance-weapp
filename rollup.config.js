@@ -11,13 +11,13 @@ export default {
   output: [
     {
       file:
-        env === 'test' ? 'test/project/libs/enhancemp.js' : 'dist/enhancemp.js',
+        env === 'test' ? 'testProject/libs/enhancemp.js' : 'dist/enhancemp.js',
       format: 'cjs'
     },
     {
       file:
         env === 'test'
-          ? 'test/project/libs/enhancemp.min.js'
+          ? 'testProject/libs/enhancemp.min.js'
           : 'dist/enhancemp.min.js',
       format: 'cjs',
       plugins: [terser()]

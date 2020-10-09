@@ -65,9 +65,11 @@ export function diffData(
     // 获取原始值
     const newData = getRawData(proxyData)
 
+    // 如果相等，代表是基本类型
     if (oldData === newData) {
       continue
     }
+
     // 旧值类型
     const oldType = getType(oldData)
     // 新值类型
@@ -81,9 +83,8 @@ export function diffData(
 
     // 基本类型（JSON中没有函数正则等数据类型）
     if (newType !== 'Object' && newType !== 'Array') {
-      if (oldData !== newData) {
-        addUpdateData(keyPath, newData)
-      }
+      // 如果能走到这，说明肯定不相等
+      addUpdateData(keyPath, newData)
       continue
     }
 

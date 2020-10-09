@@ -1,24 +1,28 @@
 import { isFunction } from './util'
-const request: any[] = []
-const response: any[] = []
+const request: [LooseFunction, LooseFunction][] = []
+const response: [LooseFunction, LooseFunction][] = []
 
 export const interceptors: Interceptors = {
   request: {
     use(onFulfilled, onRejected) {
-      const block = []
-      block.push(
-        isFunction(onFulfilled) ? onFulfilled : (config: any) => config
-      )
-      block.push(isFunction(onRejected) ? onRejected : (error: any) => error)
-      request.push(block)
+      onFulfilled = isFunction(onFulfilled)
+        ? onFulfilled
+        : (config: any) => config
+      onRejected = isFunction(onRejected)
+        ? onRejected
+        : (error: any) => Promise.reject(error)
+      request.push([onFulfilled!, onRejected!])
     }
   },
   response: {
     use(onFulfilled, onRejected) {
-      const block = []
-      isFunction(onFulfilled) && block.push(onFulfilled)
-      isFunction(onRejected) && block.push(onRejected)
-      block.length && response.push(block)
+      onFulfilled = isFunction(onFulfilled)
+        ? onFulfilled
+        : (config: any) => config
+      onRejected = isFunction(onRejected)
+        ? onRejected
+        : (error: any) => Promise.reject(error)
+      response.push([onFulfilled!, onRejected!])
     }
   }
 }

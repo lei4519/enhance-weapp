@@ -25,6 +25,7 @@ module.exports = {
   // An array of regexp pattern strings used to skip coverage collection
   coveragePathIgnorePatterns: [
     '<rootDir>/node_modules',
+    '<rootDir>/src/request.ts',
     '<rootDir>/src/util.ts'
   ],
 
@@ -87,7 +88,7 @@ module.exports = {
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
-  // modulePathIgnorePatterns: [],
+  modulePathIgnorePatterns: ['<rootDir>/testProject'],
 
   // Activates notifications for test results
   // notify: false,

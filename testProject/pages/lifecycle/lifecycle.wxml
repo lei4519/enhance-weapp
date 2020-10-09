@@ -1,2 +1,4 @@
 <!--pages/lifecycle/lifecycle.wxml-->
 <text>pages/lifecycle/lifecycle.wxml</text>
+<test id="test"/>
+<test1 id="test1"/>

@@ -35,9 +35,9 @@ export {
   onMoved as onMovedHooks,
   onDetached as onDetachedHooks,
   onError as onErrorHooks,
-  onPageShow,
-  onPageHide,
-  onPageResize
+  onPageShow as onPageShowHooks,
+  onPageHide as onPageHideHooks,
+  onPageResize as onPageResizeHooks
 } from './lifecycle'
 
 export {

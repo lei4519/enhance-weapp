@@ -1,7 +1,9 @@
 {
   "pages": [
     "pages/lifecycle/lifecycle",
-    "pages/componentLifecycle/componentLifecycle"
+    "pages/lcOrderAsync/lcOrder",
+    "pages/reactive/reactive",
+    "pages/watching/watching"
   ],
   "window": {
     "backgroundTextStyle": "light",

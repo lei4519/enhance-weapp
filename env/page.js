@@ -1,52 +1,11 @@
-class WxPage {
-  constructor(config = {}) {
-    this.background = false
-    Object.keys(config).forEach(key => {
-      this[key] = config[key]
-    })
-    this.data = config.data || {}
-    this.onRender =
-      config.onRender ||
-      (() => {
-        //
-      })
-  }
-  toggleBackground(){
-    const task = this.background ? this.onShow : this.onHide
-    setTimeout(() => {
-      task.call(this)
-    })
-    this.background = !this.background
-  }
-  setData(data, fn) {
-    Object.keys(data).forEach(key => {
-      const keys = key.split('.')
-      if (keys.length === 1) {
-        this.data[key] = data[key]
-      } else {
-        let end = this.data
-        keys.forEach((k, index) => {
-          if (!end[k]) {
-            end[k] = {}
-          }
-          if (index === keys.length - 1) {
-            end[k] = data[key]
-          } else {
-            end = end[k]
-          }
-        })
-      }
-    })
-    this.onRender()
-    fn && fn()
-  }
-}
-
 function Page(config) {
-  const page = new WxPage(config)
-
+  if (!config.setData) {
+    config.setData = (obj, fn) => {
+      fn?.()
+    }
+  }
     ;[
-    'onLoad',
+      'onLoad',
       'onShow',
       'onReady',
       'onHide',
@@ -59,14 +18,13 @@ function Page(config) {
       'onAddToFavorites'
     ].forEach((key) => {
     if (key === 'onLoad') {
-      page?.[key]({query: 1})
+      config?.[key]({query: 1})
     } else {
       setTimeout(() => {
-        page?.[key]()
+        config?.[key]()
       })
     }
   })
-
-  return page
+  return config
 }
 global.Page = Page

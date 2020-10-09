@@ -1,0 +1,10 @@
+<!--pages/componentLifecycle/component/test.wxml-->
+<view>
+  <button id="changeRef" bindtap="changeRef">{{refVal}}</button>
+</view>
+<view>
+  <button id="changeReactiveVal" bindtap="changeReactiveVal">{{reactiveVal.value}}</button>
+</view>
+<view>
+  <button id="changeReactiveArr" bindtap="changeReactiveArr">{{reactiveVal.array}}</button>
+</view>

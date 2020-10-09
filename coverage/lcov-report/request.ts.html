@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">15.15% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/33</span>
+                <span class='fraction'>5/33</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">18.52% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/28</span>
+                <span class='fraction'>5/27</span>
             </div>
         
             
@@ -102,24 +102,15 @@
 <a name='L43'></a><a href='#L43'>43</a>
 <a name='L44'></a><a href='#L44'>44</a>
 <a name='L45'></a><a href='#L45'>45</a>
-<a name='L46'></a><a href='#L46'>46</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L46'></a><a href='#L46'>46</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -128,6 +119,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -147,32 +147,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { isFunction } from './util'</span>
-const request: any[] = <span class="cstat-no" title="statement not covered" >[]</span>
-const response: any[] = <span class="cstat-no" title="statement not covered" >[]</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { isFunction } from './util'
+const request: [LooseFunction, LooseFunction][] = []
+const response: [LooseFunction, LooseFunction][] = []
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >interceptors: Interceptors = {</span>
+export const interceptors: Interceptors = {
   request: {
 <span class="fstat-no" title="function not covered" >    use(</span>onFulfilled, onRejected) {
-      const block = <span class="cstat-no" title="statement not covered" >[]</span>
-<span class="cstat-no" title="statement not covered" >      block.push(</span>
-        isFunction(onFulfilled) ? onFulfilled : <span class="fstat-no" title="function not covered" >(c</span>onfig: any) =&gt; <span class="cstat-no" title="statement not covered" >config</span>
-      )
-<span class="cstat-no" title="statement not covered" >      block.push(isFunction(onRejected) ? onRejected : <span class="fstat-no" title="function not covered" >(e</span>rror: any) =&gt; <span class="cstat-no" title="statement not covered" >error)</span></span>
-<span class="cstat-no" title="statement not covered" >      request.push(block)</span>
+<span class="cstat-no" title="statement not covered" >      onFulfilled = isFunction(onFulfilled)</span>
+        ? onFulfilled
+        : <span class="fstat-no" title="function not covered" >(c</span>onfig: any) =&gt; <span class="cstat-no" title="statement not covered" >config</span>
+<span class="cstat-no" title="statement not covered" >      onRejected = isFunction(onRejected) ? onRejected : <span class="fstat-no" title="function not covered" >(e</span>rror: any) =&gt; <span class="cstat-no" title="statement not covered" >error</span></span>
+<span class="cstat-no" title="statement not covered" >      request.push([onFulfilled!, onRejected!])</span>
     }
   },
   response: {
-    use<span class="fstat-no" title="function not covered" >(o</span>nFulfilled, onRejected) {
-      const block = <span class="cstat-no" title="statement not covered" >[]</span>
-<span class="cstat-no" title="statement not covered" >      isFunction(onFulfilled) &amp;&amp; block.push(onFulfilled)</span>
-<span class="cstat-no" title="statement not covered" >      isFunction(onRejected) &amp;&amp; block.push(onRejected)</span>
-<span class="cstat-no" title="statement not covered" >      block.length &amp;&amp; response.push(block)</span>
+<span class="fstat-no" title="function not covered" >    use(</span>onFulfilled, onRejected) {
+<span class="cstat-no" title="statement not covered" >      onFulfilled = isFunction(onFulfilled)</span>
+        ? onFulfilled
+        : <span class="fstat-no" title="function not covered" >(c</span>onfig: any) =&gt; <span class="cstat-no" title="statement not covered" >config</span>
+<span class="cstat-no" title="statement not covered" >      onRejected = isFunction(onRejected) ? onRejected : <span class="fstat-no" title="function not covered" >(e</span>rror: any) =&gt; <span class="cstat-no" title="statement not covered" >error</span></span>
+<span class="cstat-no" title="statement not covered" >      response.push([onFulfilled!, onRejected!])</span>
     }
   }
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >r</span>equestMethod&lt;</span>T = any&gt;(options: AjaxOptions): Promise&lt;T&gt; {
+export function <span class="fstat-no" title="function not covered" >requestMethod&lt;</span>T = any&gt;(options: AjaxOptions): Promise&lt;T&gt; {
   const _request = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(o</span>ptions: AjaxOptions) =&gt;</span>
 <span class="cstat-no" title="statement not covered" >    new Promise&lt;T&gt;(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      options.success = <span class="fstat-no" title="function not covered" >response </span>=&gt; <span class="cstat-no" title="statement not covered" >resolve({ options, response } as any)</span></span>
@@ -199,7 +199,7 @@ export const <span class="cstat-no" title="statement not covered" >interceptors:
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Sat Oct 03 2020 10:36:54 GMT+0800 (China Standard Time)
+                at Mon Oct 05 2020 16:19:26 GMT+0800 (China Standard Time)
             </div>
         </div>
         <script src="prettify.js"></script>

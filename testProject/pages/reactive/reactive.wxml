@@ -1,0 +1,19 @@
+<!--pages/reactive/reactive.wxml-->
+<text>pages/reactive/reactive.wxml</text>
+<test id="test"/>
+<view>
+  <button id="changeRef" bindtap="changeRef">{{refVal}}</button>
+</view>
+<view>
+  <button id="changeReactiveVal" bindtap="changeReactiveVal">{{reactiveVal.value}}</button>
+</view>
+<view>
+  <button id="changeReactiveArr" bindtap="changeReactiveArr">{{reactiveVal.array}}</button>
+</view>
+<view>
+  <button id="changeData" bindtap="changeData">
+    {{dataRef}}
+    {{dataReactive.value}}
+    {{dataReactive.array}}
+  </button>
+</view>

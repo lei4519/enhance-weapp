@@ -17,14 +17,31 @@ export const notControlLifecycle = () => {
   isControlLifecycle = false
 }
 
-let controlLifecycle: ControlLifecycleFn = (
+let controlLifecycle: ControlLifecycleFn = ({
   type,
   name,
   ctx,
   lcEventBus,
   waitHook,
   invokeHooks
-) => {
+}) => {
+  // 生命周期执行顺序
+  // 初始化
+  // ⬇️ onLaunch App
+  // ⬇️ onShow App
+  // ⬇️ onLoad Page
+  // ⬇️ onShow Page
+  // ⬇️ created Comp
+  // ⬇️ attached Comp
+  // ⬇️ ready Comp
+  // ⬇️ onReady Page
+
+  // 切后台
+  // ⬇️ onHide Page
+  // ⬇️ onHide App
+  // ⬇️ onShow App
+  // ⬇️ onShow Page
+
   if (type === 'app') {
     if (name === 'onShow') {
       // App的onShow，应该在App onLaunch执行完成之后执行
@@ -32,11 +49,19 @@ let controlLifecycle: ControlLifecycleFn = (
     } else if (name === 'onHide') {
       // App的onHide，应该在Page onHide执行完成之后执行
       return waitHook(lcEventBus, 'page:onHide:resolve')
+    } else {
+      // 其他的生命周期直接调用
+      invokeHooks()
     }
   } else if (type === 'page') {
     if (name === 'onLoad') {
-      // Page的onLoad，应该在App onShow执行完成之后执行
-      return waitHook(lcEventBus, 'app:onShow:resolve')
+      // 没有App说明是独立分包情况，不需要等待
+      if (getApp()) {
+        // Page的onLoad，应该在App onShow执行完成之后执行
+        return waitHook(lcEventBus, 'app:onShow:resolve')
+      } else {
+        return invokeHooks()
+      }
     } else if (name === 'onShow') {
       // Page的onShow
       // 初始化时应该在Page onLoad执行完成之后执行
@@ -54,6 +79,9 @@ let controlLifecycle: ControlLifecycleFn = (
     } else if (name === 'onReady') {
       // Page的onReady，应该在Page onShow执行完成之后执行
       return waitHook(ctx, 'onShow:resolve')
+    } else {
+      // 其他的生命周期直接调用
+      invokeHooks()
     }
   } else if (type === 'component') {
     if (name === 'created') {
@@ -65,6 +93,9 @@ let controlLifecycle: ControlLifecycleFn = (
     } else if (name === 'ready') {
       // Component的ready，应该在Component attached执行完成之后执行
       return waitHook(ctx, 'attached:resolve')
+    } else {
+      // 其他的生命周期直接调用
+      invokeHooks()
     }
   }
 }
@@ -151,7 +182,7 @@ export function decoratorLifeCycle(
         : options
 
     // 保留用户定义的生命周期函数
-    let userHooks: HookFn | HookFn[] =
+    let userHooks: HookFn | HookFn[] | null =
       type === 'component' && !isPageLC
         ? // 组件的生命周期可以定义在lifetimes 和 options中, lifetimes 优先级高于 options
           decoratorOptions[name] || options[name]
@@ -167,6 +198,33 @@ export function decoratorLifeCycle(
         initHooks(type, this)
         // 处理 mixins
         handlerMixins(type, this)
+
+        // 页面卸载时需要重置变量
+        if (type === 'app') {
+          this.__hooks__.onHide.push(() => {
+            lcEventBus['__app:onShow:resolve__'] = lcEventBus[
+              '__app:onShow:reject__'
+            ] = this['__onShow:resolve__'] = this['__onShow:reject__'] = false
+          })
+        } else if (type === 'page') {
+          this.__hooks__.onHide.push(() => {
+            lcEventBus['__page:onShow:resolve__'] = lcEventBus[
+              '__page:onShow:reject__'
+            ] = this['__onShow:resolve__'] = this['__onShow:reject__'] = false
+          })
+          this.__hooks__.onUnload.push(() => {
+            lc.page.forEach(name => {
+              lcEventBus[`__page:${name}:resolve__`] = lcEventBus[
+                `__page:${name}:reject__`
+              ] = false
+            })
+          })
+        } else {
+          this.__hooks__.hide.push(() => {
+            this['__show:resolve__'] = this['__show:reject__'] = false
+          })
+        }
+
         // App 里没有data，没有视图，不需要使用响应式
         if (name !== 'onLaunch') {
           // 只有定义了setup才会进行响应式处理，这是为了兼容老项目
@@ -180,6 +238,7 @@ export function decoratorLifeCycle(
           }
         }
       }
+
       // 如果用户定义了生命周期函数
       if (userHooks) {
         // 统一处理为数组
@@ -253,29 +312,20 @@ export function decoratorLifeCycle(
           : eventBus.$once(eventName, invokeHooks)
       }
 
-      // 生命周期执行顺序
-      // 初始化
-      // ⬇️ onLaunch App
-      // ⬇️ onShow App
-      // ⬇️ onLoad Page
-      // ⬇️ onShow Page
-      // ⬇️ created Comp
-      // ⬇️ attached Comp
-      // ⬇️ ready Comp
-      // ⬇️ onReady Page
-
-      // 切后台
-      // ⬇️ onHide Page
-      // ⬇️ onHide App
-      // ⬇️ onShow App
-      // ⬇️ onShow Page
-
       // 控制生命周期执行顺序
       if (isControlLifecycle) {
-        controlLifecycle(type, name, this, lcEventBus, waitHook, invokeHooks)
+        controlLifecycle({
+          type,
+          name,
+          ctx: this,
+          lcEventBus,
+          waitHook,
+          invokeHooks
+        })
+      } else {
+        // 没有控制直接调用
+        invokeHooks()
       }
-      // 其他的生命周期直接调用
-      invokeHooks()
     }
   })
 
@@ -338,10 +388,10 @@ function callHooks(
   const setDefaultValue = (val: any) => {
     if (val === void 0) {
       // 更新默认值
-      val = options
+      return (val = options)
     } else {
       // 同步默认值
-      options = val
+      return (options = val)
     }
   }
 
@@ -350,7 +400,7 @@ function callHooks(
       if (isFunction(optOrPromise?.then)) {
         // 异步微任务执行
         optOrPromise = optOrPromise.then((result: any) => {
-          setDefaultValue(result)
+          result = setDefaultValue(result)
           // 每次执行前将当前的ctx推入全局
           // 以此保证多个实例在异步穿插运行时使用onXXX动态添加的生命周期函数指向正确
           setCurrentCtx(ctx)
@@ -361,14 +411,13 @@ function callHooks(
       } else {
         // 同步任务运行
         setCurrentCtx(ctx)
-        optOrPromise = lcHooks[i].call(ctx, optOrPromise)
-        setDefaultValue(optOrPromise)
+        optOrPromise = setDefaultValue(lcHooks[i].call(ctx, optOrPromise))
         setCurrentCtx(null)
       }
     }
     // 运行期间可以动态添加生命周期, 运行链结束检查是否有新增的钩子函数
     const checkNewHooks = (result: any) => {
-      setDefaultValue(result)
+      result = setDefaultValue(result)
       const nowLen = ctx.__hooks__[name].length
       if (nowLen > len) {
         // 如果有，就执行新增的钩子函数

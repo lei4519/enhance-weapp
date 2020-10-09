@@ -22,8 +22,8 @@ function setDataQueueFlush() {
 function flushSetDataJobs() {
   setDataCtxQueue.forEach(ctx => {
     const res = diffData(ctx.data, ctx.data$)
-    if (!res) return
-    console.log('响应式触发this.setData，参数: ', res)
+    if (!res) return ctx.$emit('setDataRender:resolve')
+    // console.log('响应式触发this.setData，参数: ', res)
     ctx.setData(res, () => {
       ctx.$emit('setDataRender:resolve')
     })

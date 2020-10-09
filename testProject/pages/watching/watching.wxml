@@ -1,0 +1,4 @@
+<!--pages/watching/watching.wxml-->
+<text>pages/watching/watching.wxml</text>
+<view>{{value}}</view>
+<test id="test"/>

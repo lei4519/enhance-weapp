@@ -29,8 +29,8 @@ type ComponentLifeTime =
 interface SetupOptions {
   setup?: (
     // 打开当前页面路径中的参数
-    query: Record<string, string | undefined>
-  ) => LooseObject | Promise<LooseObject>
+    query?: Record<string, string | undefined>
+  ) => LooseObject
 }
 
 /** 默认类型 */
@@ -132,20 +132,21 @@ type ComponentHooksName =
 type WaitHookFn = (eventBus: EnhanceEvents, eventName: string) => void
 
 /** 生命周期的控制函数 */
-type ControlLifecycleFn = (
+type ControlLifecycleFn = (params: ControlLifecycleFnParams) => void
+interface ControlLifecycleFnParams {
   // 类型：APP / Page / Component
-  type: DecoratorType,
+  type: DecoratorType
   // 生命周期的名称
-  name: AppLifeTime | PageLifeTime | ComponentLifeTime,
+  name: AppLifeTime | PageLifeTime | ComponentLifeTime
   // 当前的this
-  ctx: EnhanceRuntime,
+  ctx: EnhanceRuntime
   // 全局的生命周期事件总线，记录当前所有的生命周期运行情况
-  lcEventBus: EnhanceEvents,
+  lcEventBus: EnhanceEvents
   // 等待指定生命周期执行成功后 调用当前生命周期
-  waitHook: WaitHookFn,
+  waitHook: WaitHookFn
   // 调用执行当前生命周期
   invokeHooks: LooseFunction
-) => void
+}
 
 // request请求参数
 type AjaxOptions = WechatMiniprogram.RequestOption & LooseObject
