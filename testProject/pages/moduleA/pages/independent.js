@@ -1,5 +1,5 @@
-import { Epage, onLoadHooks } from '../../libs/enhancemp'
-import { setTimeoutResolve, genFn } from '../../utils/index.js'
+import { Epage, onLoadHooks } from '../../../libs/enhancemp'
+import { setTimeoutResolve, genFn } from '../../../utils/index.js'
 // 生命周期执行顺序
 let queue = []
 let optionsList = []
@@ -28,13 +28,12 @@ Epage({
         })
         options.a = 1
         // 生命周期函数如果有返回值并且不为undefined, 默认值会更新为此值，在之后的函数中可以接收到这个默认值
-        return setTimeoutResolve(options, 100)
+        return options
       })
       // 装饰后生命周期可以正常执行, 并通过监听xxx:resolve来判断执行完成
       this.$once('onLoad:resolve', () => {
         queue.push(9)
       })
-      return setTimeoutResolve(void 0, 100)
     })
     return {
       queue,
@@ -56,7 +55,5 @@ Epage({
       queue.push(6)
     }
   ],
-  onShow() {},
-  onReady: [],
   ...genFn(['onHide'], 100)
 })

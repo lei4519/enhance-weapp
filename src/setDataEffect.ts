@@ -52,6 +52,7 @@ function syncOldData(data: LooseObject, updateData: LooseObject) {
     const key = pathsArr.pop()!
     let obj = data
     while (pathsArr.length) {
+      /* istanbul ignore next */
       obj = obj[pathsArr.shift()!]
     }
     obj[key] = value

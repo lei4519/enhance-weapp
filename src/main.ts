@@ -4,13 +4,10 @@ export { Eapp } from './Eapp'
 
 export { globalMixins } from './mixins'
 export { wxp } from './wxp'
-export {
-  getCurrentCtx,
-  notControlLifecycle,
-  customControlLifecycle
-} from './lifecycle'
+export { notControlLifecycle, customControlLifecycle } from './lifecycle'
 
 export {
+  getCurrentCtx,
   onLaunch as onLaunchHooks,
   onAppShow as onAppShowHooks,
   onAppHide as onAppHideHooks,
@@ -38,7 +35,7 @@ export {
   onPageShow as onPageShowHooks,
   onPageHide as onPageHideHooks,
   onPageResize as onPageResizeHooks
-} from './lifecycle'
+} from './createPushHooks'
 
 export {
   computed,

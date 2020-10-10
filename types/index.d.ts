@@ -128,6 +128,8 @@ type ComponentHooksName =
   | 'onHide'
   | 'onResize'
 
+type Lifetime = AppLifeTime | PageLifeTime | ComponentLifeTime
+
 /** 等待指定生命周期执行成功后 调用当前生命周期 */
 type WaitHookFn = (eventBus: EnhanceEvents, eventName: string) => void
 

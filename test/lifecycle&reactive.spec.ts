@@ -6,6 +6,7 @@ import { Ecomponent } from '@/Ecomponent'
 import { setTimeoutResolve } from '@/util'
 import { customControlLifecycle, notControlLifecycle } from '@/lifecycle'
 import { isReactive, isReadonly, reactive, ref } from '@vue/reactivity'
+import { getCurrentCtx } from '@/createPushHooks'
 
 /**
  * 对传给小程序原生函数的选项处理是否正确？
@@ -23,255 +24,17 @@ describe('装饰生命周期函数', () => {
     await miniProgram.close()
   })
 
-  /* lifecycle */
-  test('Component会对选项做初始化工作, setup会放在methods中', () => {
-    const comp: any = Ecomponent({
-      setup() {
-        return {}
-      }
-    })
-    expect(comp.pageLifetimes).toBeTruthy()
-    expect(comp.lifetimes).toBeTruthy()
-    expect(comp.methods).toBeTruthy()
-    expect(comp.methods.setup).toBeTruthy()
-  })
+  // beforeAll(async () => {
+  //   miniProgram = await automator.connect({
+  //     wsEndpoint: 'ws://localhost:9420'
+  //   })
+  // }, 40000)
+  //
+  // afterAll(async () => {
+  //   await miniProgram.disconnect()
+  // })
 
-  test('生命周期钩子会在对应的选项中进行装饰', () => {
-    const app: any = Eapp({})
-    const page: any = Epage({})
-    const comp: any = Ecomponent({})
-    expect(Object.keys(app)).toEqual([
-      'onLaunch',
-      'onShow',
-      'onHide',
-      'onError',
-      'onPageNotFound',
-      'onUnhandledRejection',
-      'onThemeChange'
-    ])
-    expect(Object.keys(page)).toEqual([
-      'onLoad',
-      'onShow',
-      'onReady',
-      'onHide',
-      'onUnload',
-      'onPullDownRefresh',
-      'onReachBottom',
-      'onShareAppMessage',
-      'onTabItemTap',
-      'onResize',
-      'onAddToFavorites',
-      'setData'
-    ])
-    expect(Object.keys(comp.lifetimes)).toEqual([
-      'created',
-      'attached',
-      'ready',
-      'moved',
-      'detached',
-      'error'
-    ])
-    expect(Object.keys(comp.pageLifetimes)).toEqual(['show', 'hide', 'resize'])
-  })
-
-  test('装饰后生命周期函数不再是之前的函数', () => {
-    const onLaunch = () => {}
-    const app: any = Eapp({
-      onLaunch
-    })
-    expect(app.onLaunch).not.toEqual(onLaunch)
-
-    const onLoad = () => {}
-    const pageOptions = {
-      onLoad
-    }
-    Epage(pageOptions)
-    expect(pageOptions.onLoad).not.toEqual(onLoad)
-
-    const created = () => {}
-    const show = () => {}
-    const componentOptions = {
-      created,
-      pageLifetimes: {
-        show
-      }
-    }
-    const comp: any = Ecomponent(componentOptions)
-    expect(comp.lifetimes.created).not.toEqual(created)
-    expect(comp.pageLifetimes.show).not.toEqual(show)
-  })
-
-  test('在onLaunch、onLoad、created中初始化events, __events__不可遍历', () => {
-    const app: any = Eapp({})
-    const page: any = Epage({})
-    const comp: any = Ecomponent({})
-    expect(app.__events__).toBeTruthy()
-    expect(page.__events__).toBeTruthy()
-    expect(comp.__events__).toBeTruthy()
-    expect(Object.keys(app).findIndex(k => k === '__events__')).toBe(-1)
-    expect(Object.keys(page).findIndex(k => k === '__events__')).toBe(-1)
-    expect(Object.keys(comp).findIndex(k => k === '__events__')).toBe(-1)
-  })
-
-  test('在onLaunch、onLoad、created中初始化钩子队列, __hooks__属性不可遍历', () => {
-    const app: any = Eapp({})
-    const page: any = Epage({})
-    const comp: any = Ecomponent({})
-    expect(app.__hooks__).toBeTruthy()
-    expect(page.__hooks__).toBeTruthy()
-    expect(comp.__hooks__).toBeTruthy()
-    expect(Object.keys(app).findIndex(k => k === '__hooks__')).toBe(-1)
-    expect(Object.keys(page).findIndex(k => k === '__hooks__')).toBe(-1)
-    expect(Object.keys(comp).findIndex(k => k === '__hooks__')).toBe(-1)
-  })
-
-  test('App 中不处理 setup、data', async () => {
-    const app: any = Eapp({})
-    expect(app.$nextTick).toBeFalsy()
-    expect(app.data$).toBeFalsy()
-  })
-
-  test('如果没有传入setup，将不会对data、响应式等做增强', () => {
-    const page: any = Epage({})
-    const comp: any = Ecomponent({})
-    expect(page.$nextTick).toBeFalsy()
-    expect(page.data$).toBeFalsy()
-    expect(comp.$nextTick).toBeFalsy()
-    expect(comp.data$).toBeFalsy()
-  })
-
-  test('生命周期执行顺序', async done => {
-    /**
-     * 生命周期执行顺序
-     * 装饰后选项上的生命周期函数可以是数组
-     * 选项中定义的生命周期，最后执行
-     * 生命周期中可以使用onX添加生命周期函数, 可以如此递归
-     * 使用onX添加的生命周期函数, 会依次执行
-     * 生命周期函数如果返回Promise，会阻塞后续代码执行
-     * 装饰后生命周期可以正常执行, 并通过监听xxx:resolve来判断执行完成
-     * 微信传入生命周期的参数为默认值，生命周期函数如果返回值为undefined, 在之后的函数中依然可以接收到默认值
-     * 生命周期函数如果有返回值并且不为undefined, 默认值会更新为此值，在之后的函数中可以接收到这个默认值
-     * 多个实例生命周期异步穿插运行，动态添加的钩子可以正确指向对应实例
-     */
-    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
-    const page = await miniProgram.evaluate(() => {
-      return getCurrentPages()[0]
-    })
-    const [comp1, comp2] = await miniProgram.evaluate(() => {
-      return [
-        getCurrentPages()[0].selectComponent('#test'),
-        getCurrentPages()[0].selectComponent('#test1')
-      ]
-    })
-    await setTimeoutResolve(null, 500)
-    expect(page.data$.queue).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
-    expect(page.data$.optionsList).toEqual([{}, { a: 1 }])
-    expect(comp1.data$.queue).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
-    expect(comp2.data$.queue).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
-    done()
-  }, 20000)
-
-  test('异步情况: 生命周期应该按照顺序执行', async done => {
-    // 生命周期执行顺序
-    // 初始化
-    // ⬇️ onLaunch App
-    // ⬇️ onShow App
-    // App的onShow，应该在App onLaunch执行完成之后执行
-
-    // ⬇️ created Comp
-    // Component的created，应该在Page onShow执行完成之后执行
-
-    // ⬇️ attached Comp
-    // Component的attached，应该在Component created执行完成之后执行
-
-    // ⬇️ ready Comp
-    // Component的ready，应该在Component attached执行完成之后执行
-
-    // ⬇️ onLoad Page
-    // Page的onLoad，应该在App onShow执行完成之后执行
-
-    // ⬇️ onShow Page
-    // Page的onShow 应该在Page onLoad执行完成之后执行
-
-    // ⬇️ onReady Page
-    // Page的onReady，应该在Page onShow执行完成之后执行
-
-    // 切后台
-    // ⬇️ onHide Page
-    // ⬇️ onHide App
-    // App的onHide，应该在Page onHide执行完成之后执行
-
-    // 切前台
-    // ⬇️ onShow App
-    // ⬇️ onShow Page
-    // Page的onShow  应该在App onShow执行完成之后执行
-
-    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
-    await miniProgram.navigateTo('/pages/lcOrderAsync/lcOrder')
-    const globalData = await miniProgram.evaluate(() => {
-      return getApp().globalData
-    })
-    expect(globalData.orderAsync).toEqual([
-      'onLaunch',
-      'onShow',
-      'onHide',
-      'onLoad',
-      'onShow',
-      'onReady',
-      'created',
-      'attached',
-      'ready'
-    ])
-    done()
-  }, 20000)
-
-  test('自定义生命周期控制', async done => {
-    await miniProgram.evaluate(() => {
-      getApp().customControlLifecycle(({ invokeHooks }: any) => invokeHooks())
-    })
-    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
-    await miniProgram.navigateTo('/pages/lcOrderAsync/lcOrder')
-    const globalData = await miniProgram.evaluate(() => {
-      return getApp().globalData
-    })
-    expect(globalData.orderAsync).not.toEqual([
-      'onLaunch',
-      'onShow',
-      'onHide',
-      'onLoad',
-      'onShow',
-      'onReady',
-      'created',
-      'attached',
-      'ready'
-    ])
-    done()
-  }, 20000)
-
-  test('解除生命周期控制', async done => {
-    await miniProgram.evaluate(() => {
-      getApp().notControlLifecycle()
-    })
-    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
-    await miniProgram.navigateTo('/pages/lcOrderAsync/lcOrder')
-    const globalData = await miniProgram.evaluate(() => {
-      return getApp().globalData
-    })
-    expect(globalData.orderAsync).not.toEqual([
-      'onLaunch',
-      'onShow',
-      'onHide',
-      'onLoad',
-      'onShow',
-      'onReady',
-      'created',
-      'attached',
-      'ready'
-    ])
-    done()
-  }, 20000)
-
-  /* reactive */
+  // reactive
   test('初始的data值会复制给data$, 但是两者引用并不相等', () => {
     const page: any = Epage({
       data: {
@@ -283,6 +46,17 @@ describe('装饰生命周期函数', () => {
     })
     expect(page.data !== page.data$).toBeTruthy()
     expect(page.data.e !== page.data$.e).toBeTruthy()
+  })
+
+  test('获取运行期间的实例', () => {
+    let page, ctx
+    Epage({
+      onLoad() {
+        ctx = getCurrentCtx()
+        page = this
+      }
+    })
+    expect(page).toBe(ctx)
   })
 
   test('setup返回值是Object时才会做处理', () => {
@@ -487,7 +261,7 @@ describe('装饰生命周期函数', () => {
         expect(comp.data$.refVal).toBe(1)
 
         expect(changeReactiveValWxml).toBe('1')
-        expect(comp.data$.reactiveVal.value).toBe(1)
+        expect(comp.data$.reactiveVal.value.a.b).toBe(1)
 
         expect(changeReactiveArrWxml).toBe('1,2,3')
         expect(comp.data$.reactiveVal.array).toEqual([1, 2, 3])
@@ -508,7 +282,7 @@ describe('装饰生命周期函数', () => {
         expect(comp.data$.refVal).toBe(2)
 
         expect(changeReactiveValWxml).toBe('2')
-        expect(comp.data$.reactiveVal.value).toBe(2)
+        expect(comp.data$.reactiveVal.value.a.b).toBe(2)
 
         expect(changeReactiveArrWxml).toBe('1,2')
         expect(comp.data$.reactiveVal.array).toEqual([1, 2])
@@ -575,4 +349,316 @@ describe('装饰生命周期函数', () => {
       expect(comp.data$.value).toBe(3)
     }
   }, 30000)
+
+  // lifecycle
+  test('Component会对选项做初始化工作, setup会放在methods中', () => {
+    const comp: any = Ecomponent({
+      setup() {
+        return {}
+      }
+    })
+    expect(comp.pageLifetimes).toBeTruthy()
+    expect(comp.lifetimes).toBeTruthy()
+    expect(comp.methods).toBeTruthy()
+    expect(comp.methods.setup).toBeTruthy()
+  })
+
+  test('生命周期钩子会在对应的选项中进行装饰', () => {
+    const app: any = Eapp({})
+    const page: any = Epage({})
+    const comp: any = Ecomponent({})
+    expect(Object.keys(app)).toEqual([
+      'onLaunch',
+      'onShow',
+      'onHide',
+      'onError',
+      'onPageNotFound',
+      'onUnhandledRejection',
+      'onThemeChange'
+    ])
+    expect(Object.keys(page)).toEqual([
+      'onLoad',
+      'onShow',
+      'onReady',
+      'onHide',
+      'onUnload',
+      'onPullDownRefresh',
+      'onReachBottom',
+      'onShareAppMessage',
+      'onTabItemTap',
+      'onResize',
+      'onAddToFavorites',
+      'setData'
+    ])
+    expect(Object.keys(comp.lifetimes)).toEqual([
+      'created',
+      'attached',
+      'ready',
+      'moved',
+      'detached',
+      'error'
+    ])
+    expect(Object.keys(comp.pageLifetimes)).toEqual(['show', 'hide', 'resize'])
+  })
+
+  test('装饰后生命周期函数不再是之前的函数', () => {
+    const onLaunch = () => {}
+    const app: any = Eapp({
+      onLaunch
+    })
+    expect(app.onLaunch).not.toEqual(onLaunch)
+
+    const onLoad = () => {}
+    const pageOptions = {
+      onLoad,
+      onResize() {}
+    }
+    Epage(pageOptions)
+    expect(pageOptions.onLoad).not.toEqual(onLoad)
+
+    const created = () => {}
+    const show = () => {}
+    const componentOptions = {
+      created,
+      pageLifetimes: {
+        show
+      }
+    }
+    const comp: any = Ecomponent(componentOptions)
+    expect(comp.lifetimes.created).not.toEqual(created)
+    expect(comp.pageLifetimes.show).not.toEqual(show)
+  })
+
+  test('在onLaunch、onLoad、created中初始化events, __events__不可遍历', () => {
+    const app: any = Eapp({})
+    const page: any = Epage({})
+    const comp: any = Ecomponent({})
+    expect(app.__events__).toBeTruthy()
+    expect(page.__events__).toBeTruthy()
+    expect(comp.__events__).toBeTruthy()
+    expect(Object.keys(app).findIndex(k => k === '__events__')).toBe(-1)
+    expect(Object.keys(page).findIndex(k => k === '__events__')).toBe(-1)
+    expect(Object.keys(comp).findIndex(k => k === '__events__')).toBe(-1)
+  })
+
+  test('在onLaunch、onLoad、created中初始化钩子队列, __hooks__属性不可遍历', () => {
+    const app: any = Eapp({})
+    const page: any = Epage({})
+    const comp: any = Ecomponent({})
+    expect(app.__hooks__).toBeTruthy()
+    expect(page.__hooks__).toBeTruthy()
+    expect(comp.__hooks__).toBeTruthy()
+    expect(Object.keys(app).findIndex(k => k === '__hooks__')).toBe(-1)
+    expect(Object.keys(page).findIndex(k => k === '__hooks__')).toBe(-1)
+    expect(Object.keys(comp).findIndex(k => k === '__hooks__')).toBe(-1)
+  })
+
+  test('App 中不处理 setup、data', async () => {
+    const app: any = Eapp({})
+    expect(app.$nextTick).toBeFalsy()
+    expect(app.data$).toBeFalsy()
+  })
+
+  test('如果没有传入setup，将不会对data、响应式等做增强', () => {
+    const page: any = Epage({})
+    const comp: any = Ecomponent({})
+    expect(page.$nextTick).toBeFalsy()
+    expect(page.data$).toBeFalsy()
+    expect(comp.$nextTick).toBeFalsy()
+    expect(comp.data$).toBeFalsy()
+  })
+
+  test('生命周期执行顺序', async done => {
+    /**
+     * 生命周期执行顺序
+     * 装饰后选项上的生命周期函数可以是数组
+     * 选项中定义的生命周期，最后执行
+     * 生命周期中可以使用onX添加生命周期函数, 可以如此递归
+     * 使用onX添加的生命周期函数, 会依次执行
+     * 生命周期函数如果返回Promise，会阻塞后续代码执行
+     * 装饰后生命周期可以正常执行, 并通过监听xxx:resolve来判断执行完成
+     * 微信传入生命周期的参数为默认值，生命周期函数如果返回值为undefined, 在之后的函数中依然可以接收到默认值
+     * 生命周期函数如果有返回值并且不为undefined, 默认值会更新为此值，在之后的函数中可以接收到这个默认值
+     * 多个实例生命周期异步穿插运行，动态添加的钩子可以正确指向对应实例
+     */
+    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
+    const page = await miniProgram.evaluate(() => {
+      return getCurrentPages()[0]
+    })
+    const [comp1, comp2] = await miniProgram.evaluate(() => {
+      return [
+        getCurrentPages()[0].selectComponent('#test'),
+        getCurrentPages()[0].selectComponent('#test1')
+      ]
+    })
+    await setTimeoutResolve(null, 500)
+    expect(page.data$.queue).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    expect(page.data$.optionsList).toEqual([{}, { a: 1 }])
+    expect(comp1.data$.queue).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    expect(comp2.data$.queue).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    done()
+  }, 20000)
+
+  test('捕获生命周期执行错误：同步', async done => {
+    await miniProgram.reLaunch('/pages/lifecycleError/lifecycle')
+    const page = await miniProgram.evaluate(() => {
+      return getCurrentPages()[0]
+    })
+    await setTimeoutResolve(null, 500)
+    expect(page.data$.queue).toEqual([1, 2, 3, 4])
+
+    notControlLifecycle()
+    const queue: any = []
+    Epage({
+      onLoad() {
+        queue.push(1)
+        throw new Error()
+      },
+      catchLifeCycleError() {
+        queue.push(2)
+      }
+    })
+    await setTimeoutResolve(null, 100)
+    expect(queue).toEqual([1, 2])
+    done()
+  }, 20000)
+
+  test('捕获生命周期执行错误：异步', async done => {
+    await miniProgram.reLaunch('/pages/lifecycleError/lifecycle1')
+    const page = await miniProgram.evaluate(() => {
+      return getCurrentPages()[0]
+    })
+    await setTimeoutResolve(null, 500)
+    expect(page.data$.queue).toEqual([1, 2, 3, 4])
+
+    notControlLifecycle()
+    const queue: any = []
+    Epage({
+      onLoad() {
+        queue.push(1)
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject(new Error())
+          })
+        })
+      }
+    })
+    await setTimeoutResolve(null, 100)
+    expect(queue).toEqual([1])
+    done()
+  }, 20000)
+
+  test('异步情况: 生命周期应该按照顺序执行', async done => {
+    // 生命周期执行顺序
+    // 初始化
+    // ⬇️ onLaunch App
+    // ⬇️ onShow App
+    // App的onShow，应该在App onLaunch执行完成之后执行
+
+    // ⬇️ created Comp
+    // Component的created，应该在Page onShow执行完成之后执行
+
+    // ⬇️ attached Comp
+    // Component的attached，应该在Component created执行完成之后执行
+
+    // ⬇️ ready Comp
+    // Component的ready，应该在Component attached执行完成之后执行
+
+    // ⬇️ onLoad Page
+    // Page的onLoad，应该在App onShow执行完成之后执行
+
+    // ⬇️ onShow Page
+    // Page的onShow 应该在Page onLoad执行完成之后执行
+
+    // ⬇️ onReady Page
+    // Page的onReady，应该在Page onShow执行完成之后执行
+
+    // 切后台
+    // ⬇️ onHide Page
+    // ⬇️ onHide App
+    // App的onHide，应该在Page onHide执行完成之后执行
+
+    // 切前台
+    // ⬇️ onShow App
+    // ⬇️ onShow Page
+    // Page的onShow  应该在App onShow执行完成之后执行
+
+    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
+    await miniProgram.navigateTo('/pages/lcOrderAsync/lcOrder')
+    const globalData = await miniProgram.evaluate(() => {
+      return getApp().globalData
+    })
+    expect(globalData.orderAsync).toEqual([
+      'onLaunch',
+      'onShow',
+      'onHide',
+      'onLoad',
+      'onShow',
+      'onReady',
+      'created',
+      'attached',
+      'ready'
+    ])
+    done()
+  }, 20000)
+
+  test('独立分包: 生命周期执行顺序', async done => {
+    ;(global as any).getApp = () => false
+    await miniProgram.reLaunch('/pages/moduleA/pages/independent')
+    const page = await miniProgram.evaluate(() => {
+      return getCurrentPages()[0]
+    })
+    await setTimeoutResolve(null, 500)
+    expect(page.data$.queue).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    expect(page.data$.optionsList).toEqual([{}, { a: 1 }])
+    done()
+    ;(global as any).getApp = () => true
+  }, 20000)
+
+  test('自定义生命周期控制', async done => {
+    customControlLifecycle(({ invokeHooks }: any) => invokeHooks())
+    await miniProgram.evaluate(() => {
+      getApp().customControlLifecycle(({ invokeHooks }: any) => invokeHooks())
+    })
+    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
+    await miniProgram.navigateTo('/pages/lcOrderAsync/lcOrder')
+    const globalData = await miniProgram.evaluate(() => {
+      return getApp().globalData
+    })
+    expect(globalData.orderAsync).not.toEqual([
+      'onLaunch',
+      'onShow',
+      'onHide',
+      'onLoad',
+      'onShow',
+      'onReady',
+      'created',
+      'attached',
+      'ready'
+    ])
+    done()
+  }, 20000)
+
+  test('解除生命周期控制', async done => {
+    await miniProgram.evaluate(() => {
+      getApp().notControlLifecycle()
+    })
+    await miniProgram.reLaunch('/pages/lifecycle/lifecycle')
+    await miniProgram.navigateTo('/pages/lcOrderAsync/lcOrder')
+    const globalData = await miniProgram.evaluate(() => {
+      return getApp().globalData
+    })
+    expect(globalData.orderAsync).not.toEqual([
+      'onLaunch',
+      'onShow',
+      'onHide',
+      'onLoad',
+      'onShow',
+      'onReady',
+      'created',
+      'attached',
+      'ready'
+    ])
+    done()
+  }, 20000)
 })

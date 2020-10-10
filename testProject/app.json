@@ -1,9 +1,20 @@
 {
   "pages": [
     "pages/lifecycle/lifecycle",
+    "pages/lifecycleError/lifecycle",
+    "pages/lifecycleError/lifecycle1",
     "pages/lcOrderAsync/lcOrder",
     "pages/reactive/reactive",
     "pages/watching/watching"
+  ],
+  "subpackages": [
+    {
+      "root": "moduleA",
+      "independent": true,
+      "pages": [
+        "pages/independent"
+      ]
+    }
   ],
   "window": {
     "backgroundTextStyle": "light",

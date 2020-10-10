@@ -26,6 +26,7 @@ module.exports = {
   coveragePathIgnorePatterns: [
     '<rootDir>/node_modules',
     '<rootDir>/src/request.ts',
+    '<rootDir>/src/createPushHooks.ts',
     '<rootDir>/src/util.ts'
   ],
 

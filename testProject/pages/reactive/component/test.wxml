@@ -3,7 +3,7 @@
   <button id="changeRef" bindtap="changeRef">{{refVal}}</button>
 </view>
 <view>
-  <button id="changeReactiveVal" bindtap="changeReactiveVal">{{reactiveVal.value}}</button>
+  <button id="changeReactiveVal" bindtap="changeReactiveVal">{{reactiveVal.value.a.b}}</button>
 </view>
 <view>
   <button id="changeReactiveArr" bindtap="changeReactiveArr">{{reactiveVal.array}}</button>

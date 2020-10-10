@@ -9,11 +9,15 @@ Ecomponent({
     const changeRef = () => refVal.value++
 
     const reactiveVal = reactive({
-      value: 1,
+      value: {
+        a: {
+          b: 1
+        }
+      },
       array: [1, 2, 3]
     })
     // reactive值修改会同步至data和data$
-    const changeReactiveVal = () => reactiveVal.value++
+    const changeReactiveVal = () => reactiveVal.value.a.b++
     // reactive数组值通过方法修改会同步至data和data$
     const changeReactiveArr = () => reactiveVal.array.pop()
 

@@ -4,12 +4,18 @@ import {
   isFunction,
   isObject,
   transformOnName
-} from '@/util'
+} from './util'
 import { initEvents } from './events'
 import { handlerMixins } from './mixins'
 import { handlerSetup } from './reactive'
 import { setDataNextTick } from './setDataEffect'
-type Lifetime = AppLifeTime | PageLifeTime | ComponentLifeTime
+import {
+  appPushHooks,
+  componentPushHooks,
+  pagePushHooks,
+  setCurrentCtx,
+  lc
+} from './createPushHooks'
 
 let isControlLifecycle = true
 /** 不控制生命周期的运行顺序 */
@@ -56,10 +62,12 @@ let controlLifecycle: ControlLifecycleFn = ({
   } else if (type === 'page') {
     if (name === 'onLoad') {
       // 没有App说明是独立分包情况，不需要等待
+      /* istanbul ignore next */
       if (getApp()) {
         // Page的onLoad，应该在App onShow执行完成之后执行
         return waitHook(lcEventBus, 'app:onShow:resolve')
       } else {
+        /* istanbul ignore next */
         return invokeHooks()
       }
     } else if (name === 'onShow') {
@@ -72,6 +80,7 @@ let controlLifecycle: ControlLifecycleFn = ({
         : // 已经onLoad（onLoad肯定在app:onShow之后执行），说明是切后台逻辑
         ctx['__onLoad:resolve__']
         ? // 监听app:onShow
+          /* istanbul ignore next */
           lcEventBus.$once('app:onShow:resolve', invokeHooks)
         : // 初始化逻辑，监听onLoad
           ctx.$once('onLoad:resolve', invokeHooks)
@@ -83,7 +92,7 @@ let controlLifecycle: ControlLifecycleFn = ({
       // 其他的生命周期直接调用
       invokeHooks()
     }
-  } else if (type === 'component') {
+  } else {
     if (name === 'created') {
       // Component的created，应该在Page onShow执行完成之后执行
       return waitHook(lcEventBus, 'page:onShow:resolve')
@@ -107,52 +116,14 @@ export const customControlLifecycle = (fn: ControlLifecycleFn) => {
 // 生命周期事件总线，控制生命周期的正确运行顺序
 const lcEventBus = initEvents()
 
-// 需要装饰的所有生命周期
-export const lc = {
-  app: [
-    'onLaunch',
-    'onShow',
-    'onHide',
-    'onError',
-    'onPageNotFound',
-    'onUnhandledRejection',
-    'onThemeChange'
-  ] as Array<AppLifeTime>,
-  page: [
-    'onLoad',
-    'onShow',
-    'onReady',
-    'onHide',
-    'onUnload',
-    'onPullDownRefresh',
-    'onReachBottom',
-    'onShareAppMessage',
-    // 'onPageScroll', 性能问题：一旦监听，每次滚动两个线程之间都会通信一次
-    'onTabItemTap',
-    'onResize',
-    'onAddToFavorites'
-  ] as Array<PageLifeTime>,
-  component: [
-    'created',
-    'attached',
-    'ready',
-    'moved',
-    'detached',
-    'error',
-    'show',
-    'hide',
-    'resize'
-  ] as Array<ComponentLifeTime>
-}
-
 /**
  * @description 装饰小程序生命周期
  * @param options 用户给构造函数传入的选项
  * @param type App | Page | Component
  */
 export function decoratorLifeCycle(
-  options: LooseObject = {},
-  type: DecoratorType = 'page'
+  options: LooseObject,
+  type: DecoratorType
 ): LooseObject {
   // 组件要做额外处理
   if (type === 'component') {
@@ -220,7 +191,9 @@ export function decoratorLifeCycle(
             })
           })
         } else {
+          /* istanbul ignore next */
           this.__hooks__.hide.push(() => {
+            /* istanbul ignore next */
             this['__show:resolve__'] = this['__show:reject__'] = false
           })
         }
@@ -242,8 +215,10 @@ export function decoratorLifeCycle(
       // 如果用户定义了生命周期函数
       if (userHooks) {
         // 统一处理为数组
+        /* istanbul ignore next */
         if (!Array.isArray(userHooks)) userHooks = [userHooks as HookFn]
         setCurrentCtx(this)
+        /* istanbul ignore next */
         userHooks.forEach(fn => {
           if (isFunction(fn)) {
             // 在setup中添加的钩子应该于原函数之前执行
@@ -293,6 +268,7 @@ export function decoratorLifeCycle(
           // 执行保存的钩子函数
           const result = callHooks(type, name, options, this)
           // 异步结果
+          /* istanbul ignore next */
           if (isFunction(result?.then)) {
             result.then(resolve).catch(reject)
           } else {
@@ -332,16 +308,6 @@ export function decoratorLifeCycle(
   return options
 }
 
-// 全局保留上下文，添加钩子函数时使用
-let currentCtx: EnhanceRuntime | null = null
-function setCurrentCtx(ctx: EnhanceRuntime | null) {
-  currentCtx = ctx
-}
-// 获取生命周期执行是的this值，可能为null
-export function getCurrentCtx(): EnhanceRuntime | null {
-  return currentCtx
-}
-
 /**
  * 初始化生命周期钩子相关属性
  */
@@ -367,8 +333,10 @@ function callHooks(
   name: Lifetime,
   options: LooseObject,
   ctx: EnhanceRuntime,
-  startIdx = 0
+  startIdx?: number
 ) {
+  /* istanbul ignore next */
+  startIdx = Number(startIdx) ? startIdx : 0
   // 将运行标识位全部置为false
   ctx[`__${name}:resolve__`] = false
   ctx[`__${name}:reject__`] = false
@@ -396,7 +364,8 @@ function callHooks(
   }
 
   if (len) {
-    for (let i = startIdx; i < len; i++) {
+    for (let i = startIdx!; i < len; i++) {
+      /* istanbul ignore next */
       if (isFunction(optOrPromise?.then)) {
         // 异步微任务执行
         optOrPromise = optOrPromise.then((result: any) => {
@@ -419,12 +388,15 @@ function callHooks(
     const checkNewHooks = (result: any) => {
       result = setDefaultValue(result)
       const nowLen = ctx.__hooks__[name].length
+      /* istanbul ignore next */
       if (nowLen > len) {
         // 如果有，就执行新增的钩子函数
+        /* istanbul ignore next */
         return callHooks(type, name, result, ctx, len)
       }
       return result
     }
+    /* istanbul ignore next */
     if (isFunction(optOrPromise?.then)) {
       optOrPromise = optOrPromise.then(checkNewHooks)
     } else {
@@ -433,72 +405,3 @@ function callHooks(
   }
   return optOrPromise
 }
-
-type PushHooksFn = (cb: HookFn) => void
-
-// 生成添加钩子的函数
-function createPushHooks(name: Lifetime): PushHooksFn {
-  // 添加钩子函数
-  return function pushHooks(cb: HookFn) {
-    // 函数才能被推入
-    if (isFunction(cb)) {
-      let i
-      if ((i = currentCtx) && (i = i.__hooks__[name])) {
-        // 避免onShow、onHide等多次调用的生命周期，重复添加相同的钩子函数
-        if (!i.includes(cb)) {
-          i.push(cb)
-        }
-      }
-    }
-  }
-}
-
-// App的添加函数
-const appPushHooks = lc.app.reduce((res, name) => {
-  res[name] = createPushHooks(name)
-  return res
-}, {} as { [P in AppLifeTime]: PushHooksFn })
-
-export const onLaunch = appPushHooks.onLaunch
-export const onAppShow = appPushHooks.onShow
-export const onAppHide = appPushHooks.onHide
-export const onAppError = appPushHooks.onError
-export const onPageNotFound = appPushHooks.onPageNotFound
-export const onUnhandledRejection = appPushHooks.onUnhandledRejection
-export const onThemeChange = appPushHooks.onThemeChange
-
-// Page的添加函数
-const pagePushHooks = lc.page.reduce((res, name) => {
-  res[name] = createPushHooks(name)
-  return res
-}, {} as { [P in PageLifeTime]: PushHooksFn })
-
-export const onLoad = pagePushHooks.onLoad
-export const onShow = pagePushHooks.onShow
-export const onReady = pagePushHooks.onReady
-export const onHide = pagePushHooks.onHide
-export const onUnload = pagePushHooks.onUnload
-export const onPullDownRefresh = pagePushHooks.onPullDownRefresh
-export const onReachBottom = pagePushHooks.onReachBottom
-export const onShareAppMessage = pagePushHooks.onShareAppMessage
-export const onTabItemTap = pagePushHooks.onTabItemTap
-export const onResize = pagePushHooks.onResize
-export const onAddToFavorites = pagePushHooks.onAddToFavorites
-
-// Component的添加函数
-const componentPushHooks = lc.component.reduce((res, name: string) => {
-  // created => onCreated | ready => onReady
-  const onName = transformOnName(name)
-  res[onName as ComponentHooksName] = createPushHooks(name as ComponentLifeTime)
-  return res
-}, {} as { [P in ComponentHooksName]: PushHooksFn })
-
-export const onCreated = componentPushHooks.onCreated
-export const onAttached = componentPushHooks.onAttached
-export const onComponentReady = componentPushHooks.onReady
-export const onMoved = componentPushHooks.onMoved
-export const onDetached = componentPushHooks.onDetached
-export const onError = componentPushHooks.onError
-export const onPageShow = componentPushHooks.onShow
-export const onPageHide = componentPushHooks.onHide
-export const onPageResize = componentPushHooks.onResize
