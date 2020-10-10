@@ -24,6 +24,7 @@ function flushSetDataJobs() {
     const res = diffData(ctx.data, ctx.data$)
     if (!res) return ctx.$emit('setDataRender:resolve')
     // console.log('响应式触发this.setData，参数: ', res)
+    syncOldData(ctx.data, res!)
     ctx.setData(res, () => {
       ctx.$emit('setDataRender:resolve')
     })
@@ -40,4 +41,19 @@ export function setDataNextTick(this: EnhanceRuntime, cb?: LooseFunction) {
     promise = promise.then(cb)
   }
   return promise!
+}
+
+/**
+ * @description 同步更新旧数据，用于下次数据对比
+ */
+function syncOldData(data: LooseObject, updateData: LooseObject) {
+  Object.entries(updateData).forEach(([paths, value]) => {
+    const pathsArr = paths.split('.')
+    const key = pathsArr.pop()!
+    let obj = data
+    while (pathsArr.length) {
+      obj = obj[pathsArr.shift()!]
+    }
+    obj[key] = value
+  })
 }
