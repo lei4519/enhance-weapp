@@ -1,3 +1,4 @@
+import { EnhanceEvents, LooseFunction, LooseObject } from '../types'
 import { defineReadonlyProp, disabledEnumerable, isFunction } from './util'
 
 export function initEvents(ctx: LooseObject = {}): EnhanceEvents {

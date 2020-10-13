@@ -1,3 +1,4 @@
+import { EpageFn } from '../types'
 import { decoratorLifeCycle } from './lifecycle'
 
 export const Epage: EpageFn = options => {

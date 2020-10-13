@@ -1,3 +1,4 @@
+import { LooseFunction, Interceptors, AjaxOptions } from '../types'
 import { isFunction } from './util'
 const request: [LooseFunction, LooseFunction][] = []
 const response: [LooseFunction, LooseFunction][] = []

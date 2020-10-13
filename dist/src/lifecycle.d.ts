@@ -1,3 +1,4 @@
+import { ControlLifecycleFn, DecoratorType, EnhanceRuntime, LooseObject } from '../types';
 /** 不控制生命周期的运行顺序 */
 export declare const notControlLifecycle: () => void;
 export declare const customControlLifecycle: (fn: ControlLifecycleFn) => void;

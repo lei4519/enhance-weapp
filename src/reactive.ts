@@ -8,6 +8,7 @@ import {
 import { reactive } from '@vue/reactivity'
 import { setDataQueueJob } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
+import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
 
 export function handlerSetup(
   ctx: EnhanceRuntime,

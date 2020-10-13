@@ -1,3 +1,4 @@
+import { LooseObject } from '../types';
 export declare function noop(): void;
 /**
  * @description 定义属性，不可修改，不可遍历，不可删除

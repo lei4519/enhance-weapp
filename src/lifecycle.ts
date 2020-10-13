@@ -16,6 +16,7 @@ import {
   setCurrentCtx,
   lc
 } from './createPushHooks'
+import { AppLifeTime, ComponentHooksName, ControlLifecycleFn, DecoratorType, EnhanceRuntime, HookFn, Lifetime, LooseObject, PageLifeTime, WaitHookFn } from '../types'
 
 let isControlLifecycle = true
 /** 不控制生命周期的运行顺序 */

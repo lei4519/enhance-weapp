@@ -1,3 +1,4 @@
+import { LooseObject } from '../types'
 import { cloneDeepRawData, getRawData, getType, isPrimitive } from './util'
 /**
  * @description diff新旧数据，返回差异路径对象

@@ -1,3 +1,4 @@
+import { ComponentLifeTime, HookFn, EnhanceRuntime } from '../types';
 export declare const lc: {
     app: ("onLaunch" | "onShow" | "onHide" | "onError" | "onPageNotFound" | "onUnhandledRejection" | "onThemeChange")[];
     page: ("onShow" | "onHide" | "onLoad" | "onReady" | "onUnload" | "onPullDownRefresh" | "onReachBottom" | "onShareAppMessage" | "onShareTimeline" | "onTabItemTap" | "onResize" | "onAddToFavorites")[];

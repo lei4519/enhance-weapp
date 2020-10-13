@@ -1,5 +1,6 @@
 import { isFunction } from './util'
 import { diffData } from '@/diffData'
+import { EnhanceRuntime, LooseFunction, LooseObject } from '../types'
 // 需要更新的异步队列
 const setDataCtxQueue: Set<EnhanceRuntime> = new Set()
 // 是否注册了异步任务

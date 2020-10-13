@@ -1,3 +1,4 @@
+import { GlobalMixinsOptions, DecoratorType, EnhanceRuntime, HookFn } from '../types'
 import { isObject } from './util'
 
 let mixins: GlobalMixinsOptions | null = null

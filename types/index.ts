@@ -1,32 +1,31 @@
-declare module 'miniprogram-api-promise'
 /** 宽松对象 */
-interface LooseObject {
+export interface LooseObject {
   [key: string]: any
 }
 
 /** 宽松函数 */
-interface LooseFunction extends LooseObject {
+export interface LooseFunction extends LooseObject {
   (...args: any[]): any
 }
 /** 要装饰的类型 */
-type DecoratorType = 'app' | 'page' | 'component'
+export type DecoratorType = 'app' | 'page' | 'component'
 
 /** 钩子函数 */
-type HookFn = (opt?: any) => any | Promise<any>
+export type HookFn = (opt?: any) => any | Promise<any>
 
 /** App 生命周期 */
-type AppLifeTime = keyof WechatMiniprogram.App.Option
+export type AppLifeTime = keyof WechatMiniprogram.App.Option
 /** Page 生命周期 */
-type PageLifeTime = keyof Omit<WechatMiniprogram.Page.ILifetime, 'onPageScroll'>
+export type PageLifeTime = keyof Omit<WechatMiniprogram.Page.ILifetime, 'onPageScroll'>
 /** 组件 生命周期 */
-type ComponentLifeTime =
+export type ComponentLifeTime =
   | keyof Omit<WechatMiniprogram.Component.Lifetimes, 'lifetimes'>
   | 'show'
   | 'hide'
   | 'resize'
 
 /** setup 类型 */
-interface SetupOptions {
+export interface SetupOptions {
   setup?: (
     // 打开当前页面路径中的参数
     query?: Record<string, string | undefined>
@@ -34,11 +33,11 @@ interface SetupOptions {
 }
 
 /** 默认类型 */
-type DataOption = WechatMiniprogram.Page.DataOption
-type CustomOption = WechatMiniprogram.Page.CustomOption
-type PropertyOption = WechatMiniprogram.Component.PropertyOption
+export type DataOption = WechatMiniprogram.Page.DataOption
+export type CustomOption = WechatMiniprogram.Page.CustomOption
+export type PropertyOption = WechatMiniprogram.Component.PropertyOption
 
-interface EnhanceEvents {
+export interface EnhanceEvents {
   // 记录所有监听的事件
   __events__: Record<string, LooseFunction[]>
   // 监听事件
@@ -53,7 +52,7 @@ interface EnhanceEvents {
 }
 
 /** 增强的运行时参数 */
-interface EnhanceRuntime<T extends string | number | symbol = any> extends EnhanceEvents {
+export interface EnhanceRuntime<T extends string | number | symbol = any> extends EnhanceEvents {
   // 保存所有注册的生命周期钩子
   __hooks__: Record<T, LooseFunction[]>
   // 等待视图更新
@@ -63,14 +62,14 @@ interface EnhanceRuntime<T extends string | number | symbol = any> extends Enhan
 }
 
 /** Eapp 函数 */
-type EappFn = <T extends LooseObject = LooseObject>(
+export type EappFn = <T extends LooseObject = LooseObject>(
   options: WechatMiniprogram.App.Options<
     T & Partial<EnhanceRuntime<AppLifeTime>>
   >
 ) => void
 
 /** Epage 函数 */
-type EpageFn = <
+export type EpageFn = <
   TData extends DataOption = DataOption,
   TCustom extends CustomOption = CustomOption
 >(
@@ -78,13 +77,13 @@ type EpageFn = <
 ) => void
 
 /** Epage 函数参数 */
-type EpageOptions<
+export type EpageOptions<
   TData extends DataOption,
   TCustom extends CustomOption
 > = SetupOptions & WechatMiniprogram.Page.Options<TData, TCustom>
 
 /** Ecomponent 函数 */
-type EcomponentFn = <
+export type EcomponentFn = <
   TData extends DataOption = DataOption,
   TProperty extends PropertyOption = PropertyOption,
   TMethod extends LooseFunction = LooseFunction
@@ -97,7 +96,7 @@ type EcomponentFn = <
 ) => void
 
 /** Ecomponent 函数参数 */
-type EcomponentOptions<
+export type EcomponentOptions<
   TData extends DataOption = DataOption,
   TProperty extends PropertyOption = PropertyOption,
   TMethod extends LooseFunction = LooseFunction
@@ -109,7 +108,7 @@ type EcomponentOptions<
   >
 
 // 组件监听生命周期的函数名称
-type ComponentHooksName =
+export type ComponentHooksName =
   | 'onCreated'
   | 'onAttached'
   | 'onReady'
@@ -120,14 +119,14 @@ type ComponentHooksName =
   | 'onHide'
   | 'onResize'
 
-type Lifetime = AppLifeTime | PageLifeTime | ComponentLifeTime
+export type Lifetime = AppLifeTime | PageLifeTime | ComponentLifeTime
 
 /** 等待指定生命周期执行成功后 调用当前生命周期 */
-type WaitHookFn = (eventBus: EnhanceEvents, eventName: string) => void
+export type WaitHookFn = (eventBus: EnhanceEvents, eventName: string) => void
 
 /** 生命周期的控制函数 */
-type ControlLifecycleFn = (params: ControlLifecycleFnParams) => void
-interface ControlLifecycleFnParams {
+export type ControlLifecycleFn = (params: ControlLifecycleFnParams) => void
+export interface ControlLifecycleFnParams {
   // 类型：APP / Page / Component
   type: DecoratorType
   // 生命周期的名称
@@ -143,10 +142,10 @@ interface ControlLifecycleFnParams {
 }
 
 // request请求参数
-type AjaxOptions = WechatMiniprogram.RequestOption & LooseObject
+export type AjaxOptions = WechatMiniprogram.RequestOption & LooseObject
 
 // 拦截器
-interface Interceptors {
+export interface Interceptors {
   request: {
     use(
       onFulfilled?: (
@@ -164,7 +163,7 @@ interface Interceptors {
 }
 
 /** 全局混入参数 */
-interface GlobalMixinsOptions {
+export interface GlobalMixinsOptions {
   /** 混入App逻辑 */
   app?: {
     /** 混入App 生命周期 */

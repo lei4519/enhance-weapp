@@ -1,3 +1,4 @@
+import { AppLifeTime, ComponentLifeTime, PageLifeTime, HookFn, EnhanceRuntime, Lifetime, ComponentHooksName } from '../types'
 import { isFunction, transformOnName } from './util'
 
 // 需要装饰的所有生命周期

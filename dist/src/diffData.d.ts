@@ -1,3 +1,4 @@
+import { LooseObject } from '../types';
 /**
  * @description diff新旧数据，返回差异路径对象
  *
