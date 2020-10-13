@@ -3,8 +3,6 @@
 - 导航
     - <a href="#user-content-简介">简介</a>
 
-    - <a href="#user-content-项目调整">项目调整</a>
-
     - <a href="#user-content-api">API</a>
 
     - <a href="#user-content-框架注意点">框架注意点</a>
@@ -65,10 +63,7 @@ uniapp、trao等框架也可以实现开发效率的提升，但是这些框架�
   - 全局为 页面/组件 实例混入生命周期钩子、data、方法等
 - 生命周期改为数组结构，可以在setup函数或全局mixins中多次注册
   - 遍历执行时，如果某个函数返回了Promise，则会阻塞后续代码的执行。
-- 为this 加入$ajax方法
-    - 将 wx.request 代理到 `this.$ajax` 上，加入axios拦截器机制抽离业务逻辑
-- 为this 加入发布订阅方法
-    - `this.$on`、`this.$once`、`this.$emit`、`this.$off`
+- 封装wx.request，加入请求拦截器功能机制抽离业务逻辑
 
 ### 响应式
 
@@ -549,20 +544,20 @@ import {
                                  \ -> Page:onLoad -> Page:onShow -> Page:onReady
                                                                   \
                                                                    \ -> Comp:created -> Comp:created -> Comp:attached -> Comp:ready
-    
+
       切换后台：
       Page:onHide -> App:onHide
       App:onShow -> Page:onShow
-  
+
       以上的生命周期即使是异步函数，也会按照上述顺序进行执行。
       一个实际的业务场景就是我们会在页面onLoad时获取用户的token，再之后的请求中将token带上，如果不对初始化的生命周期进行控制的话，就会导致token还在获取中，但页面和组件中的请求方法就已经全部被调用了。
-  
+
       其他的生命周期不会做处理，按照微信原本的调用顺序执行。
-  
+
       如果你不希望对生命周期的顺序进行控制，可以调用 notControlLifecycle 来取消控制，这将使生命周期函数恢复微信本身的调用顺序。
       如果你觉得默认的生命周期控制顺序不符合你的要求，可以调用 customControlLifecycle 来定制你自己的顺序。
     ```
-    
+
 - 不要在组件的methods中定义setup函数，会被options.setup覆盖
 
 - 混入的生命周期钩子应该总是将自己接受到的参数通过return传递下去，否则后续钩子将接受不到参数值
