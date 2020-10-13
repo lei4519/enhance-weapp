@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "增强小程序开发能力，加入vue composition api等特性",
   "main": "dist/enhancemp.min.js",
-  "types": "./types/index.d.ts",
+  "types": "./dist/src/main.d.ts",
   "scripts": {
     "build": "NODE_ENV=production npx rollup --config",
     "build:test": "NODE_ENV=test npx rollup --config",
