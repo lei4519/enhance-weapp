@@ -99,7 +99,7 @@ export function diffData(
       }
       // 长度相等，将数组的每一项推入diff队列中
       for (let i = 0, l = oldData.length; i < l; i++) {
-        diffQueue.push([oldData[i], newData[i], `${keyPath}.${i}`])
+        diffQueue.push([oldData[i], newData[i], `${keyPath}[${i}]`])
       }
       continue
     }

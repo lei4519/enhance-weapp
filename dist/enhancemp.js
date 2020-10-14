@@ -1112,7 +1112,7 @@ function diffData(oldRootData, newRootData) {
             }
             // 长度相等，将数组的每一项推入diff队列中
             for (var i = 0, l = oldData.length; i < l; i++) {
-                diffQueue.push([oldData[i], newData[i], keyPath + "." + i]);
+                diffQueue.push([oldData[i], newData[i], keyPath + "[" + i + "]"]);
             }
             return "continue";
         }
@@ -1224,7 +1224,7 @@ function setDataNextTick(cb) {
 function syncOldData(data, updateData) {
     Object.entries(updateData).forEach(function (_a) {
         var paths = _a[0], value = _a[1];
-        var pathsArr = paths.split('.');
+        var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
         var key = pathsArr.pop();
         var obj = data;
         while (pathsArr.length) {

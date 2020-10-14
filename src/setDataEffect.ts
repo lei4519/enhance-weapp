@@ -49,7 +49,7 @@ export function setDataNextTick(this: EnhanceRuntime, cb?: LooseFunction) {
  */
 function syncOldData(data: LooseObject, updateData: LooseObject) {
   Object.entries(updateData).forEach(([paths, value]) => {
-    const pathsArr = paths.split('.')
+    const pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.')
     const key = pathsArr.pop()!
     let obj = data
     while (pathsArr.length) {
