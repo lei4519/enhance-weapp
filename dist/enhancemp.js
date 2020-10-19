@@ -1823,7 +1823,7 @@ function handlerSetup(ctx, options, type) {
     disabledEnumerable(ctx, '__watching__', false);
     disabledEnumerable(ctx, '__stopWatchFn__', null);
     // 执行setup
-    var setupData = ctx.setup(options);
+    var setupData = ctx.setup.call(ctx, options);
     if (isObject$1(setupData)) {
         Object.keys(setupData).forEach(function (key) {
             var val = setupData[key];
@@ -2178,7 +2178,7 @@ function decoratorLifeCycle(options, type) {
                         this.$nextTick = setDataNextTick;
                         // 处理 setup
                         setCurrentCtx(this);
-                        handlerSetup(this, options, type);
+                        handlerSetup(this, type === 'component' ? this.properties : options, type);
                         setCurrentCtx(null);
                     }
                 }

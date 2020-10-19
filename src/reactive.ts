@@ -22,7 +22,7 @@ export function handlerSetup(
   disabledEnumerable(ctx, '__watching__', false)
   disabledEnumerable(ctx, '__stopWatchFn__', null)
   // 执行setup
-  const setupData = ctx.setup(options)
+  const setupData = ctx.setup.call(ctx, options)
   if (isObject(setupData)) {
     Object.keys(setupData).forEach(key => {
       const val = setupData[key]

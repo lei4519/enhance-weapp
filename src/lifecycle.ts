@@ -207,7 +207,7 @@ export function decoratorLifeCycle(
             this.$nextTick = setDataNextTick
             // 处理 setup
             setCurrentCtx(this)
-            handlerSetup(this, options, type)
+            handlerSetup(this, type === 'component' ? this.properties : options, type)
             setCurrentCtx(null)
           }
         }
