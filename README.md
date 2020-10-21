@@ -216,40 +216,26 @@ globalMixins({
 })
 ```
 
-### 微信 Promise API
-
-#### 使用方法
-
-```js
-import { wxp } from 'enhance-weapp'
-
-wxp.login().then().catch()
-wxp.checkSession().then().catch()
-wxp.showModal().then().catch()
-wxp.pageScrollTo().then().catch()
-```
-
-
 ### request拦截器
 
 #### 使用方法（同axios）
 ```js
-import { wxp } from 'enhance-weapp'
+import { request } from 'enhance-weapp'
 
 // 请求拦截器
-wxp.request.interceptors.request.use(
+request.interceptors.request.use(
   () => {/* resolve 执行 */},
   () => {/* reject 执行 */}
 )
 
 // 响应拦截器
-wxp.request.interceptors.response.use(
+request.interceptors.response.use(
   () => {/* resolve 执行 */},
   () => {/* reject 执行 */}
 )
 
-// 使用wxp.request请求时会应用 注册的拦截器
-wxp.request().then().catch().finally()
+// 使用request请求时会应用 注册的拦截器
+request().then().catch().finally()
 ```
 
 ### 生命周期监听钩子

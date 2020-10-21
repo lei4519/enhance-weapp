@@ -48,3 +48,5 @@ export function requestMethod<T = any>(options: AjaxOptions): Promise<T> {
   })
   return promise
 }
+
+requestMethod.interceptors = interceptors

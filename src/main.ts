@@ -3,8 +3,9 @@ export { Epage } from './Epage'
 export { Eapp } from './Eapp'
 
 export { globalMixins } from './mixins'
-export { wxp } from './wxp'
 export { notControlLifecycle, customControlLifecycle } from './lifecycle'
+
+export { requestMethod as request } from './request'
 
 export {
   getCurrentCtx,
@@ -64,4 +65,5 @@ export {
   triggerRef,
   unref
 } from '@vue/reactivity'
+
 export { watch, watchEffect } from '@vue/runtime-core'

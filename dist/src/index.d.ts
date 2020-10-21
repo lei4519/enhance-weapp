@@ -1,4 +1,3 @@
-declare module 'miniprogram-api-promise'
 /** 宽松对象 */
 interface LooseObject {
   [key: string]: any
