@@ -177,7 +177,6 @@ globalMixins({
       onUnload: [],
       onPullDownRefresh: [],
       onReachBottom: [],
-      onShareAppMessage: [],
       onTabItemTap: [],
       onResize: [],
       onAddToFavorites: []
@@ -309,7 +308,6 @@ import {
   onUnloadHooks,
   onPullDownRefreshHooks,
   onReachBottomHooks,
-  onShareAppMessageHooks,
   onTabItemTapHooks,
   onResizeHooks,
   onAddToFavoritesHooks
@@ -361,7 +359,6 @@ page: [
     'onUnload:resolve',
     'onPullDownRefresh:resolve',
     'onReachBottom:resolve',
-    'onShareAppMessage:resolve',
     'onTabItemTap:resolve',
     'onResize:resolve',
     'onAddToFavorites:resolve',

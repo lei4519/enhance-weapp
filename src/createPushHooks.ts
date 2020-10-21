@@ -20,7 +20,7 @@ export const lc = {
     'onUnload',
     'onPullDownRefresh',
     'onReachBottom',
-    'onShareAppMessage',
+    // 'onShareAppMessage', 分享不需要包装，一个页面只有一个
     // 'onPageScroll', 性能问题：一旦监听，每次滚动两个线程之间都会通信一次
     'onTabItemTap',
     'onResize',
@@ -95,7 +95,6 @@ export const onHide = pagePushHooks.onHide
 export const onUnload = pagePushHooks.onUnload
 export const onPullDownRefresh = pagePushHooks.onPullDownRefresh
 export const onReachBottom = pagePushHooks.onReachBottom
-export const onShareAppMessage = pagePushHooks.onShareAppMessage
 export const onTabItemTap = pagePushHooks.onTabItemTap
 export const onResize = pagePushHooks.onResize
 export const onAddToFavorites = pagePushHooks.onAddToFavorites

@@ -22,7 +22,6 @@ export {
   onUnload as onUnloadHooks,
   onPullDownRefresh as onPullDownRefreshHooks,
   onReachBottom as onReachBottomHooks,
-  onShareAppMessage as onShareAppMessageHooks,
   onTabItemTap as onTabItemTapHooks,
   onResize as onResizeHooks,
   onAddToFavorites as onAddToFavoritesHooks,
