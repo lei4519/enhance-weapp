@@ -1197,11 +1197,11 @@ function setDataQueueFlush() {
 }
 function flushSetDataJobs() {
     setDataCtxQueue.forEach(function (ctx) {
-        var res = diffData(ctx.data, ctx.data$);
+        var res = diffData(ctx.__oldData__, ctx.data$);
         if (!res)
             return ctx.$emit('setDataRender:resolve');
+        ctx.__oldData__ = cloneDeepRawData(ctx.data$);
         // console.log('响应式触发this.setData，参数: ', res)
-        syncOldData(ctx.data, res);
         ctx.setData(res, function () {
             ctx.$emit('setDataRender:resolve');
         });
@@ -1217,22 +1217,6 @@ function setDataNextTick(cb) {
         promise = promise.then(cb);
     }
     return promise;
-}
-/**
- * @description 同步更新旧数据，用于下次数据对比
- */
-function syncOldData(data, updateData) {
-    Object.entries(updateData).forEach(function (_a) {
-        var paths = _a[0], value = _a[1];
-        var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
-        var key = pathsArr.pop();
-        var obj = data;
-        while (pathsArr.length) {
-            /* istanbul ignore next */
-            obj = obj[pathsArr.shift()];
-        }
-        obj[key] = value;
-    });
 }
 
 function callWithErrorHandling(fn, instance, type, args) {
@@ -1822,6 +1806,7 @@ function handlerSetup(ctx, options, type) {
     // 初始化属性，判断数据是否正在被watch
     disabledEnumerable(ctx, '__watching__', false);
     disabledEnumerable(ctx, '__stopWatchFn__', null);
+    disabledEnumerable(ctx, '__oldData__', null);
     // 执行setup
     var setupData = ctx.setup.call(ctx, options);
     if (isObject$1(setupData)) {
@@ -1832,10 +1817,12 @@ function handlerSetup(ctx, options, type) {
             else {
                 // 直接返回reactive值，需要将里面的属性继续ref化
                 ctx.data$[key] = toRef(setupData, key);
+                ctx.data[key] = isRef(setupData[key])
+                    ? unref(setupData[key])
+                    : toRaw(setupData[key]);
             }
         });
-        // 将setup返回的值同步至ctx.data
-        ctx.data = cloneDeepRawData(ctx.data$);
+        ctx.__oldData__ = cloneDeep(ctx.data);
         // 同步合并后的值到渲染层
         if (type === 'page') {
             ctx.setData(ctx.data);
@@ -1917,7 +1904,7 @@ var lc = {
         'onUnload',
         'onPullDownRefresh',
         'onReachBottom',
-        'onShareAppMessage',
+        // 'onShareAppMessage', 分享不需要包装，一个页面只有一个
         // 'onPageScroll', 性能问题：一旦监听，每次滚动两个线程之间都会通信一次
         'onTabItemTap',
         'onResize',
@@ -1984,7 +1971,6 @@ var onHide = pagePushHooks.onHide;
 var onUnload = pagePushHooks.onUnload;
 var onPullDownRefresh = pagePushHooks.onPullDownRefresh;
 var onReachBottom = pagePushHooks.onReachBottom;
-var onShareAppMessage = pagePushHooks.onShareAppMessage;
 var onTabItemTap = pagePushHooks.onTabItemTap;
 var onResize = pagePushHooks.onResize;
 var onAddToFavorites = pagePushHooks.onAddToFavorites;
@@ -2664,7 +2650,6 @@ exports.onPullDownRefreshHooks = onPullDownRefresh;
 exports.onReachBottomHooks = onReachBottom;
 exports.onReadyHooks = onReady;
 exports.onResizeHooks = onResize;
-exports.onShareAppMessageHooks = onShareAppMessage;
 exports.onShowHooks = onShow;
 exports.onTabItemTapHooks = onTabItemTap;
 exports.onThemeChangeHooks = onThemeChange;

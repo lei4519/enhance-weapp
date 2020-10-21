@@ -44,7 +44,6 @@ export declare const onHide: PushHooksFn;
 export declare const onUnload: PushHooksFn;
 export declare const onPullDownRefresh: PushHooksFn;
 export declare const onReachBottom: PushHooksFn;
-export declare const onShareAppMessage: PushHooksFn;
 export declare const onTabItemTap: PushHooksFn;
 export declare const onResize: PushHooksFn;
 export declare const onAddToFavorites: PushHooksFn;

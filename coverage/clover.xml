@@ -1,354 +1,349 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1602333725686" clover="3.2.0">
-  <project timestamp="1602333725686" name="All files">
-    <metrics statements="321" coveredstatements="321" conditionals="179" coveredconditionals="179" methods="61" coveredmethods="61" elements="561" coveredelements="561" complexity="0" loc="321" ncloc="321" packages="1" files="9" classes="9"/>
+<coverage generated="1603278197168" clover="3.2.0">
+  <project timestamp="1603278197168" name="All files">
+    <metrics statements="316" coveredstatements="315" conditionals="183" coveredconditionals="183" methods="59" coveredmethods="58" elements="558" coveredelements="556" complexity="0" loc="316" ncloc="316" packages="1" files="9" classes="9"/>
     <file name="Eapp.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/Eapp.ts">
       <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-      <line num="1" count="1" type="stmt"/>
-      <line num="3" count="1" type="stmt"/>
-      <line num="4" count="5" type="stmt"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="4" count="1" type="stmt"/>
       <line num="5" count="5" type="stmt"/>
+      <line num="6" count="5" type="stmt"/>
     </file>
     <file name="Ecomponent.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/Ecomponent.ts">
       <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-      <line num="1" count="1" type="stmt"/>
-      <line num="3" count="1" type="stmt"/>
-      <line num="4" count="8" type="stmt"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="4" count="1" type="stmt"/>
       <line num="5" count="8" type="stmt"/>
+      <line num="6" count="8" type="stmt"/>
     </file>
     <file name="Epage.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/Epage.ts">
       <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-      <line num="1" count="2" type="stmt"/>
-      <line num="3" count="2" type="stmt"/>
-      <line num="4" count="19" type="stmt"/>
+      <line num="2" count="2" type="stmt"/>
+      <line num="4" count="2" type="stmt"/>
       <line num="5" count="19" type="stmt"/>
+      <line num="6" count="19" type="stmt"/>
     </file>
     <file name="diffData.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/diffData.ts">
       <metrics statements="51" coveredstatements="51" conditionals="30" coveredconditionals="30" methods="7" coveredmethods="7"/>
-      <line num="1" count="4" type="stmt"/>
-      <line num="18" count="4" type="stmt"/>
-      <line num="23" count="18" type="stmt"/>
-      <line num="26" count="18" type="stmt"/>
-      <line num="28" count="18" type="stmt"/>
-      <line num="29" count="20" type="cond" truecount="2" falsecount="0"/>
-      <line num="31" count="20" type="cond" truecount="2" falsecount="0"/>
-      <line num="36" count="18" type="stmt"/>
-      <line num="38" count="18" type="stmt"/>
-      <line num="40" count="18" type="stmt"/>
+      <line num="2" count="4" type="stmt"/>
+      <line num="19" count="4" type="stmt"/>
+      <line num="24" count="18" type="stmt"/>
+      <line num="27" count="18" type="stmt"/>
+      <line num="29" count="18" type="stmt"/>
+      <line num="30" count="20" type="cond" truecount="2" falsecount="0"/>
+      <line num="32" count="20" type="cond" truecount="2" falsecount="0"/>
+      <line num="37" count="18" type="stmt"/>
+      <line num="39" count="18" type="stmt"/>
       <line num="41" count="18" type="stmt"/>
-      <line num="43" count="22" type="stmt"/>
-      <line num="45" count="22" type="cond" truecount="2" falsecount="0"/>
-      <line num="47" count="22" type="cond" truecount="2" falsecount="0"/>
-      <line num="49" count="21" type="stmt"/>
-      <line num="53" count="18" type="cond" truecount="2" falsecount="0"/>
-      <line num="54" count="1" type="stmt"/>
-      <line num="56" count="1" type="stmt"/>
-      <line num="62" count="18" type="stmt"/>
-      <line num="63" count="51" type="stmt"/>
-      <line num="66" count="51" type="stmt"/>
-      <line num="69" count="51" type="cond" truecount="2" falsecount="0"/>
-      <line num="74" count="35" type="stmt"/>
-      <line num="76" count="35" type="stmt"/>
-      <line num="79" count="35" type="cond" truecount="2" falsecount="0"/>
-      <line num="80" count="1" type="stmt"/>
-      <line num="85" count="34" type="cond" truecount="4" falsecount="0"/>
-      <line num="87" count="14" type="stmt"/>
-      <line num="92" count="20" type="cond" truecount="2" falsecount="0"/>
-      <line num="95" count="7" type="cond" truecount="2" falsecount="0"/>
-      <line num="96" count="1" type="stmt"/>
-      <line num="100" count="6" type="stmt"/>
-      <line num="101" count="15" type="stmt"/>
-      <line num="108" count="13" type="stmt"/>
-      <line num="110" count="13" type="stmt"/>
-      <line num="112" count="13" type="cond" truecount="2" falsecount="0"/>
-      <line num="113" count="1" type="stmt"/>
-      <line num="122" count="12" type="stmt"/>
-      <line num="123" count="18" type="stmt"/>
-      <line num="125" count="18" type="stmt"/>
-      <line num="127" count="18" type="stmt"/>
-      <line num="133" count="18" type="cond" truecount="2" falsecount="0"/>
-      <line num="134" count="1" type="stmt"/>
-      <line num="139" count="17" type="stmt"/>
+      <line num="42" count="18" type="stmt"/>
+      <line num="44" count="22" type="stmt"/>
+      <line num="46" count="22" type="cond" truecount="2" falsecount="0"/>
+      <line num="48" count="22" type="cond" truecount="2" falsecount="0"/>
+      <line num="50" count="21" type="stmt"/>
+      <line num="54" count="18" type="cond" truecount="2" falsecount="0"/>
+      <line num="55" count="1" type="stmt"/>
+      <line num="57" count="1" type="stmt"/>
+      <line num="63" count="18" type="stmt"/>
+      <line num="64" count="51" type="stmt"/>
+      <line num="67" count="51" type="stmt"/>
+      <line num="70" count="51" type="cond" truecount="2" falsecount="0"/>
+      <line num="75" count="35" type="stmt"/>
+      <line num="77" count="35" type="stmt"/>
+      <line num="80" count="35" type="cond" truecount="2" falsecount="0"/>
+      <line num="81" count="1" type="stmt"/>
+      <line num="86" count="34" type="cond" truecount="4" falsecount="0"/>
+      <line num="88" count="14" type="stmt"/>
+      <line num="93" count="20" type="cond" truecount="2" falsecount="0"/>
+      <line num="96" count="7" type="cond" truecount="2" falsecount="0"/>
+      <line num="97" count="1" type="stmt"/>
+      <line num="101" count="6" type="stmt"/>
+      <line num="102" count="15" type="stmt"/>
+      <line num="109" count="13" type="stmt"/>
+      <line num="111" count="13" type="stmt"/>
+      <line num="113" count="13" type="cond" truecount="2" falsecount="0"/>
+      <line num="114" count="1" type="stmt"/>
+      <line num="123" count="12" type="stmt"/>
+      <line num="124" count="18" type="stmt"/>
+      <line num="126" count="18" type="stmt"/>
+      <line num="128" count="18" type="stmt"/>
+      <line num="134" count="18" type="cond" truecount="2" falsecount="0"/>
+      <line num="135" count="1" type="stmt"/>
       <line num="140" count="17" type="stmt"/>
-      <line num="143" count="11" type="cond" truecount="2" falsecount="0"/>
-      <line num="144" count="1" type="stmt"/>
+      <line num="141" count="17" type="stmt"/>
+      <line num="144" count="11" type="cond" truecount="2" falsecount="0"/>
       <line num="145" count="1" type="stmt"/>
-      <line num="148" count="11" type="cond" truecount="2" falsecount="0"/>
-      <line num="150" count="10" type="stmt"/>
-      <line num="153" count="18" type="stmt"/>
+      <line num="146" count="1" type="stmt"/>
+      <line num="149" count="11" type="cond" truecount="2" falsecount="0"/>
+      <line num="151" count="10" type="stmt"/>
+      <line num="154" count="18" type="stmt"/>
     </file>
     <file name="events.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/events.ts">
       <metrics statements="28" coveredstatements="28" conditionals="28" coveredconditionals="28" methods="6" coveredmethods="6"/>
-      <line num="1" count="4" type="stmt"/>
-      <line num="3" count="47" type="cond" truecount="2" falsecount="0"/>
-      <line num="4" count="40" type="stmt"/>
-      <line num="6" count="40" type="stmt"/>
-      <line num="10" count="35" type="cond" truecount="2" falsecount="0"/>
+      <line num="2" count="4" type="stmt"/>
+      <line num="4" count="47" type="cond" truecount="2" falsecount="0"/>
+      <line num="5" count="40" type="stmt"/>
+      <line num="7" count="40" type="stmt"/>
       <line num="11" count="35" type="cond" truecount="2" falsecount="0"/>
-      <line num="12" count="34" type="stmt"/>
-      <line num="16" count="40" type="stmt"/>
-      <line num="20" count="55" type="cond" truecount="2" falsecount="0"/>
+      <line num="12" count="35" type="cond" truecount="2" falsecount="0"/>
+      <line num="13" count="34" type="stmt"/>
+      <line num="17" count="40" type="stmt"/>
       <line num="21" count="55" type="cond" truecount="2" falsecount="0"/>
-      <line num="22" count="54" type="stmt"/>
+      <line num="22" count="55" type="cond" truecount="2" falsecount="0"/>
       <line num="23" count="54" type="stmt"/>
-      <line num="27" count="40" type="stmt"/>
-      <line num="29" count="3020" type="stmt"/>
-      <line num="31" count="1010" type="cond" truecount="6" falsecount="0"/>
-      <line num="32" count="46" type="stmt"/>
-      <line num="33" count="69" type="stmt"/>
+      <line num="24" count="54" type="stmt"/>
+      <line num="28" count="40" type="stmt"/>
+      <line num="30" count="2840" type="stmt"/>
+      <line num="32" count="950" type="cond" truecount="6" falsecount="0"/>
+      <line num="33" count="46" type="stmt"/>
       <line num="34" count="69" type="stmt"/>
-      <line num="35" count="69" type="cond" truecount="2" falsecount="0"/>
-      <line num="36" count="51" type="stmt"/>
+      <line num="35" count="69" type="stmt"/>
+      <line num="36" count="69" type="cond" truecount="2" falsecount="0"/>
       <line num="37" count="51" type="stmt"/>
-      <line num="43" count="40" type="stmt"/>
-      <line num="48" count="54" type="cond" truecount="6" falsecount="0"/>
-      <line num="51" count="53" type="cond" truecount="2" falsecount="0"/>
-      <line num="52" count="53" type="stmt"/>
-      <line num="53" count="53" type="cond" truecount="2" falsecount="0"/>
-      <line num="54" count="52" type="stmt"/>
-      <line num="58" count="40" type="stmt"/>
+      <line num="38" count="51" type="stmt"/>
+      <line num="44" count="40" type="stmt"/>
+      <line num="49" count="54" type="cond" truecount="6" falsecount="0"/>
+      <line num="52" count="53" type="cond" truecount="2" falsecount="0"/>
+      <line num="53" count="53" type="stmt"/>
+      <line num="54" count="53" type="cond" truecount="2" falsecount="0"/>
+      <line num="55" count="52" type="stmt"/>
+      <line num="59" count="40" type="stmt"/>
     </file>
     <file name="lifecycle.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/lifecycle.ts">
-      <metrics statements="125" coveredstatements="125" conditionals="70" coveredconditionals="70" methods="19" coveredmethods="19"/>
+      <metrics statements="125" coveredstatements="125" conditionals="72" coveredconditionals="72" methods="19" coveredmethods="19"/>
       <line num="1" count="3" type="stmt"/>
       <line num="8" count="3" type="stmt"/>
       <line num="9" count="3" type="stmt"/>
       <line num="10" count="3" type="stmt"/>
       <line num="11" count="3" type="stmt"/>
       <line num="12" count="3" type="stmt"/>
-      <line num="20" count="3" type="stmt"/>
-      <line num="22" count="3" type="stmt"/>
+      <line num="21" count="3" type="stmt"/>
       <line num="23" count="3" type="stmt"/>
-      <line num="26" count="3" type="stmt"/>
-      <line num="27" count="195" type="stmt"/>
-      <line num="28" count="195" type="stmt"/>
-      <line num="29" count="195" type="stmt"/>
-      <line num="30" count="195" type="stmt"/>
-      <line num="31" count="195" type="stmt"/>
-      <line num="32" count="195" type="stmt"/>
-      <line num="51" count="195" type="cond" truecount="2" falsecount="0"/>
-      <line num="52" count="35" type="cond" truecount="2" falsecount="0"/>
-      <line num="54" count="5" type="stmt"/>
-      <line num="55" count="30" type="cond" truecount="2" falsecount="0"/>
-      <line num="57" count="5" type="stmt"/>
-      <line num="60" count="25" type="stmt"/>
-      <line num="62" count="160" type="cond" truecount="2" falsecount="0"/>
-      <line num="63" count="112" type="cond" truecount="2" falsecount="0"/>
-      <line num="73" count="100" type="cond" truecount="2" falsecount="0"/>
-      <line num="77" count="10" type="cond" truecount="2" falsecount="0"/>
-      <line num="87" count="10" type="stmt"/>
-      <line num="88" count="90" type="cond" truecount="2" falsecount="0"/>
-      <line num="90" count="10" type="stmt"/>
-      <line num="93" count="80" type="stmt"/>
-      <line num="96" count="48" type="cond" truecount="2" falsecount="0"/>
-      <line num="98" count="8" type="stmt"/>
-      <line num="99" count="40" type="cond" truecount="2" falsecount="0"/>
-      <line num="101" count="8" type="stmt"/>
-      <line num="102" count="32" type="cond" truecount="2" falsecount="0"/>
-      <line num="104" count="8" type="stmt"/>
-      <line num="107" count="24" type="stmt"/>
-      <line num="112" count="3" type="stmt"/>
-      <line num="113" count="1" type="stmt"/>
-      <line num="117" count="3" type="stmt"/>
-      <line num="124" count="3" type="stmt"/>
-      <line num="129" count="32" type="cond" truecount="2" falsecount="0"/>
-      <line num="131" count="8" type="cond" truecount="2" falsecount="0"/>
-      <line num="133" count="8" type="cond" truecount="2" falsecount="0"/>
-      <line num="135" count="8" type="cond" truecount="2" falsecount="0"/>
+      <line num="24" count="3" type="stmt"/>
+      <line num="27" count="3" type="stmt"/>
+      <line num="28" count="185" type="stmt"/>
+      <line num="29" count="185" type="stmt"/>
+      <line num="30" count="185" type="stmt"/>
+      <line num="31" count="185" type="stmt"/>
+      <line num="32" count="185" type="stmt"/>
+      <line num="33" count="185" type="stmt"/>
+      <line num="52" count="185" type="cond" truecount="2" falsecount="0"/>
+      <line num="53" count="35" type="cond" truecount="2" falsecount="0"/>
+      <line num="55" count="5" type="stmt"/>
+      <line num="56" count="30" type="cond" truecount="2" falsecount="0"/>
+      <line num="58" count="5" type="stmt"/>
+      <line num="61" count="25" type="stmt"/>
+      <line num="63" count="150" type="cond" truecount="2" falsecount="0"/>
+      <line num="64" count="102" type="cond" truecount="2" falsecount="0"/>
+      <line num="74" count="90" type="cond" truecount="2" falsecount="0"/>
+      <line num="78" count="10" type="cond" truecount="2" falsecount="0"/>
+      <line num="88" count="10" type="stmt"/>
+      <line num="89" count="80" type="cond" truecount="2" falsecount="0"/>
+      <line num="91" count="10" type="stmt"/>
+      <line num="94" count="70" type="stmt"/>
+      <line num="97" count="48" type="cond" truecount="2" falsecount="0"/>
+      <line num="99" count="8" type="stmt"/>
+      <line num="100" count="40" type="cond" truecount="2" falsecount="0"/>
+      <line num="102" count="8" type="stmt"/>
+      <line num="103" count="32" type="cond" truecount="2" falsecount="0"/>
+      <line num="105" count="8" type="stmt"/>
+      <line num="108" count="24" type="stmt"/>
+      <line num="113" count="3" type="stmt"/>
+      <line num="114" count="1" type="stmt"/>
+      <line num="118" count="3" type="stmt"/>
+      <line num="125" count="3" type="stmt"/>
+      <line num="130" count="32" type="cond" truecount="2" falsecount="0"/>
+      <line num="132" count="8" type="cond" truecount="2" falsecount="0"/>
+      <line num="134" count="8" type="cond" truecount="2" falsecount="0"/>
       <line num="136" count="8" type="cond" truecount="2" falsecount="0"/>
-      <line num="140" count="32" type="stmt"/>
-      <line num="143" count="32" type="stmt"/>
-      <line num="145" count="316" type="stmt"/>
-      <line num="149" count="316" type="stmt"/>
-      <line num="157" count="316" type="cond" truecount="2" falsecount="0"/>
-      <line num="163" count="316" type="stmt"/>
-      <line num="165" count="252" type="cond" truecount="5" falsecount="0"/>
-      <line num="167" count="32" type="stmt"/>
-      <line num="169" count="32" type="stmt"/>
-      <line num="171" count="32" type="stmt"/>
-      <line num="174" count="32" type="cond" truecount="2" falsecount="0"/>
-      <line num="175" count="5" type="stmt"/>
+      <line num="137" count="8" type="cond" truecount="2" falsecount="0"/>
+      <line num="141" count="32" type="stmt"/>
+      <line num="144" count="32" type="stmt"/>
+      <line num="146" count="297" type="stmt"/>
+      <line num="150" count="297" type="stmt"/>
+      <line num="158" count="297" type="cond" truecount="2" falsecount="0"/>
+      <line num="164" count="297" type="stmt"/>
+      <line num="166" count="237" type="cond" truecount="5" falsecount="0"/>
+      <line num="168" count="32" type="stmt"/>
+      <line num="170" count="32" type="stmt"/>
+      <line num="172" count="32" type="stmt"/>
+      <line num="175" count="32" type="cond" truecount="2" falsecount="0"/>
       <line num="176" count="5" type="stmt"/>
-      <line num="180" count="27" type="cond" truecount="2" falsecount="0"/>
-      <line num="181" count="19" type="stmt"/>
-      <line num="182" count="15" type="stmt"/>
-      <line num="186" count="19" type="stmt"/>
-      <line num="187" count="15" type="stmt"/>
-      <line num="188" count="165" type="stmt"/>
-      <line num="202" count="32" type="cond" truecount="2" falsecount="0"/>
-      <line num="204" count="27" type="cond" truecount="2" falsecount="0"/>
-      <line num="206" count="14" type="stmt"/>
-      <line num="208" count="14" type="stmt"/>
+      <line num="177" count="5" type="stmt"/>
+      <line num="181" count="27" type="cond" truecount="2" falsecount="0"/>
+      <line num="182" count="19" type="stmt"/>
+      <line num="183" count="15" type="stmt"/>
+      <line num="187" count="19" type="stmt"/>
+      <line num="188" count="15" type="stmt"/>
+      <line num="189" count="150" type="stmt"/>
+      <line num="203" count="32" type="cond" truecount="2" falsecount="0"/>
+      <line num="205" count="27" type="cond" truecount="2" falsecount="0"/>
+      <line num="207" count="14" type="stmt"/>
       <line num="209" count="14" type="stmt"/>
-      <line num="210" count="14" type="stmt"/>
-      <line num="216" count="252" type="cond" truecount="2" falsecount="0"/>
-      <line num="220" count="7" type="stmt"/>
-      <line num="237" count="7" type="stmt"/>
-      <line num="241" count="252" type="stmt"/>
-      <line num="243" count="250" type="stmt"/>
-      <line num="244" count="248" type="stmt"/>
-      <line num="245" count="248" type="stmt"/>
-      <line num="247" count="248" type="stmt"/>
-      <line num="248" count="248" type="stmt"/>
-      <line num="250" count="248" type="stmt"/>
-      <line num="251" count="248" type="stmt"/>
-      <line num="254" count="250" type="stmt"/>
-      <line num="255" count="2" type="stmt"/>
+      <line num="210" count="14" type="cond" truecount="2" falsecount="0"/>
+      <line num="211" count="14" type="stmt"/>
+      <line num="217" count="237" type="cond" truecount="2" falsecount="0"/>
+      <line num="221" count="7" type="stmt"/>
+      <line num="238" count="7" type="stmt"/>
+      <line num="242" count="237" type="stmt"/>
+      <line num="244" count="235" type="stmt"/>
+      <line num="245" count="233" type="stmt"/>
+      <line num="246" count="233" type="stmt"/>
+      <line num="248" count="233" type="stmt"/>
+      <line num="249" count="233" type="stmt"/>
+      <line num="251" count="233" type="stmt"/>
+      <line num="252" count="233" type="stmt"/>
+      <line num="255" count="235" type="stmt"/>
       <line num="256" count="2" type="stmt"/>
-      <line num="257" count="2" type="cond" truecount="2" falsecount="0"/>
-      <line num="258" count="1" type="stmt"/>
-      <line num="260" count="2" type="stmt"/>
+      <line num="257" count="2" type="stmt"/>
+      <line num="258" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="259" count="1" type="stmt"/>
       <line num="261" count="2" type="stmt"/>
-      <line num="263" count="2" type="stmt"/>
+      <line num="262" count="2" type="stmt"/>
       <line num="264" count="2" type="stmt"/>
-      <line num="267" count="250" type="stmt"/>
-      <line num="269" count="250" type="stmt"/>
-      <line num="280" count="1" type="stmt"/>
-      <line num="285" count="252" type="stmt"/>
-      <line num="286" count="56" type="stmt"/>
-      <line num="292" count="252" type="cond" truecount="2" falsecount="0"/>
-      <line num="293" count="195" type="stmt"/>
-      <line num="303" count="57" type="stmt"/>
-      <line num="308" count="32" type="stmt"/>
-      <line num="314" count="3" type="stmt"/>
-      <line num="319" count="38" type="stmt"/>
-      <line num="321" count="38" type="stmt"/>
-      <line num="323" count="376" type="stmt"/>
-      <line num="324" count="376" type="stmt"/>
-      <line num="325" count="376" type="stmt"/>
-      <line num="327" count="38" type="stmt"/>
-      <line num="341" count="250" type="stmt"/>
-      <line num="342" count="250" type="stmt"/>
-      <line num="343" count="250" type="stmt"/>
-      <line num="344" count="250" type="stmt"/>
-      <line num="347" count="250" type="stmt"/>
-      <line num="349" count="250" type="stmt"/>
-      <line num="351" count="250" type="stmt"/>
-      <line num="356" count="250" type="stmt"/>
-      <line num="357" count="122" type="cond" truecount="2" falsecount="0"/>
-      <line num="359" count="110" type="stmt"/>
-      <line num="362" count="12" type="stmt"/>
-      <line num="366" count="250" type="cond" truecount="2" falsecount="0"/>
-      <line num="367" count="64" type="stmt"/>
-      <line num="388" count="60" type="stmt"/>
-      <line num="389" count="59" type="stmt"/>
+      <line num="265" count="2" type="stmt"/>
+      <line num="268" count="235" type="stmt"/>
+      <line num="270" count="235" type="stmt"/>
+      <line num="281" count="1" type="stmt"/>
+      <line num="286" count="237" type="stmt"/>
+      <line num="287" count="56" type="stmt"/>
+      <line num="293" count="237" type="cond" truecount="2" falsecount="0"/>
+      <line num="294" count="185" type="stmt"/>
+      <line num="304" count="52" type="stmt"/>
+      <line num="309" count="32" type="stmt"/>
+      <line num="315" count="3" type="stmt"/>
+      <line num="320" count="38" type="stmt"/>
+      <line num="322" count="38" type="stmt"/>
+      <line num="324" count="353" type="stmt"/>
+      <line num="325" count="353" type="stmt"/>
+      <line num="326" count="353" type="stmt"/>
+      <line num="328" count="38" type="stmt"/>
+      <line num="342" count="235" type="stmt"/>
+      <line num="343" count="235" type="stmt"/>
+      <line num="344" count="235" type="stmt"/>
+      <line num="345" count="235" type="stmt"/>
+      <line num="348" count="235" type="stmt"/>
+      <line num="350" count="235" type="stmt"/>
+      <line num="352" count="235" type="stmt"/>
+      <line num="357" count="235" type="stmt"/>
+      <line num="358" count="122" type="cond" truecount="2" falsecount="0"/>
+      <line num="360" count="110" type="stmt"/>
+      <line num="363" count="12" type="stmt"/>
+      <line num="367" count="235" type="cond" truecount="2" falsecount="0"/>
+      <line num="368" count="64" type="stmt"/>
+      <line num="389" count="60" type="stmt"/>
       <line num="390" count="59" type="stmt"/>
-      <line num="397" count="59" type="stmt"/>
-      <line num="406" count="249" type="stmt"/>
+      <line num="391" count="59" type="stmt"/>
+      <line num="398" count="59" type="stmt"/>
+      <line num="407" count="234" type="stmt"/>
     </file>
     <file name="mixins.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/mixins.ts">
       <metrics statements="28" coveredstatements="28" conditionals="29" coveredconditionals="29" methods="7" coveredmethods="7"/>
-      <line num="1" count="3" type="stmt"/>
-      <line num="3" count="3" type="stmt"/>
-      <line num="4" count="3" type="stmt"/>
-      <line num="5" count="11" type="stmt"/>
-      <line num="8" count="3" type="stmt"/>
-      <line num="12" count="45" type="cond" truecount="4" falsecount="0"/>
-      <line num="13" count="12" type="stmt"/>
-      <line num="14" count="18" type="cond" truecount="2" falsecount="0"/>
-      <line num="15" count="13" type="cond" truecount="2" falsecount="0"/>
-      <line num="16" count="12" type="cond" truecount="2" falsecount="0"/>
-      <line num="17" count="12" type="stmt"/>
-      <line num="19" count="12" type="cond" truecount="2" falsecount="0"/>
-      <line num="20" count="10" type="stmt"/>
-      <line num="26" count="5" type="cond" truecount="2" falsecount="0"/>
-      <line num="27" count="4" type="stmt"/>
-      <line num="31" count="12" type="cond" truecount="2" falsecount="0"/>
-      <line num="32" count="18" type="stmt"/>
-      <line num="33" count="18" type="cond" truecount="4" falsecount="0"/>
-      <line num="34" count="5" type="stmt"/>
-      <line num="35" count="7" type="stmt"/>
-      <line num="36" count="7" type="cond" truecount="2" falsecount="0"/>
-      <line num="37" count="6" type="cond" truecount="2" falsecount="0"/>
-      <line num="38" count="6" type="stmt"/>
-      <line num="43" count="13" type="stmt"/>
-      <line num="47" count="23" type="stmt"/>
-      <line num="48" count="23" type="cond" truecount="5" falsecount="0"/>
-      <line num="49" count="5" type="stmt"/>
-      <line num="52" count="45" type="stmt"/>
-    </file>
-    <file name="reactive.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/reactive.ts">
-      <metrics statements="46" coveredstatements="46" conditionals="14" coveredconditionals="14" methods="10" coveredmethods="10"/>
-      <line num="1" count="3" type="stmt"/>
-      <line num="8" count="3" type="stmt"/>
-      <line num="9" count="3" type="stmt"/>
-      <line num="10" count="3" type="stmt"/>
-      <line num="12" count="3" type="stmt"/>
-      <line num="18" count="14" type="cond" truecount="2" falsecount="0"/>
-      <line num="19" count="14" type="stmt"/>
-      <line num="21" count="14" type="stmt"/>
-      <line num="22" count="14" type="stmt"/>
-      <line num="24" count="14" type="stmt"/>
-      <line num="25" count="14" type="cond" truecount="2" falsecount="0"/>
-      <line num="26" count="13" type="stmt"/>
-      <line num="27" count="19" type="stmt"/>
-      <line num="28" count="19" type="cond" truecount="2" falsecount="0"/>
-      <line num="29" count="2" type="stmt"/>
-      <line num="31" count="17" type="stmt"/>
-      <line num="35" count="13" type="stmt"/>
-      <line num="37" count="13" type="cond" truecount="2" falsecount="0"/>
-      <line num="38" count="10" type="stmt"/>
-      <line num="42" count="3" type="stmt"/>
-      <line num="43" count="3" type="stmt"/>
-      <line num="46" count="3" type="stmt"/>
-      <line num="47" count="3" type="stmt"/>
-      <line num="48" count="6" type="stmt"/>
-      <line num="50" count="3" type="stmt"/>
-      <line num="54" count="14" type="stmt"/>
-      <line num="55" count="14" type="stmt"/>
-      <line num="56" count="14" type="cond" truecount="2" falsecount="0"/>
-      <line num="59" count="11" type="stmt"/>
-      <line num="60" count="11" type="stmt"/>
-      <line num="62" count="11" type="stmt"/>
-      <line num="63" count="11" type="stmt"/>
-      <line num="67" count="3" type="stmt"/>
-      <line num="68" count="3" type="stmt"/>
-      <line num="70" count="3" type="stmt"/>
-      <line num="71" count="3" type="stmt"/>
-      <line num="73" count="14" type="stmt"/>
-      <line num="77" count="14" type="stmt"/>
-      <line num="79" count="19" type="cond" truecount="2" falsecount="0"/>
-      <line num="80" count="14" type="stmt"/>
-      <line num="82" count="14" type="stmt"/>
-      <line num="83" count="4" type="stmt"/>
-      <line num="89" count="14" type="stmt"/>
-      <line num="91" count="10" type="cond" truecount="2" falsecount="0"/>
-      <line num="92" count="3" type="stmt"/>
-      <line num="94" count="3" type="stmt"/>
-    </file>
-    <file name="setDataEffect.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/setDataEffect.ts">
-      <metrics statements="31" coveredstatements="31" conditionals="8" coveredconditionals="8" methods="9" coveredmethods="9"/>
-      <line num="1" count="3" type="stmt"/>
       <line num="2" count="3" type="stmt"/>
       <line num="4" count="3" type="stmt"/>
-      <line num="6" count="3" type="stmt"/>
-      <line num="8" count="3" type="stmt"/>
-      <line num="9" count="11" type="cond" truecount="2" falsecount="0"/>
-      <line num="10" count="7" type="stmt"/>
+      <line num="5" count="3" type="stmt"/>
+      <line num="6" count="11" type="stmt"/>
+      <line num="9" count="3" type="stmt"/>
+      <line num="13" count="45" type="cond" truecount="4" falsecount="0"/>
+      <line num="14" count="12" type="stmt"/>
+      <line num="15" count="18" type="cond" truecount="2" falsecount="0"/>
+      <line num="16" count="13" type="cond" truecount="2" falsecount="0"/>
+      <line num="17" count="12" type="cond" truecount="2" falsecount="0"/>
+      <line num="18" count="12" type="stmt"/>
+      <line num="20" count="12" type="cond" truecount="2" falsecount="0"/>
+      <line num="21" count="10" type="stmt"/>
+      <line num="27" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="28" count="4" type="stmt"/>
+      <line num="32" count="12" type="cond" truecount="2" falsecount="0"/>
+      <line num="33" count="18" type="stmt"/>
+      <line num="34" count="18" type="cond" truecount="4" falsecount="0"/>
+      <line num="35" count="5" type="stmt"/>
+      <line num="36" count="7" type="stmt"/>
+      <line num="37" count="7" type="cond" truecount="2" falsecount="0"/>
+      <line num="38" count="6" type="cond" truecount="2" falsecount="0"/>
+      <line num="39" count="6" type="stmt"/>
+      <line num="44" count="13" type="stmt"/>
+      <line num="48" count="23" type="stmt"/>
+      <line num="49" count="23" type="cond" truecount="5" falsecount="0"/>
+      <line num="50" count="5" type="stmt"/>
+      <line num="53" count="45" type="stmt"/>
+    </file>
+    <file name="reactive.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/reactive.ts">
+      <metrics statements="47" coveredstatements="46" conditionals="16" coveredconditionals="16" methods="10" coveredmethods="9"/>
+      <line num="1" count="3" type="stmt"/>
+      <line num="2" count="3" type="stmt"/>
+      <line num="3" count="3" type="stmt"/>
+      <line num="4" count="3" type="stmt"/>
+      <line num="7" count="3" type="stmt"/>
+      <line num="13" count="14" type="cond" truecount="2" falsecount="0"/>
+      <line num="14" count="14" type="stmt"/>
+      <line num="16" count="14" type="stmt"/>
+      <line num="17" count="14" type="stmt"/>
+      <line num="18" count="14" type="stmt"/>
+      <line num="20" count="14" type="stmt"/>
+      <line num="21" count="14" type="cond" truecount="2" falsecount="0"/>
+      <line num="22" count="13" type="stmt"/>
+      <line num="23" count="19" type="cond" truecount="2" falsecount="0"/>
+      <line num="24" count="2" type="stmt"/>
+      <line num="27" count="17" type="stmt"/>
+      <line num="28" count="17" type="stmt"/>
+      <line num="33" count="13" type="stmt"/>
+      <line num="35" count="13" type="cond" truecount="2" falsecount="0"/>
+      <line num="36" count="10" type="stmt"/>
+      <line num="40" count="3" type="stmt"/>
+      <line num="41" count="3" type="stmt"/>
+      <line num="44" count="3" type="stmt"/>
+      <line num="45" count="3" type="stmt"/>
+      <line num="46" count="6" type="stmt"/>
+      <line num="48" count="3" type="stmt"/>
+      <line num="52" count="14" type="stmt"/>
+      <line num="53" count="14" type="stmt"/>
+      <line num="54" count="14" type="cond" truecount="2" falsecount="0"/>
+      <line num="57" count="11" type="stmt"/>
+      <line num="58" count="11" type="stmt"/>
+      <line num="60" count="11" type="stmt"/>
+      <line num="61" count="11" type="stmt"/>
+      <line num="65" count="3" type="stmt"/>
+      <line num="66" count="3" type="stmt"/>
+      <line num="68" count="3" type="stmt"/>
+      <line num="69" count="3" type="stmt"/>
+      <line num="71" count="14" type="stmt"/>
+      <line num="75" count="14" type="stmt"/>
+      <line num="77" count="19" type="cond" truecount="2" falsecount="0"/>
+      <line num="78" count="14" type="stmt"/>
+      <line num="80" count="14" type="stmt"/>
+      <line num="81" count="0" type="stmt"/>
+      <line num="87" count="14" type="stmt"/>
+      <line num="89" count="10" type="cond" truecount="2" falsecount="0"/>
+      <line num="90" count="3" type="stmt"/>
+      <line num="92" count="3" type="stmt"/>
+    </file>
+    <file name="setDataEffect.ts" path="/Users/lay/docker/web/gitlab/enhance-weapp/src/setDataEffect.ts">
+      <metrics statements="25" coveredstatements="25" conditionals="8" coveredconditionals="8" methods="7" coveredmethods="7"/>
+      <line num="1" count="3" type="stmt"/>
+      <line num="2" count="3" type="stmt"/>
+      <line num="5" count="3" type="stmt"/>
+      <line num="7" count="3" type="stmt"/>
+      <line num="9" count="3" type="stmt"/>
+      <line num="10" count="8" type="cond" truecount="2" falsecount="0"/>
       <line num="11" count="7" type="stmt"/>
-      <line num="16" count="7" type="cond" truecount="2" falsecount="0"/>
-      <line num="17" count="6" type="stmt"/>
+      <line num="12" count="7" type="stmt"/>
+      <line num="17" count="7" type="cond" truecount="2" falsecount="0"/>
       <line num="18" count="6" type="stmt"/>
-      <line num="23" count="6" type="stmt"/>
-      <line num="24" count="7" type="stmt"/>
-      <line num="25" count="7" type="cond" truecount="2" falsecount="0"/>
+      <line num="19" count="6" type="stmt"/>
+      <line num="24" count="6" type="stmt"/>
+      <line num="25" count="7" type="stmt"/>
+      <line num="26" count="7" type="cond" truecount="2" falsecount="0"/>
       <line num="27" count="6" type="stmt"/>
-      <line num="28" count="6" type="stmt"/>
-      <line num="29" count="3" type="stmt"/>
-      <line num="32" count="6" type="stmt"/>
+      <line num="29" count="6" type="stmt"/>
+      <line num="30" count="3" type="stmt"/>
       <line num="33" count="6" type="stmt"/>
-      <line num="36" count="3" type="stmt"/>
-      <line num="38" count="7" type="stmt"/>
+      <line num="34" count="6" type="stmt"/>
+      <line num="37" count="3" type="stmt"/>
       <line num="39" count="7" type="stmt"/>
-      <line num="40" count="7" type="cond" truecount="2" falsecount="0"/>
-      <line num="41" count="4" type="stmt"/>
-      <line num="43" count="7" type="stmt"/>
-      <line num="50" count="6" type="stmt"/>
-      <line num="51" count="6" type="stmt"/>
-      <line num="52" count="6" type="stmt"/>
-      <line num="53" count="6" type="stmt"/>
-      <line num="54" count="6" type="stmt"/>
-      <line num="58" count="6" type="stmt"/>
+      <line num="40" count="7" type="stmt"/>
+      <line num="41" count="7" type="cond" truecount="2" falsecount="0"/>
+      <line num="42" count="4" type="stmt"/>
+      <line num="44" count="7" type="stmt"/>
     </file>
   </project>
 </coverage>

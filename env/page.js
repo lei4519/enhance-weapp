@@ -12,7 +12,6 @@ function Page(config) {
       'onUnload',
       'onPullDownRefresh',
       'onReachBottom',
-      'onShareAppMessage',
       'onTabItemTap',
       'onResize',
       'onAddToFavorites'

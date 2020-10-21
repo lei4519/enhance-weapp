@@ -77,7 +77,7 @@ describe('diff新旧数据', () => {
     const newData = {
       a: [1, 2, 4]
     }
-    expect(diffData(oldData, newData)).toEqual({ 'a.2': 4 })
+    expect(diffData(oldData, newData)).toEqual({ 'a[2]': 4 })
   })
   test('对象新增', () => {
     const oldData = {
@@ -117,9 +117,9 @@ describe('diff新旧数据', () => {
       a: { a: { d: [4, 5, 6] }, b: 2, c: 3 }
     }
     expect(diffData(oldData, newData)).toEqual({
-      'a.a.d.0': 4,
-      'a.a.d.1': 5,
-      'a.a.d.2': 6,
+      'a.a.d[0]': 4,
+      'a.a.d[1]': 5,
+      'a.a.d[2]': 6,
       'a.b': 2,
       'a.c': 3
     })

@@ -52,6 +52,7 @@ describe('setData', () => {
       page.data$.a = 3
       page.data$.a = 2
       page.data$.a = 5
+      setDataQueueJob(page)
       // 初始化会调用一次
       expect(setData.mock.calls.length).toBe(1)
       setTimeout(() => {

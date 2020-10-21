@@ -1,4 +1,4 @@
-import { isFunction } from './util'
+import { cloneDeep, cloneDeepRawData, isFunction } from './util'
 import { diffData } from '@/diffData'
 import { EnhanceRuntime, LooseFunction, LooseObject } from '../types'
 // 需要更新的异步队列
@@ -22,10 +22,10 @@ function setDataQueueFlush() {
 
 function flushSetDataJobs() {
   setDataCtxQueue.forEach(ctx => {
-    const res = diffData(ctx.data, ctx.data$)
+    const res = diffData(ctx.__oldData__, ctx.data$)
     if (!res) return ctx.$emit('setDataRender:resolve')
+    ctx.__oldData__ = cloneDeepRawData(ctx.data$)
     // console.log('响应式触发this.setData，参数: ', res)
-    syncOldData(ctx.data, res!)
     ctx.setData(res, () => {
       ctx.$emit('setDataRender:resolve')
     })
@@ -42,20 +42,4 @@ export function setDataNextTick(this: EnhanceRuntime, cb?: LooseFunction) {
     promise = promise.then(cb)
   }
   return promise!
-}
-
-/**
- * @description 同步更新旧数据，用于下次数据对比
- */
-function syncOldData(data: LooseObject, updateData: LooseObject) {
-  Object.entries(updateData).forEach(([paths, value]) => {
-    const pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.')
-    const key = pathsArr.pop()!
-    let obj = data
-    while (pathsArr.length) {
-      /* istanbul ignore next */
-      obj = obj[pathsArr.shift()!]
-    }
-    obj[key] = value
-  })
 }

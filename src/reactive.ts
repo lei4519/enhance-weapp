@@ -1,11 +1,5 @@
-import {
-  cloneDeep,
-  cloneDeepRawData,
-  disabledEnumerable,
-  isFunction,
-  isObject
-} from './util'
-import { reactive, toRef, toRefs } from '@vue/reactivity'
+import { cloneDeep, disabledEnumerable, isFunction, isObject } from './util'
+import { isRef, reactive, toRaw, toRef, toRefs, unref } from '@vue/reactivity'
 import { setDataQueueJob } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
 import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
@@ -21,8 +15,9 @@ export function handlerSetup(
   // 初始化属性，判断数据是否正在被watch
   disabledEnumerable(ctx, '__watching__', false)
   disabledEnumerable(ctx, '__stopWatchFn__', null)
+  disabledEnumerable(ctx, '__oldData__', null)
   // 执行setup
-  let setupData = ctx.setup.call(ctx, options)
+  const setupData = ctx.setup.call(ctx, options)
   if (isObject(setupData)) {
     Object.keys(setupData).forEach(key => {
       if (isFunction(setupData[key])) {
@@ -30,10 +25,12 @@ export function handlerSetup(
       } else {
         // 直接返回reactive值，需要将里面的属性继续ref化
         ctx.data$[key] = toRef(setupData, key)
+        ctx.data[key] = isRef(setupData[key])
+          ? unref(setupData[key])
+          : toRaw(setupData[key])
       }
     })
-    // 将setup返回的值同步至ctx.data
-    ctx.data = cloneDeepRawData(ctx.data$)
+    ctx.__oldData__ = cloneDeep(ctx.data)
     // 同步合并后的值到渲染层
     if (type === 'page') {
       ctx.setData(ctx.data)

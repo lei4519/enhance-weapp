@@ -14,25 +14,25 @@ import { getCurrentCtx } from '@/createPushHooks'
  * */
 describe('装饰生命周期函数', () => {
   let miniProgram: any
-  beforeAll(async () => {
-    miniProgram = await automator.launch({
-      projectPath: path.resolve(__dirname, '../testProject')
-    })
-  }, 40000)
-
-  afterAll(async () => {
-    await miniProgram.close()
-  })
-
   // beforeAll(async () => {
-  //   miniProgram = await automator.connect({
-  //     wsEndpoint: 'ws://localhost:9420'
+  //   miniProgram = await automator.launch({
+  //     projectPath: path.resolve(__dirname, '../testProject')
   //   })
   // }, 40000)
   //
   // afterAll(async () => {
-  //   await miniProgram.disconnect()
+  //   await miniProgram.close()
   // })
+
+  beforeAll(async () => {
+    miniProgram = await automator.connect({
+      wsEndpoint: 'ws://localhost:9420'
+    })
+  }, 40000)
+
+  afterAll(async () => {
+    await miniProgram.disconnect()
+  })
 
   // reactive
   test('初始的data值会复制给data$, 但是两者引用并不相等', () => {
@@ -97,7 +97,7 @@ describe('装饰生命周期函数', () => {
     expect(isReactive(page.data.e)).toBeFalsy()
 
     expect(isReactive(page.data$)).toBeTruthy()
-    expect(isReactive(page.data$.b)).toBeTruthy()
+    expect(isReactive(page.data$.b)).toBeFalsy()
     expect(isReactive(page.data$.c)).toBeTruthy()
     expect(isReactive(page.data$.e)).toBeTruthy()
 
@@ -122,7 +122,7 @@ describe('装饰生命周期函数', () => {
     expect(isReactive(comp.data.e)).toBeFalsy()
 
     expect(isReactive(comp.data$)).toBeTruthy()
-    expect(isReactive(comp.data$.b)).toBeTruthy()
+    expect(isReactive(comp.data$.b)).toBeFalsy()
     expect(isReactive(comp.data$.c)).toBeTruthy()
     expect(isReactive(comp.data$.e)).toBeTruthy()
   })
@@ -384,7 +384,6 @@ describe('装饰生命周期函数', () => {
       'onUnload',
       'onPullDownRefresh',
       'onReachBottom',
-      'onShareAppMessage',
       'onTabItemTap',
       'onResize',
       'onAddToFavorites',
