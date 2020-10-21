@@ -5,7 +5,7 @@ import {
   isFunction,
   isObject
 } from './util'
-import { reactive } from '@vue/reactivity'
+import { reactive, toRef, toRefs } from '@vue/reactivity'
 import { setDataQueueJob } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
 import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
@@ -22,14 +22,14 @@ export function handlerSetup(
   disabledEnumerable(ctx, '__watching__', false)
   disabledEnumerable(ctx, '__stopWatchFn__', null)
   // 执行setup
-  const setupData = ctx.setup.call(ctx, options)
+  let setupData = ctx.setup.call(ctx, options)
   if (isObject(setupData)) {
     Object.keys(setupData).forEach(key => {
-      const val = setupData[key]
-      if (isFunction(val)) {
-        ctx[key] = val
+      if (isFunction(setupData[key])) {
+        ctx[key] = setupData[key]
       } else {
-        ctx.data$[key] = val
+        // 直接返回reactive值，需要将里面的属性继续ref化
+        ctx.data$[key] = toRef(setupData, key)
       }
     })
     // 将setup返回的值同步至ctx.data

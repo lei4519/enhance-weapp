@@ -1826,12 +1826,12 @@ function handlerSetup(ctx, options, type) {
     var setupData = ctx.setup.call(ctx, options);
     if (isObject$1(setupData)) {
         Object.keys(setupData).forEach(function (key) {
-            var val = setupData[key];
-            if (isFunction$1(val)) {
-                ctx[key] = val;
+            if (isFunction$1(setupData[key])) {
+                ctx[key] = setupData[key];
             }
             else {
-                ctx.data$[key] = val;
+                // 直接返回reactive值，需要将里面的属性继续ref化
+                ctx.data$[key] = toRef(setupData, key);
             }
         });
         // 将setup返回的值同步至ctx.data
