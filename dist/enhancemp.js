@@ -1045,6 +1045,7 @@ function handlerMixins(type, ctx) {
  * @return {Object}  传给this.setData的值
  */
 function diffData(oldRootData, newRootData) {
+    var SKIP_LENGTH = 99;
     // 更新对象，最终传给this.setData的值
     var updateObject = null;
     var diffQueue = [];
@@ -1110,6 +1111,11 @@ function diffData(oldRootData, newRootData) {
                 addUpdateData(keyPath, newData);
                 return "continue";
             }
+            // 长度相等，但是数组length过长，不进行diff
+            if (oldData.length > SKIP_LENGTH) {
+                addUpdateData(keyPath, newData);
+                return "continue";
+            }
             // 长度相等，将数组的每一项推入diff队列中
             for (var i = 0, l = oldData.length; i < l; i++) {
                 diffQueue.push([oldData[i], newData[i], keyPath + "[" + i + "]"]);
@@ -1123,6 +1129,11 @@ function diffData(oldRootData, newRootData) {
         var newKeys = Object.keys(newData);
         // 旧长新短：删除操作，直接重设
         if (oldKeys.length > newKeys.length) {
+            addUpdateData(keyPath, newData);
+            return "continue";
+        }
+        // 长度相等，但是length过长，不进行diff
+        if (oldKeys.length > SKIP_LENGTH) {
             addUpdateData(keyPath, newData);
             return "continue";
         }

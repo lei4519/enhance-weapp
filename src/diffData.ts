@@ -20,6 +20,7 @@ export function diffData(
   oldRootData: LooseObject,
   newRootData: LooseObject
 ): LooseObject | null {
+  const SKIP_LENGTH = 99
   // 更新对象，最终传给this.setData的值
   let updateObject: LooseObject | null = null
   // 需要对比数据的数组
@@ -97,6 +98,11 @@ export function diffData(
         addUpdateData(keyPath, newData)
         continue
       }
+      // 长度相等，但是数组length过长，不进行diff
+      if (oldData.length > SKIP_LENGTH) {
+        addUpdateData(keyPath, newData)
+        continue
+      }
       // 长度相等，将数组的每一项推入diff队列中
       for (let i = 0, l = oldData.length; i < l; i++) {
         diffQueue.push([oldData[i], newData[i], `${keyPath}[${i}]`])
@@ -111,6 +117,11 @@ export function diffData(
     const newKeys = Object.keys(newData)
     // 旧长新短：删除操作，直接重设
     if (oldKeys.length > newKeys.length) {
+      addUpdateData(keyPath, newData)
+      continue
+    }
+    // 长度相等，但是length过长，不进行diff
+    if (oldKeys.length > SKIP_LENGTH) {
       addUpdateData(keyPath, newData)
       continue
     }
