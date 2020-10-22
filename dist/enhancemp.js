@@ -1811,15 +1811,19 @@ function handlerSetup(ctx, options, type) {
     var setupData = ctx.setup.call(ctx, options);
     if (isObject$1(setupData)) {
         Object.keys(setupData).forEach(function (key) {
+            var val = setupData[key];
             if (isFunction$1(setupData[key])) {
-                ctx[key] = setupData[key];
+                ctx[key] = val;
             }
             else {
                 // 直接返回reactive值，需要将里面的属性继续ref化
-                ctx.data$[key] = toRef(setupData, key);
-                ctx.data[key] = isRef(setupData[key])
-                    ? unref(setupData[key])
-                    : toRaw(setupData[key]);
+                ctx.data$[key] =
+                    isReactive(val) || isRef(val)
+                        ? val
+                        : isPrimitive(val)
+                            ? toRef(setupData, key)
+                            : reactive(val);
+                ctx.data[key] = isRef(val) ? unref(val) : toRaw(val);
             }
         });
         ctx.__oldData__ = cloneDeep(ctx.data);

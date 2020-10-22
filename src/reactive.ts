@@ -1,5 +1,18 @@
-import { cloneDeep, disabledEnumerable, isFunction, isObject } from './util'
-import { isRef, reactive, toRaw, toRef, toRefs, unref } from '@vue/reactivity'
+import {
+  cloneDeep,
+  disabledEnumerable,
+  isFunction,
+  isObject,
+  isPrimitive
+} from './util'
+import {
+  isReactive,
+  isRef,
+  reactive,
+  toRaw,
+  toRef,
+  unref
+} from '@vue/reactivity'
 import { setDataQueueJob } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
 import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
@@ -20,14 +33,18 @@ export function handlerSetup(
   const setupData = ctx.setup.call(ctx, options)
   if (isObject(setupData)) {
     Object.keys(setupData).forEach(key => {
+      const val = setupData[key]
       if (isFunction(setupData[key])) {
-        ctx[key] = setupData[key]
+        ctx[key] = val
       } else {
         // 直接返回reactive值，需要将里面的属性继续ref化
-        ctx.data$[key] = toRef(setupData, key)
-        ctx.data[key] = isRef(setupData[key])
-          ? unref(setupData[key])
-          : toRaw(setupData[key])
+        ctx.data$[key] =
+        isReactive(val) || isRef(val)
+            ? val
+            : isPrimitive(val)
+            ? toRef(setupData, key)
+            : reactive(val)
+        ctx.data[key] = isRef(val) ? unref(val) : toRaw(val)
       }
     })
     ctx.__oldData__ = cloneDeep(ctx.data)
