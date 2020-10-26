@@ -78,13 +78,14 @@ export function getRawData(data: LooseObject): LooseObject {
 }
 
 export function cloneDeepRawData(data: LooseObject): LooseObject {
+  let res
   return isPrimitive(data)
     ? data
-    : JSON.parse(
-        JSON.stringify(data, (key, val) => {
-          return getRawData(val)
-        })
-      )
+    : (res = JSON.stringify(data, (key, val) => {
+        return getRawData(val)
+      }))
+    ? JSON.parse(res)
+    : void 0
 }
 
 export function cloneDeep(data: LooseObject): LooseObject {

@@ -890,11 +890,14 @@ function getRawData(data) {
             : toRaw(data);
 }
 function cloneDeepRawData(data) {
+    var res;
     return isPrimitive(data)
         ? data
-        : JSON.parse(JSON.stringify(data, function (key, val) {
+        : (res = JSON.stringify(data, function (key, val) {
             return getRawData(val);
-        }));
+        }))
+            ? JSON.parse(res)
+            : void 0;
 }
 function cloneDeep(data) {
     return JSON.parse(JSON.stringify(data));
