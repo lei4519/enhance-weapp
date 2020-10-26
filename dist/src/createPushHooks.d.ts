@@ -63,7 +63,7 @@ export declare const onAttached: PushHooksFn;
 export declare const onComponentReady: PushHooksFn;
 export declare const onMoved: PushHooksFn;
 export declare const onDetached: PushHooksFn;
-export declare const onError: PushHooksFn;
+export declare const onComponentError: PushHooksFn;
 export declare const onPageShow: PushHooksFn;
 export declare const onPageHide: PushHooksFn;
 export declare const onPageResize: PushHooksFn;

@@ -31,7 +31,7 @@ export {
   onComponentReady as onComponentReadyHooks,
   onMoved as onMovedHooks,
   onDetached as onDetachedHooks,
-  onError as onErrorHooks,
+  onComponentError as onComponentErrorHooks,
   onPageShow as onPageShowHooks,
   onPageHide as onPageHideHooks,
   onPageResize as onPageResizeHooks
