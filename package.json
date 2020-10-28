@@ -9,7 +9,7 @@
     "build:test": "cross-env NODE_ENV=test npx rollup --config",
     "startWxIDE": "/Applications/wechatwebdevtools.app/Contents/MacOS/cli --auto /Users/lay/docker/web/gitlab/enhance-weapp/testProject --auto-port 9420",
     "test:all": "jest",
-    "test:single": "jest test/diffData.spec.ts"
+    "test:single": "jest test/lifecycle&reactive.spec.ts"
   },
   "keywords": [
     "composition",

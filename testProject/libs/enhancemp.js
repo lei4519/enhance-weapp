@@ -963,11 +963,14 @@ function getRawData(data) {
             : toRaw(data);
 }
 function cloneDeepRawData(data) {
+    var res;
     return isPrimitive(data)
         ? data
-        : JSON.parse(JSON.stringify(data, function (key, val) {
+        : (res = JSON.stringify(data, function (key, val) {
             return getRawData(val);
-        }));
+        }))
+            ? JSON.parse(res)
+            : void 0;
 }
 function cloneDeep(data) {
     return JSON.parse(JSON.stringify(data));
@@ -1118,6 +1121,7 @@ function handlerMixins(type, ctx) {
  * @return {Object}  传给this.setData的值
  */
 function diffData(oldRootData, newRootData) {
+    var SKIP_LENGTH = 99;
     // 更新对象，最终传给this.setData的值
     var updateObject = null;
     var diffQueue = [];
@@ -1183,9 +1187,14 @@ function diffData(oldRootData, newRootData) {
                 addUpdateData(keyPath, newData);
                 return "continue";
             }
+            // 长度相等，但是数组length过长，不进行diff
+            if (oldData.length > SKIP_LENGTH) {
+                addUpdateData(keyPath, newData);
+                return "continue";
+            }
             // 长度相等，将数组的每一项推入diff队列中
             for (var i = 0, l = oldData.length; i < l; i++) {
-                diffQueue.push([oldData[i], newData[i], keyPath + "." + i]);
+                diffQueue.push([oldData[i], newData[i], keyPath + "[" + i + "]"]);
             }
             return "continue";
         }
@@ -1196,6 +1205,11 @@ function diffData(oldRootData, newRootData) {
         var newKeys = Object.keys(newData);
         // 旧长新短：删除操作，直接重设
         if (oldKeys.length > newKeys.length) {
+            addUpdateData(keyPath, newData);
+            return "continue";
+        }
+        // 长度相等，但是length过长，不进行diff
+        if (oldKeys.length > SKIP_LENGTH) {
             addUpdateData(keyPath, newData);
             return "continue";
         }
@@ -1270,17 +1284,47 @@ function setDataQueueFlush() {
 }
 function flushSetDataJobs() {
     setDataCtxQueue.forEach(function (ctx) {
-        var res = diffData(ctx.data, ctx.data$);
+        var res = diffData(ctx.__oldData__, ctx.data$);
         if (!res)
             return ctx.$emit('setDataRender:resolve');
         // console.log('响应式触发this.setData，参数: ', res)
-        syncOldData(ctx.data, res);
         ctx.setData(res, function () {
             ctx.$emit('setDataRender:resolve');
-        });
+        }, false);
+        ctx.__oldData__ = cloneDeep(ctx.data);
     });
     setDataCtxQueue.clear();
     isFlushing = false;
+}
+var userSetDataFlag = false;
+function setData(rawSetData, data, cb, isUserInvoke) {
+    var _this = this;
+    if (isUserInvoke === void 0) { isUserInvoke = true; }
+    if (isUserInvoke) {
+        userSetDataFlag = true;
+        // 同步 data$ 值
+        try {
+            Object.entries(data).forEach(function (_a) {
+                var paths = _a[0], value = _a[1];
+                var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
+                var key = pathsArr.pop();
+                var obj = _this.data$;
+                while (pathsArr.length) {
+                    /* istanbul ignore next */
+                    obj = obj[pathsArr.shift()];
+                }
+                obj[key] = value;
+            });
+            Promise.resolve().then(() => {
+                userSetDataFlag = false;
+            })
+        }
+        catch (err) {
+            console.error('同步this.data$失败：', err);
+        }
+    }
+    rawSetData.call(this, data, cb);
+    this.__oldData__ = cloneDeep(this.data);
 }
 function setDataNextTick(cb) {
     var resolve;
@@ -1290,22 +1334,6 @@ function setDataNextTick(cb) {
         promise = promise.then(cb);
     }
     return promise;
-}
-/**
- * @description 同步更新旧数据，用于下次数据对比
- */
-function syncOldData(data, updateData) {
-    Object.entries(updateData).forEach(function (_a) {
-        var paths = _a[0], value = _a[1];
-        var pathsArr = paths.split('.');
-        var key = pathsArr.pop();
-        var obj = data;
-        while (pathsArr.length) {
-            /* istanbul ignore next */
-            obj = obj[pathsArr.shift()];
-        }
-        obj[key] = value;
-    });
 }
 
 const stack = [];
@@ -2243,20 +2271,27 @@ function handlerSetup(ctx, options, type) {
     // 初始化属性，判断数据是否正在被watch
     disabledEnumerable(ctx, '__watching__', false);
     disabledEnumerable(ctx, '__stopWatchFn__', null);
+    disabledEnumerable(ctx, '__oldData__', null);
     // 执行setup
-    var setupData = ctx.setup(options);
+    var setupData = ctx.setup.call(ctx, options);
     if (isObject$1(setupData)) {
         Object.keys(setupData).forEach(function (key) {
             var val = setupData[key];
-            if (isFunction$1(val)) {
+            if (isFunction$1(setupData[key])) {
                 ctx[key] = val;
             }
             else {
-                ctx.data$[key] = val;
+                // 直接返回reactive值，需要将里面的属性继续ref化
+                ctx.data$[key] =
+                    isReactive(val) || isRef(val)
+                        ? val
+                        : isPrimitive(val)
+                            ? toRef(setupData, key)
+                            : reactive(val);
+                ctx.data[key] = isRef(val) ? unref(val) : toRaw(val);
             }
         });
-        // 将setup返回的值同步至ctx.data
-        ctx.data = cloneDeepRawData(ctx.data$);
+        ctx.__oldData__ = cloneDeep(ctx.data);
         // 同步合并后的值到渲染层
         if (type === 'page') {
             ctx.setData(ctx.data);
@@ -2304,7 +2339,10 @@ function createWatching(ctx) {
         ctx.__watching__ = true;
         // 保留取消监听的函数
         ctx.__stopWatchFn__ = watch(ctx.data$, function () {
-            setDataQueueJob(ctx);
+            // 用户调用setData触发的响应式不做处理，避免循环更新
+            if (!userSetDataFlag) {
+                setDataQueueJob(ctx);
+            }
         });
     };
 }
@@ -2338,7 +2376,7 @@ var lc = {
         'onUnload',
         'onPullDownRefresh',
         'onReachBottom',
-        'onShareAppMessage',
+        // 'onShareAppMessage', 分享不需要包装，一个页面只有一个
         // 'onPageScroll', 性能问题：一旦监听，每次滚动两个线程之间都会通信一次
         'onTabItemTap',
         'onResize',
@@ -2405,7 +2443,6 @@ var onHide = pagePushHooks.onHide;
 var onUnload = pagePushHooks.onUnload;
 var onPullDownRefresh = pagePushHooks.onPullDownRefresh;
 var onReachBottom = pagePushHooks.onReachBottom;
-var onShareAppMessage = pagePushHooks.onShareAppMessage;
 var onTabItemTap = pagePushHooks.onTabItemTap;
 var onResize = pagePushHooks.onResize;
 var onAddToFavorites = pagePushHooks.onAddToFavorites;
@@ -2421,7 +2458,7 @@ var onAttached = componentPushHooks.onAttached;
 var onComponentReady = componentPushHooks.onReady;
 var onMoved = componentPushHooks.onMoved;
 var onDetached = componentPushHooks.onDetached;
-var onError = componentPushHooks.onError;
+var onComponentError = componentPushHooks.onError;
 var onPageShow = componentPushHooks.onShow;
 var onPageHide = componentPushHooks.onHide;
 var onPageResize = componentPushHooks.onResize;
@@ -2597,9 +2634,14 @@ function decoratorLifeCycle(options, type) {
                     if (isFunction$1(this.setup)) {
                         // nextTick
                         this.$nextTick = setDataNextTick;
+                        var rawSetData_1 = this.setData;
+                        this.setData = function (data, cb, isUserInvoke) {
+                            if (isUserInvoke === void 0) { isUserInvoke = true; }
+                            setData.call(this, rawSetData_1, data, cb, isUserInvoke);
+                        };
                         // 处理 setup
                         setCurrentCtx(this);
-                        handlerSetup(this, options, type);
+                        handlerSetup(this, type === 'component' ? this.properties : options, type);
                         setCurrentCtx(null);
                     }
                 }
@@ -2804,196 +2846,6 @@ var Eapp = function (options) {
     return App(options);
 };
 
-const asyncMethods = [
-  'canvasGetImageData',
-  'canvasPutImageData',
-  'canvasToTempFilePath',
-  'setEnableDebug',
-  'startAccelerometer',
-  'stopAccelerometer',
-  'getBatteryInfo',
-  'getClipboardData',
-  'setClipboardData',
-  'startCompass',
-  'stopCompass',
-  'addPhoneContact',
-  'startGyroscope',
-  'stopGyroscope',
-  'startBeaconDiscovery',
-  'stopBeaconDiscovery',
-  'getBeacons',
-  'startLocalServiceDiscovery',
-  'stopLocalServiceDiscovery',
-  'startDeviceMotionListening',
-  'stopDeviceMotionListening',
-  'getNetworkType',
-  'makePhoneCall',
-  'scanCode',
-  'getSystemInfo',
-  'vibrateShort',
-  'vibrateLong',
-  'getExtConfig',
-  'chooseLocation',
-  'getLocation',
-  'openLocation',
-  'chooseMessageFile',
-  'loadFontFace',
-  'chooseImage',
-  'previewImage',
-  'getImageInfo',
-  'saveImageToPhotosAlbum',
-  'compressImage',
-  'chooseVideo',
-  'saveVideoToPhotosAlbum',
-  'downloadFile',
-  'request',
-  'connectSocket',
-  'closeSocket',
-  'sendSocketMessage',
-  'uploadFile',
-  'login',
-  'checkSession',
-  'chooseAddress',
-  'authorize',
-  'addCard',
-  'openCard',
-  'chooseInvoice',
-  'chooseInvoiceTitle',
-  'getUserInfo',
-  'requestPayment',
-  'getWeRunData',
-  'showModal',
-  'showToast',
-  'hideToast',
-  'showLoading',
-  'hideLoading',
-  'showActionSheet',
-  'pageScrollTo',
-  'startPullDownRefresh',
-  'stopPullDownRefresh',
-  'setBackgroundColor',
-  'setBackgroundTextStyle',
-  'setTabBarBadge',
-  'removeTabBarBadge',
-  'showTabBarRedDot',
-  'hideTabBarRedDot',
-  'showTabBar',
-  'hideTabBar',
-  'setTabBarStyle',
-  'setTabBarItem',
-  'setTopBarText',
-  'saveFile',
-  'openDocument',
-  'getSavedFileList',
-  'getSavedFileInfo',
-  'removeSavedFile',
-  'getFileInfo',
-  'getStorage',
-  'setStorage',
-  'removeStorage',
-  'clearStorage',
-  'getStorageInfo',
-  'closeBLEConnection',
-  'closeBluetoothAdapter',
-  'createBLEConnection',
-  'getBLEDeviceCharacteristics',
-  'getBLEDeviceServices',
-  'getBluetoothAdapterState',
-  'getBluetoothDevices',
-  'getConnectedBluetoothDevices',
-  'notifyBLECharacteristicValueChange',
-  'openBluetoothAdapter',
-  'readBLECharacteristicValue',
-  'startBluetoothDevicesDiscovery',
-  'stopBluetoothDevicesDiscovery',
-  'writeBLECharacteristicValue',
-  'getHCEState',
-  'sendHCEMessage',
-  'startHCE',
-  'stopHCE',
-  'getScreenBrightness',
-  'setKeepScreenOn',
-  'setScreenBrightness',
-  'connectWifi',
-  'getConnectedWifi',
-  'getWifiList',
-  'setWifiList',
-  'startWifi',
-  'stopWifi',
-  'getBackgroundAudioPlayerState',
-  'playBackgroundAudio',
-  'pauseBackgroundAudio',
-  'seekBackgroundAudio',
-  'stopBackgroundAudio',
-  'getAvailableAudioSources',
-  'startRecord',
-  'stopRecord',
-  'setInnerAudioOption',
-  'playVoice',
-  'pauseVoice',
-  'stopVoice',
-  'getSetting',
-  'openSetting',
-  'getShareInfo',
-  'hideShareMenu',
-  'showShareMenu',
-  'updateShareMenu',
-  'checkIsSoterEnrolledInDevice',
-  'checkIsSupportSoterAuthentication',
-  'startSoterAuthentication',
-  'navigateBackMiniProgram',
-  'navigateToMiniProgram',
-  'setNavigationBarTitle',
-  'showNavigationBarLoading',
-  'hideNavigationBarLoading',
-  'setNavigationBarColor',
-  'redirectTo',
-  'reLaunch',
-  'navigateTo',
-  'switchTab',
-  'navigateBack'
-];
-
-function hasCallback(args) {
-  if (!args || typeof args !== 'object') return false
-
-  const callback = ['success', 'fail', 'complete'];
-  for (const m of callback) {
-    if (typeof args[m] === 'function') return true
-  }
-  return false
-}
-
-function _promisify(func) {
-  if (typeof func !== 'function') return fn
-  return (args = {}) =>
-    new Promise((resolve, reject) => {
-      func(
-        Object.assign(args, {
-          success: resolve,
-          fail: reject
-        })
-      );
-    })
-}
-
-function promisifyAll(wx = {}, wxp = {}) {
-  Object.keys(wx).forEach(key => {
-    const fn = wx[key];
-    if (typeof fn === 'function' && asyncMethods.indexOf(key) >= 0) {
-      wxp[key] = args => {
-        if (hasCallback(args)) {
-          fn(args);
-        } else {
-          return _promisify(fn)(args)
-        }
-      };
-    } else {
-      wxp[key] = fn;
-    }
-  });
-}
-
 var request = [];
 var response = [];
 var interceptors = {
@@ -3042,11 +2894,7 @@ function requestMethod(options) {
     });
     return promise;
 }
-
-var wxp = {};
-promisifyAll(wx, wxp);
-wxp.request = requestMethod;
-wxp.request.interceptors = interceptors;
+requestMethod.interceptors = interceptors;
 
 exports.Eapp = Eapp;
 exports.Ecomponent = Ecomponent;
@@ -3069,10 +2917,10 @@ exports.onAppErrorHooks = onAppError;
 exports.onAppHideHooks = onAppHide;
 exports.onAppShowHooks = onAppShow;
 exports.onAttachedHooks = onAttached;
+exports.onComponentErrorHooks = onComponentError;
 exports.onComponentReadyHooks = onComponentReady;
 exports.onCreatedHooks = onCreated;
 exports.onDetachedHooks = onDetached;
-exports.onErrorHooks = onError;
 exports.onHideHooks = onHide;
 exports.onLaunchHooks = onLaunch;
 exports.onLoadHooks = onLoad;
@@ -3085,7 +2933,6 @@ exports.onPullDownRefreshHooks = onPullDownRefresh;
 exports.onReachBottomHooks = onReachBottom;
 exports.onReadyHooks = onReady;
 exports.onResizeHooks = onResize;
-exports.onShareAppMessageHooks = onShareAppMessage;
 exports.onShowHooks = onShow;
 exports.onTabItemTapHooks = onTabItemTap;
 exports.onThemeChangeHooks = onThemeChange;
@@ -3096,6 +2943,7 @@ exports.proxyRefs = proxyRefs;
 exports.reactive = reactive;
 exports.readonly = readonly;
 exports.ref = ref;
+exports.request = requestMethod;
 exports.resetTracking = resetTracking;
 exports.shallowReactive = shallowReactive;
 exports.shallowReadonly = shallowReadonly;
@@ -3110,4 +2958,3 @@ exports.triggerRef = triggerRef;
 exports.unref = unref;
 exports.watch = watch;
 exports.watchEffect = watchEffect;
-exports.wxp = wxp;

@@ -8,7 +8,7 @@ import {
 import { initEvents } from './events'
 import { handlerMixins } from './mixins'
 import { handlerSetup } from './reactive'
-import { setDataNextTick } from './setDataEffect'
+import { setData, setDataNextTick } from './setDataEffect'
 import {
   appPushHooks,
   componentPushHooks,
@@ -16,7 +16,18 @@ import {
   setCurrentCtx,
   lc
 } from './createPushHooks'
-import { AppLifeTime, ComponentHooksName, ControlLifecycleFn, DecoratorType, EnhanceRuntime, HookFn, Lifetime, LooseObject, PageLifeTime, WaitHookFn } from '../types'
+import {
+  AppLifeTime,
+  ComponentHooksName,
+  ControlLifecycleFn,
+  DecoratorType,
+  EnhanceRuntime,
+  HookFn,
+  Lifetime,
+  LooseObject,
+  PageLifeTime,
+  WaitHookFn
+} from '../types'
 
 let isControlLifecycle = true
 /** 不控制生命周期的运行顺序 */
@@ -205,9 +216,21 @@ export function decoratorLifeCycle(
           if (isFunction(this.setup)) {
             // nextTick
             this.$nextTick = setDataNextTick
+            const rawSetData = this.setData
+            this.setData = function (
+              data: LooseObject,
+              cb: LooseFunction,
+              isUserInvoke = true
+            ) {
+              setData.call(this, rawSetData, data, cb, isUserInvoke)
+            }
             // 处理 setup
             setCurrentCtx(this)
-            handlerSetup(this, type === 'component' ? this.properties : options, type)
+            handlerSetup(
+              this,
+              type === 'component' ? this.properties : options,
+              type
+            )
             setCurrentCtx(null)
           }
         }

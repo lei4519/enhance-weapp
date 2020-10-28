@@ -1,0 +1,9 @@
+<!--pages/setData/setData.wxml-->
+<text>{{ a }}</text>
+
+<view>
+  <button id="fn1" bindtap="fn1">{{a}}</button>
+</view>
+<view>
+  <button id="fn2" bindtap="fn2">{{a}}</button>
+</view>

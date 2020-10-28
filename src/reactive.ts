@@ -13,7 +13,7 @@ import {
   toRef,
   unref
 } from '@vue/reactivity'
-import { setDataQueueJob } from './setDataEffect'
+import { setDataQueueJob, userSetDataFlag } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
 import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
 
@@ -95,7 +95,10 @@ function createWatching(ctx: EnhanceRuntime) {
     ctx.__watching__ = true
     // 保留取消监听的函数
     ctx.__stopWatchFn__ = watch(ctx.data$, () => {
-      setDataQueueJob(ctx)
+      // 用户调用setData触发的响应式不做处理，避免循环更新
+      if (!userSetDataFlag) {
+        setDataQueueJob(ctx)
+      }
     })
   }
 }

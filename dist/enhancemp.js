@@ -1214,14 +1214,44 @@ function flushSetDataJobs() {
         var res = diffData(ctx.__oldData__, ctx.data$);
         if (!res)
             return ctx.$emit('setDataRender:resolve');
-        ctx.__oldData__ = cloneDeepRawData(ctx.data$);
         // console.log('响应式触发this.setData，参数: ', res)
         ctx.setData(res, function () {
             ctx.$emit('setDataRender:resolve');
-        });
+        }, false);
+        ctx.__oldData__ = cloneDeep(ctx.data);
     });
     setDataCtxQueue.clear();
     isFlushing = false;
+}
+var userSetDataFlag = false;
+function setData(rawSetData, data, cb, isUserInvoke) {
+    var _this = this;
+    if (isUserInvoke === void 0) { isUserInvoke = true; }
+    if (isUserInvoke) {
+        userSetDataFlag = true;
+        // 同步 data$ 值
+        try {
+            Object.entries(data).forEach(function (_a) {
+                var paths = _a[0], value = _a[1];
+                var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
+                var key = pathsArr.pop();
+                var obj = _this.data$;
+                while (pathsArr.length) {
+                    /* istanbul ignore next */
+                    obj = obj[pathsArr.shift()];
+                }
+                obj[key] = value;
+            });
+        }
+        catch (err) {
+            console.error('同步this.data$失败：', err);
+        }
+    }
+    rawSetData.call(this, data, cb);
+    this.__oldData__ = cloneDeep(this.data);
+    if (isUserInvoke) {
+        userSetDataFlag = false;
+    }
 }
 function setDataNextTick(cb) {
     var resolve;
@@ -1888,7 +1918,10 @@ function createWatching(ctx) {
         ctx.__watching__ = true;
         // 保留取消监听的函数
         ctx.__stopWatchFn__ = watch(ctx.data$, function () {
-            setDataQueueJob(ctx);
+            // 用户调用setData触发的响应式不做处理，避免循环更新
+            if (!userSetDataFlag) {
+                setDataQueueJob(ctx);
+            }
         });
     };
 }
@@ -2180,6 +2213,11 @@ function decoratorLifeCycle(options, type) {
                     if (isFunction$1(this.setup)) {
                         // nextTick
                         this.$nextTick = setDataNextTick;
+                        var rawSetData_1 = this.setData;
+                        this.setData = function (data, cb, isUserInvoke) {
+                            if (isUserInvoke === void 0) { isUserInvoke = true; }
+                            setData.call(this, rawSetData_1, data, cb, isUserInvoke);
+                        };
                         // 处理 setup
                         setCurrentCtx(this);
                         handlerSetup(this, type === 'component' ? this.properties : options, type);
