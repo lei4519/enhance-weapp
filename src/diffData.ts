@@ -20,7 +20,6 @@ export function diffData(
   oldRootData: LooseObject,
   newRootData: LooseObject
 ): LooseObject | null {
-  const SKIP_LENGTH = 99
   // 更新对象，最终传给this.setData的值
   let updateObject: LooseObject | null = null
   // 需要对比数据的数组
@@ -83,7 +82,7 @@ export function diffData(
       continue
     }
 
-    // 基本类型（JSON中没有函数正则等数据类型）
+    // 基本类型
     if (newType !== 'Object' && newType !== 'Array') {
       // 如果能走到这，说明肯定不相等
       addUpdateData(keyPath, newData)
@@ -92,19 +91,13 @@ export function diffData(
 
     // 数组
     if (newType === 'Array') {
-      // 长度不等，直接重设
-      // 数组和对象不同，无法根据key值来判断哪些值是新增的，哪些值是删除的
-      if (oldData.length !== newData.length) {
+      // 旧长新短：删除操作，直接重设
+      if (oldData.length > newData.length) {
         addUpdateData(keyPath, newData)
         continue
       }
-      // 长度相等，但是数组length过长，不进行diff
-      if (oldData.length > SKIP_LENGTH) {
-        addUpdateData(keyPath, newData)
-        continue
-      }
-      // 长度相等，将数组的每一项推入diff队列中
-      for (let i = 0, l = oldData.length; i < l; i++) {
+      // 将新数组的每一项推入diff队列中
+      for (let i = 0, l = newData.length; i < l; i++) {
         diffQueue.push([oldData[i], newData[i], `${keyPath}[${i}]`])
       }
       continue
@@ -117,11 +110,6 @@ export function diffData(
     const newKeys = Object.keys(newData)
     // 旧长新短：删除操作，直接重设
     if (oldKeys.length > newKeys.length) {
-      addUpdateData(keyPath, newData)
-      continue
-    }
-    // 长度相等，但是length过长，不进行diff
-    if (oldKeys.length > SKIP_LENGTH) {
       addUpdateData(keyPath, newData)
       continue
     }
