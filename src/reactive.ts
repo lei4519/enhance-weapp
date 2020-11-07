@@ -88,19 +88,21 @@ export function handlerSetup(
   return setupData
 }
 
+export function watching(this: EnhanceRuntime) {
+  // 如果已经被监控了，就直接退出
+  if (this.__watching__) return
+  this.__watching__ = true
+  // 保留取消监听的函数
+  this.__stopWatchFn__ = watch(this.data$, () => {
+    // 用户调用setData触发的响应式不做处理，避免循环更新
+    if (!userSetDataFlag) {
+      setDataQueueJob(this)
+    }
+  })
+}
+
 function createWatching(ctx: EnhanceRuntime) {
-  return function watching() {
-    // 如果已经被监控了，就直接退出
-    if (ctx.__watching__) return
-    ctx.__watching__ = true
-    // 保留取消监听的函数
-    ctx.__stopWatchFn__ = watch(ctx.data$, () => {
-      // 用户调用setData触发的响应式不做处理，避免循环更新
-      if (!userSetDataFlag) {
-        setDataQueueJob(ctx)
-      }
-    })
-  }
+  return watching.bind(ctx)
 }
 
 function createStopWatching(ctx: EnhanceRuntime) {

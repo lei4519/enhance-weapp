@@ -1055,7 +1055,8 @@ function diffData(oldRootData, newRootData) {
     var addUpdateData = function (key, val) {
         !updateObject && (updateObject = {});
         // 基本类型直接赋值，引用类型解除引用
-        updateObject[key] = isPrimitive(val) ? val : cloneDeepRawData(val);
+        updateObject[key] =
+            val === void 0 ? null : isPrimitive(val) ? val : cloneDeepRawData(val);
     };
     /* 处理根对象 */
     // 获取原始值
@@ -1206,6 +1207,9 @@ function flushSetDataJobs() {
         ctx.setData(res, function () {
             ctx.$emit('setDataRender:resolve');
         }, false);
+        // 对于新增的值，重新监听
+        ctx.__watching__ = false;
+        watching.call(ctx);
         ctx.__oldData__ = cloneDeep(ctx.data);
     });
     setDataCtxQueue.clear();
@@ -1898,20 +1902,22 @@ function handlerSetup(ctx, options, type) {
     }
     return setupData;
 }
+function watching() {
+    var _this = this;
+    // 如果已经被监控了，就直接退出
+    if (this.__watching__)
+        return;
+    this.__watching__ = true;
+    // 保留取消监听的函数
+    this.__stopWatchFn__ = watch(this.data$, function () {
+        // 用户调用setData触发的响应式不做处理，避免循环更新
+        if (!userSetDataFlag) {
+            setDataQueueJob(_this);
+        }
+    });
+}
 function createWatching(ctx) {
-    return function watching() {
-        // 如果已经被监控了，就直接退出
-        if (ctx.__watching__)
-            return;
-        ctx.__watching__ = true;
-        // 保留取消监听的函数
-        ctx.__stopWatchFn__ = watch(ctx.data$, function () {
-            // 用户调用setData触发的响应式不做处理，避免循环更新
-            if (!userSetDataFlag) {
-                setDataQueueJob(ctx);
-            }
-        });
-    };
+    return watching.bind(ctx);
 }
 function createStopWatching(ctx) {
     return function stopWatching() {

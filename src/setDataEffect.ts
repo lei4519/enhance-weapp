@@ -1,6 +1,7 @@
 import { cloneDeep, cloneDeepRawData, isFunction } from './util'
 import { diffData } from '@/diffData'
 import { EnhanceRuntime, LooseFunction, LooseObject } from '../types'
+import { watching } from './reactive'
 // 需要更新的异步队列
 const setDataCtxQueue: Set<EnhanceRuntime> = new Set()
 // 是否注册了异步任务
@@ -32,6 +33,9 @@ function flushSetDataJobs() {
       },
       false
     )
+    // 对于新增的值，重新监听
+    ctx.__watching__ = false
+    watching.call(ctx)
     ctx.__oldData__ = cloneDeep(ctx.data)
   })
   setDataCtxQueue.clear()

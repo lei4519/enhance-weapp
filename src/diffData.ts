@@ -29,7 +29,8 @@ export function diffData(
   const addUpdateData = (key: string, val: any) => {
     !updateObject && (updateObject = {})
     // 基本类型直接赋值，引用类型解除引用
-    updateObject[key] = isPrimitive(val) ? val : cloneDeepRawData(val)
+    updateObject[key] =
+      val === void 0 ? null : isPrimitive(val) ? val : cloneDeepRawData(val)
   }
 
   /* 处理根对象 */
