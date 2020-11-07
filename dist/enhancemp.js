@@ -1199,21 +1199,22 @@ function setDataQueueFlush() {
     }
 }
 function flushSetDataJobs() {
-    setDataCtxQueue.forEach(function (ctx) {
-        var res = diffData(ctx.__oldData__, ctx.data$);
-        if (!res)
-            return ctx.$emit('setDataRender:resolve');
-        // console.log('响应式触发this.setData，参数: ', res)
-        ctx.setData(res, function () {
-            ctx.$emit('setDataRender:resolve');
-        }, false);
-        // 对于新增的值，重新监听
-        ctx.__watching__ = false;
-        watching.call(ctx);
-        ctx.__oldData__ = cloneDeep(ctx.data);
-    });
+    setDataCtxQueue.forEach(updateData);
     setDataCtxQueue.clear();
     isFlushing = false;
+}
+function updateData(ctx) {
+    var res = diffData(ctx.__oldData__, ctx.data$);
+    if (!res)
+        return ctx.$emit('setDataRender:resolve');
+    // console.log('响应式触发this.setData，参数: ', res)
+    ctx.setData(res, function () {
+        ctx.$emit('setDataRender:resolve');
+    }, false);
+    // 对于新增的值，重新监听
+    ctx.__watching__ = false;
+    watching.call(ctx);
+    ctx.__oldData__ = cloneDeep(ctx.data);
 }
 var userSetDataFlag = false;
 function setData(rawSetData, data, cb, isUserInvoke) {
@@ -2469,6 +2470,38 @@ function requestMethod(options) {
 }
 requestMethod.interceptors = interceptors;
 
+var state = null;
+function initStore(initState) {
+    return state = reactive(initState);
+}
+function useStore(pathStr) {
+    var ctx = getCurrentCtx();
+    if (!ctx)
+        return console.warn('未找到当前运行中的实例，请不要在setup执行堆栈外使用 useStore');
+    if (!state)
+        return console.warn('请先使用initStore 初始化');
+    if (!pathStr)
+        return console.warn('useStore 参数不能为空');
+    // const returnStr = /(=>|return)\s+(.[^\s]+)/igm
+    var paths = pathStr.split('.');
+    var key = paths.pop();
+    var obj = state;
+    try {
+        while (paths.length) {
+            obj = obj[paths.pop()];
+        }
+    }
+    catch (e) {
+        console.error("useStore(" + pathStr + ")", '传入的路径错误');
+        throw e;
+    }
+    var val = toRef(obj, key);
+    var stopWatching = watch(val, updateData.bind(ctx));
+    ctx.$once('onUnload:finally', stopWatching);
+    ctx.$once('detached:finally', stopWatching);
+    return val;
+}
+
 exports.Eapp = Eapp;
 exports.Ecomponent = Ecomponent;
 exports.Epage = Epage;
@@ -2477,8 +2510,10 @@ exports.customControlLifecycle = customControlLifecycle;
 exports.customRef = customRef;
 exports.effect = effect;
 exports.enableTracking = enableTracking;
+exports.forceUpdata = updateData;
 exports.getCurrentCtx = getCurrentCtx;
 exports.globalMixins = globalMixins;
+exports.initStore = initStore;
 exports.isProxy = isProxy;
 exports.isReactive = isReactive;
 exports.isReadonly = isReadonly;
@@ -2529,5 +2564,6 @@ exports.track = track;
 exports.trigger = trigger;
 exports.triggerRef = triggerRef;
 exports.unref = unref;
+exports.useStore = useStore;
 exports.watch = watch;
 exports.watchEffect = watchEffect;

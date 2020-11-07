@@ -517,6 +517,24 @@ import {
 
 获取生命周期执行中的this值，可能为null
 
+### forceUpdata
+
+forceUpdata 直接执行diffData
+`forceUpdata(this)`
+
+### initStore
+
+初始化全局状态
+`initStore({a: 1})`
+
+### useStore
+
+使用全局状态
+`const num = useStore((state) => state.a)`
+
+状态变化时会重新render当前实例
+
+
 ## ⚠️框架注意点
 
 - 默认情况下，生命周期执行顺序会被控制

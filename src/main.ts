@@ -7,6 +7,10 @@ export { notControlLifecycle, customControlLifecycle } from './lifecycle'
 
 export { requestMethod as request } from './request'
 
+export { updateData as forceUpdata } from './setDataEffect'
+
+export { initStore, useStore } from './store'
+
 export {
   getCurrentCtx,
   onLaunch as onLaunchHooks,

@@ -22,7 +22,11 @@ function setDataQueueFlush() {
 }
 
 function flushSetDataJobs() {
-  setDataCtxQueue.forEach(ctx => {
+  setDataCtxQueue.forEach(updateData)
+  setDataCtxQueue.clear()
+  isFlushing = false
+}
+export function updateData(ctx: EnhanceRuntime) {
     const res = diffData(ctx.__oldData__, ctx.data$)
     if (!res) return ctx.$emit('setDataRender:resolve')
     // console.log('响应式触发this.setData，参数: ', res)
@@ -37,9 +41,6 @@ function flushSetDataJobs() {
     ctx.__watching__ = false
     watching.call(ctx)
     ctx.__oldData__ = cloneDeep(ctx.data)
-  })
-  setDataCtxQueue.clear()
-  isFlushing = false
 }
 export let userSetDataFlag = false
 export function setData(
