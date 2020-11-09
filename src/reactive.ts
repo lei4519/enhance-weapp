@@ -105,12 +105,14 @@ function createWatching(ctx: EnhanceRuntime) {
   return watching.bind(ctx)
 }
 
+export function stopWatching(this: EnhanceRuntime) {
+  // 如果已经取消监听了，就直接退出
+  if (!this.__watching__) return
+  this.__watching__ = false
+  // 执行取消监听
+  this.__stopWatchFn__()
+}
+
 function createStopWatching(ctx: EnhanceRuntime) {
-  return function stopWatching() {
-    // 如果已经取消监听了，就直接退出
-    if (!ctx.__watching__) return
-    ctx.__watching__ = false
-    // 执行取消监听
-    ctx.__stopWatchFn__()
-  }
+  return stopWatching.bind(ctx)
 }

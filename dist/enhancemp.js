@@ -1212,7 +1212,7 @@ function updateData(ctx) {
         ctx.$emit('setDataRender:resolve');
     }, false);
     // 对于新增的值，重新监听
-    ctx.__watching__ = false;
+    stopWatching.call(ctx);
     watching.call(ctx);
     ctx.__oldData__ = cloneDeep(ctx.data);
 }
@@ -1920,15 +1920,16 @@ function watching() {
 function createWatching(ctx) {
     return watching.bind(ctx);
 }
+function stopWatching() {
+    // 如果已经取消监听了，就直接退出
+    if (!this.__watching__)
+        return;
+    this.__watching__ = false;
+    // 执行取消监听
+    this.__stopWatchFn__();
+}
 function createStopWatching(ctx) {
-    return function stopWatching() {
-        // 如果已经取消监听了，就直接退出
-        if (!ctx.__watching__)
-            return;
-        ctx.__watching__ = false;
-        // 执行取消监听
-        ctx.__stopWatchFn__();
-    };
+    return stopWatching.bind(ctx);
 }
 
 // 需要装饰的所有生命周期

@@ -97,7 +97,7 @@ describe('装饰生命周期函数', () => {
     expect(isReactive(page.data.e)).toBeFalsy()
 
     expect(isReactive(page.data$)).toBeTruthy()
-    expect(isReactive(page.data$.b)).toBeFalsy()
+    expect(isReactive(page.data$.b)).toBeTruthy()
     expect(isReactive(page.data$.c)).toBeTruthy()
     expect(isReactive(page.data$.e)).toBeTruthy()
 
