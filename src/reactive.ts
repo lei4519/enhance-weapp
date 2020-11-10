@@ -13,7 +13,7 @@ import {
   toRef,
   unref
 } from '@vue/reactivity'
-import { setDataQueueJob, userSetDataFlag } from './setDataEffect'
+import { setDataQueueJob, updateData, userSetDataFlag } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
 import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
 
@@ -72,15 +72,30 @@ export function handlerSetup(
     // 页面在onLoad/onShow中watch
     // 响应式监听要先于其他函数前执行
     ctx.__hooks__.onLoad.unshift(watching)
-    ctx.__hooks__.onShow.unshift(watching)
+    ctx.__hooks__.onShow.unshift(() => {
+      if (ctx['__onHide:resolve__'] && !ctx.__watching__) {
+        Promise.resolve().then(() => updateData(ctx))
+      }
+      watching()
+    })
     // onHide/unLoad结束，取消监听
     ctx.$on('onHide:finally', stopWatching)
     ctx.$on('onUnLoad:finally', stopWatching)
   } else {
     // 组件在attached/onShow中watch
     // 响应式监听要先于其他函数前执行
-    ctx.__hooks__.attached.unshift(watching)
-    ctx.__hooks__.show.unshift(watching)
+    ctx.__hooks__.attached.unshift(() => {
+      if (ctx['__detached:resolve__'] && !ctx.__watching__) {
+        Promise.resolve().then(() => updateData(ctx))
+      }
+      watching()
+    })
+    ctx.__hooks__.show.unshift(() => {
+      if (ctx['__hide:resolve__'] && !ctx.__watching__) {
+        Promise.resolve().then(() => updateData(ctx))
+      }
+      watching()
+    })
     // detached/onHide 中移除watch
     ctx.$on('hide:finally', stopWatching)
     ctx.$on('detached:finally', stopWatching)

@@ -1887,7 +1887,12 @@ function handlerSetup(ctx, options, type) {
         // 页面在onLoad/onShow中watch
         // 响应式监听要先于其他函数前执行
         ctx.__hooks__.onLoad.unshift(watching);
-        ctx.__hooks__.onShow.unshift(watching);
+        ctx.__hooks__.onShow.unshift(function () {
+            if (ctx['__onHide:resolve__'] && !ctx.__watching__) {
+                Promise.resolve().then(function () { return updateData(ctx); });
+            }
+            watching();
+        });
         // onHide/unLoad结束，取消监听
         ctx.$on('onHide:finally', stopWatching);
         ctx.$on('onUnLoad:finally', stopWatching);
@@ -1895,8 +1900,18 @@ function handlerSetup(ctx, options, type) {
     else {
         // 组件在attached/onShow中watch
         // 响应式监听要先于其他函数前执行
-        ctx.__hooks__.attached.unshift(watching);
-        ctx.__hooks__.show.unshift(watching);
+        ctx.__hooks__.attached.unshift(function () {
+            if (ctx['__detached:resolve__'] && !ctx.__watching__) {
+                Promise.resolve().then(function () { return updateData(ctx); });
+            }
+            watching();
+        });
+        ctx.__hooks__.show.unshift(function () {
+            if (ctx['__hide:resolve__'] && !ctx.__watching__) {
+                Promise.resolve().then(function () { return updateData(ctx); });
+            }
+            watching();
+        });
         // detached/onHide 中移除watch
         ctx.$on('hide:finally', stopWatching);
         ctx.$on('detached:finally', stopWatching);
