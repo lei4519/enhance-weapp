@@ -1243,7 +1243,9 @@ function setData(rawSetData, data, cb, isUserInvoke) {
     rawSetData.call(this, data, cb);
     this.__oldData__ = cloneDeep(this.data);
     if (isUserInvoke) {
-        userSetDataFlag = false;
+        Promise.resolve().then(function () {
+            userSetDataFlag = false;
+        });
     }
 }
 function setDataNextTick(cb) {

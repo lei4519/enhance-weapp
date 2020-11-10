@@ -71,7 +71,9 @@ export function setData(
   rawSetData.call(this, data, cb)
   this.__oldData__ = cloneDeep(this.data)
   if (isUserInvoke) {
-    userSetDataFlag = false
+    Promise.resolve().then(() => {
+      userSetDataFlag = false
+    })
   }
 }
 
