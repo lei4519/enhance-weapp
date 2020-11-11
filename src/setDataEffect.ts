@@ -1,7 +1,7 @@
 import { cloneDeep, cloneDeepRawData, isFunction } from './util'
 import { diffData } from '@/diffData'
 import { EnhanceRuntime, LooseFunction, LooseObject } from '../types'
-import { stopWatching, watching } from './reactive'
+import { startTrack, stopTrack, stopWatching, watching } from './reactive'
 // 需要更新的异步队列
 const setDataCtxQueue: Set<EnhanceRuntime> = new Set()
 // 是否注册了异步任务
@@ -42,7 +42,6 @@ export function updateData(ctx: EnhanceRuntime) {
     watching.call(ctx)
     ctx.__oldData__ = cloneDeep(ctx.data)
 }
-export let userSetDataFlag = false
 export function setData(
   this: EnhanceRuntime,
   rawSetData: LooseFunction,
@@ -51,7 +50,7 @@ export function setData(
   isUserInvoke = true
 ) {
   if (isUserInvoke) {
-    userSetDataFlag = true
+    stopTrack()
     // 同步 data$ 值
     try {
       Object.entries(data).forEach(([paths, value]) => {
@@ -71,9 +70,7 @@ export function setData(
   rawSetData.call(this, data, cb)
   this.__oldData__ = cloneDeep(this.data)
   if (isUserInvoke) {
-    Promise.resolve().then(() => {
-      userSetDataFlag = false
-    })
+    startTrack()
   }
 }
 

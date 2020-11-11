@@ -13,7 +13,7 @@ import {
   toRef,
   unref
 } from '@vue/reactivity'
-import { setDataQueueJob, updateData, userSetDataFlag } from './setDataEffect'
+import { setDataQueueJob, updateData } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
 import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
 
@@ -103,6 +103,17 @@ export function handlerSetup(
   return setupData
 }
 
+let tracking = true
+export function startTrack() {
+  // 响应式触发是异步的，追踪要在响应式出触发之后变更
+  Promise.resolve().then(() => {
+    tracking = true
+  })
+}
+export function stopTrack() {
+  tracking = false
+}
+
 export function watching(this: EnhanceRuntime) {
   // 如果已经被监控了，就直接退出
   if (this.__watching__) return
@@ -110,7 +121,7 @@ export function watching(this: EnhanceRuntime) {
   // 保留取消监听的函数
   this.__stopWatchFn__ = watch(this.data$, () => {
     // 用户调用setData触发的响应式不做处理，避免循环更新
-    if (!userSetDataFlag) {
+    if (tracking) {
       setDataQueueJob(this)
     }
   })

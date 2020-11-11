@@ -332,6 +332,11 @@ export function decoratorLifeCycle(
   return options
 }
 
+function decoratorObservers() {
+
+}
+
+
 /**
  * 初始化生命周期钩子相关属性
  */
