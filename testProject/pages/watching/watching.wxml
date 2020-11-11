@@ -2,3 +2,5 @@
 <text>pages/watching/watching.wxml</text>
 <view>{{value}}</view>
 <test id="test"/>
+
+<button bindtap="to">tototot</button>

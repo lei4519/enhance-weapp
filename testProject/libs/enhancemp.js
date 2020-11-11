@@ -975,6 +975,14 @@ function cloneDeepRawData(data) {
 function cloneDeep(data) {
     return JSON.parse(JSON.stringify(data));
 }
+function parsePath(obj, paths) {
+    var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
+    var key = pathsArr.pop();
+    while (pathsArr.length) {
+        obj = obj[pathsArr.shift()];
+    }
+    return [obj, key];
+}
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1121,7 +1129,6 @@ function handlerMixins(type, ctx) {
  * @return {Object}  传给this.setData的值
  */
 function diffData(oldRootData, newRootData) {
-    var SKIP_LENGTH = 99;
     // 更新对象，最终传给this.setData的值
     var updateObject = null;
     var diffQueue = [];
@@ -1129,7 +1136,8 @@ function diffData(oldRootData, newRootData) {
     var addUpdateData = function (key, val) {
         !updateObject && (updateObject = {});
         // 基本类型直接赋值，引用类型解除引用
-        updateObject[key] = isPrimitive(val) ? val : cloneDeepRawData(val);
+        updateObject[key] =
+            val === void 0 ? null : isPrimitive(val) ? val : cloneDeepRawData(val);
     };
     /* 处理根对象 */
     // 获取原始值
@@ -1173,7 +1181,7 @@ function diffData(oldRootData, newRootData) {
             addUpdateData(keyPath, newData);
             return "continue";
         }
-        // 基本类型（JSON中没有函数正则等数据类型）
+        // 基本类型
         if (newType !== 'Object' && newType !== 'Array') {
             // 如果能走到这，说明肯定不相等
             addUpdateData(keyPath, newData);
@@ -1181,19 +1189,13 @@ function diffData(oldRootData, newRootData) {
         }
         // 数组
         if (newType === 'Array') {
-            // 长度不等，直接重设
-            // 数组和对象不同，无法根据key值来判断哪些值是新增的，哪些值是删除的
-            if (oldData.length !== newData.length) {
+            // 旧长新短：删除操作，直接重设
+            if (oldData.length > newData.length) {
                 addUpdateData(keyPath, newData);
                 return "continue";
             }
-            // 长度相等，但是数组length过长，不进行diff
-            if (oldData.length > SKIP_LENGTH) {
-                addUpdateData(keyPath, newData);
-                return "continue";
-            }
-            // 长度相等，将数组的每一项推入diff队列中
-            for (var i = 0, l = oldData.length; i < l; i++) {
+            // 将新数组的每一项推入diff队列中
+            for (var i = 0, l = newData.length; i < l; i++) {
                 diffQueue.push([oldData[i], newData[i], keyPath + "[" + i + "]"]);
             }
             return "continue";
@@ -1205,11 +1207,6 @@ function diffData(oldRootData, newRootData) {
         var newKeys = Object.keys(newData);
         // 旧长新短：删除操作，直接重设
         if (oldKeys.length > newKeys.length) {
-            addUpdateData(keyPath, newData);
-            return "continue";
-        }
-        // 长度相等，但是length过长，不进行diff
-        if (oldKeys.length > SKIP_LENGTH) {
             addUpdateData(keyPath, newData);
             return "continue";
         }
@@ -1283,41 +1280,35 @@ function setDataQueueFlush() {
     }
 }
 function flushSetDataJobs() {
-    setDataCtxQueue.forEach(function (ctx) {
-        var res = diffData(ctx.__oldData__, ctx.data$);
-        if (!res)
-            return ctx.$emit('setDataRender:resolve');
-        // console.log('响应式触发this.setData，参数: ', res)
-        ctx.setData(res, function () {
-            ctx.$emit('setDataRender:resolve');
-        }, false);
-        ctx.__oldData__ = cloneDeep(ctx.data);
-    });
+    setDataCtxQueue.forEach(updateData);
     setDataCtxQueue.clear();
     isFlushing = false;
 }
-var userSetDataFlag = false;
+function updateData(ctx) {
+    var res = diffData(ctx.__oldData__, ctx.data$);
+    if (!res)
+        return ctx.$emit('setDataRender:resolve');
+    // console.log('响应式触发this.setData，参数: ', res)
+    ctx.setData(res, function () {
+        ctx.$emit('setDataRender:resolve');
+    }, false);
+    // 对于新增的值，重新监听
+    stopWatching.call(ctx);
+    watching.call(ctx);
+    ctx.__oldData__ = cloneDeep(ctx.data);
+}
 function setData(rawSetData, data, cb, isUserInvoke) {
     var _this = this;
     if (isUserInvoke === void 0) { isUserInvoke = true; }
     if (isUserInvoke) {
-        userSetDataFlag = true;
+        // stopWatching.call(this)
         // 同步 data$ 值
         try {
             Object.entries(data).forEach(function (_a) {
                 var paths = _a[0], value = _a[1];
-                var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
-                var key = pathsArr.pop();
-                var obj = _this.data$;
-                while (pathsArr.length) {
-                    /* istanbul ignore next */
-                    obj = obj[pathsArr.shift()];
-                }
+                var _b = parsePath(_this.data$, paths), obj = _b[0], key = _b[1];
                 obj[key] = value;
             });
-            Promise.resolve().then(() => {
-                userSetDataFlag = false;
-            })
         }
         catch (err) {
             console.error('同步this.data$失败：', err);
@@ -2283,11 +2274,9 @@ function handlerSetup(ctx, options, type) {
             else {
                 // 直接返回reactive值，需要将里面的属性继续ref化
                 ctx.data$[key] =
-                    isReactive(val) || isRef(val)
-                        ? val
-                        : isPrimitive(val)
-                            ? toRef(setupData, key)
-                            : reactive(val);
+                    isReactive(setupData) && isPrimitive(val)
+                        ? toRef(setupData, key)
+                        : val;
                 ctx.data[key] = isRef(val) ? unref(val) : toRaw(val);
             }
         });
@@ -2315,7 +2304,12 @@ function handlerSetup(ctx, options, type) {
         // 页面在onLoad/onShow中watch
         // 响应式监听要先于其他函数前执行
         ctx.__hooks__.onLoad.unshift(watching);
-        ctx.__hooks__.onShow.unshift(watching);
+        ctx.__hooks__.onShow.unshift(function () {
+            if (ctx['__onHide:resolve__'] && !ctx.__watching__) {
+                Promise.resolve().then(function () { return updateData(ctx); });
+            }
+            watching();
+        });
         // onHide/unLoad结束，取消监听
         ctx.$on('onHide:finally', stopWatching);
         ctx.$on('onUnLoad:finally', stopWatching);
@@ -2323,38 +2317,49 @@ function handlerSetup(ctx, options, type) {
     else {
         // 组件在attached/onShow中watch
         // 响应式监听要先于其他函数前执行
-        ctx.__hooks__.attached.unshift(watching);
-        ctx.__hooks__.show.unshift(watching);
+        ctx.__hooks__.attached.unshift(function () {
+            if (ctx['__detached:resolve__'] && !ctx.__watching__) {
+                Promise.resolve().then(function () { return updateData(ctx); });
+            }
+            watching();
+        });
+        ctx.__hooks__.show.unshift(function () {
+            if (ctx['__hide:resolve__'] && !ctx.__watching__) {
+                Promise.resolve().then(function () { return updateData(ctx); });
+            }
+            watching();
+        });
         // detached/onHide 中移除watch
         ctx.$on('hide:finally', stopWatching);
         ctx.$on('detached:finally', stopWatching);
     }
     return setupData;
 }
+function watching() {
+    var _this = this;
+    // 如果已经被监控了，就直接退出
+    if (this.__watching__)
+        return;
+    this.__watching__ = true;
+    // 保留取消监听的函数
+    this.__stopWatchFn__ = watch(this.data$, function () {
+        // 用户调用setData触发的响应式不做处理，避免循环更新
+        setDataQueueJob(_this);
+    });
+}
 function createWatching(ctx) {
-    return function watching() {
-        // 如果已经被监控了，就直接退出
-        if (ctx.__watching__)
-            return;
-        ctx.__watching__ = true;
-        // 保留取消监听的函数
-        ctx.__stopWatchFn__ = watch(ctx.data$, function () {
-            // 用户调用setData触发的响应式不做处理，避免循环更新
-            if (!userSetDataFlag) {
-                setDataQueueJob(ctx);
-            }
-        });
-    };
+    return watching.bind(ctx);
+}
+function stopWatching() {
+    // 如果已经取消监听了，就直接退出
+    if (!this.__watching__)
+        return;
+    this.__watching__ = false;
+    // 执行取消监听
+    this.__stopWatchFn__();
 }
 function createStopWatching(ctx) {
-    return function stopWatching() {
-        // 如果已经取消监听了，就直接退出
-        if (!ctx.__watching__)
-            return;
-        ctx.__watching__ = false;
-        // 执行取消监听
-        ctx.__stopWatchFn__();
-    };
+    return stopWatching.bind(ctx);
 }
 
 // 需要装饰的所有生命周期
@@ -2567,6 +2572,7 @@ var lcEventBus = initEvents();
  * @param type App | Page | Component
  */
 function decoratorLifeCycle(options, type) {
+    decoratorObservers(options);
     // 组件要做额外处理
     if (type === 'component') {
         // 处理component pageLifetimes
@@ -2741,6 +2747,74 @@ function decoratorLifeCycle(options, type) {
     return options;
 }
 /**
+ * 装饰数据监听器的变化
+ */
+function decoratorObservers(options) {
+    var observers = options.observers;
+    // 对比数据变化差异, 并同步this.data$ 的值
+    function diffAndPatch(oldData, newData) {
+        var res = diffData(oldData, newData);
+        if (res) {
+            // 同步 data$ 值
+            Object.entries(res).forEach(function (_a) {
+                var paths = _a[0], value = _a[1];
+                var _b = parsePath(oldData, paths), obj = _b[0], key = _b[1];
+                if (isRef(obj[key])) {
+                    obj[key].value = value;
+                }
+                else {
+                    obj[key] = value;
+                }
+            });
+            // this.__oldData__ = cloneDeep(args[0])
+        }
+    }
+    if (isObject$1(observers)) {
+        var allObs_1 = observers['**'];
+        observers['**'] = function (val) {
+            if (this.data$) {
+                stopWatching.call(this);
+                diffAndPatch(this.data$, val);
+                watching.call(this);
+            }
+            allObs_1 && allObs_1.call(this, val);
+        };
+        // Object.entries<LooseFunction>(observers).forEach(([key, fn]) => {
+        //   // 监听全部数据变化
+        //   if (key === '**') {
+        //     observers[key] = function (...args: any[]) {
+        //       if (this.data$) {
+        //         stopWatching.call(this)
+        //         diffAndPatch(args[0], this.data$)
+        //         watching.call(this)
+        //       }
+        //       fn.call(this, ...args)
+        //     }
+        //   } else {
+        //     observers[key] = function (...args: any[]) {
+        //       if (this.data$) {
+        //         stopWatching.call(this)
+        //         key.split(',').forEach((_k, i) => {
+        //           const [obj, k] = parsePath(this.data$, _k)
+        //           if (k === '**') {
+        //             diffAndPatch(args[i], obj)
+        //           } else {
+        //             if (isRef(obj[k])) {
+        //               obj[k].value = args[i]
+        //             } else {
+        //               obj[k] = args[i]
+        //             }
+        //           }
+        //         })
+        //         watching.call(this)
+        //       }
+        //       fn.call(this, ...args)
+        //     }
+        //   }
+        // })
+    }
+}
+/**
  * 初始化生命周期钩子相关属性
  */
 function initHooks(type, ctx) {
@@ -2896,6 +2970,38 @@ function requestMethod(options) {
 }
 requestMethod.interceptors = interceptors;
 
+var state = null;
+function initStore(initState) {
+    return state = reactive(initState);
+}
+function useStore(pathStr) {
+    var ctx = getCurrentCtx();
+    if (!ctx)
+        return console.warn('未找到当前运行中的实例，请不要在setup执行堆栈外使用 useStore');
+    if (!state)
+        return console.warn('请先使用initStore 初始化');
+    if (!pathStr)
+        return console.warn('useStore 参数不能为空');
+    // const returnStr = /(=>|return)\s+(.[^\s]+)/igm
+    var paths = pathStr.split('.');
+    var key = paths.pop();
+    var obj = state;
+    try {
+        while (paths.length) {
+            obj = obj[paths.pop()];
+        }
+    }
+    catch (e) {
+        console.error("useStore(" + pathStr + ")", '传入的路径错误');
+        throw e;
+    }
+    var val = toRef(obj, key);
+    var stopWatching = watch(val, updateData.bind(ctx));
+    ctx.$once('onUnload:finally', stopWatching);
+    ctx.$once('detached:finally', stopWatching);
+    return val;
+}
+
 exports.Eapp = Eapp;
 exports.Ecomponent = Ecomponent;
 exports.Epage = Epage;
@@ -2904,8 +3010,10 @@ exports.customControlLifecycle = customControlLifecycle;
 exports.customRef = customRef;
 exports.effect = effect;
 exports.enableTracking = enableTracking;
+exports.forceUpdata = updateData;
 exports.getCurrentCtx = getCurrentCtx;
 exports.globalMixins = globalMixins;
+exports.initStore = initStore;
 exports.isProxy = isProxy;
 exports.isReactive = isReactive;
 exports.isReadonly = isReadonly;
@@ -2956,5 +3064,6 @@ exports.track = track;
 exports.trigger = trigger;
 exports.triggerRef = triggerRef;
 exports.unref = unref;
+exports.useStore = useStore;
 exports.watch = watch;
 exports.watchEffect = watchEffect;

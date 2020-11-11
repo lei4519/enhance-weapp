@@ -902,6 +902,14 @@ function cloneDeepRawData(data) {
 function cloneDeep(data) {
     return JSON.parse(JSON.stringify(data));
 }
+function parsePath(obj, paths) {
+    var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
+    var key = pathsArr.pop();
+    while (pathsArr.length) {
+        obj = obj[pathsArr.shift()];
+    }
+    return [obj, key];
+}
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1216,23 +1224,16 @@ function updateData(ctx) {
     watching.call(ctx);
     ctx.__oldData__ = cloneDeep(ctx.data);
 }
-var userSetDataFlag = false;
 function setData(rawSetData, data, cb, isUserInvoke) {
     var _this = this;
     if (isUserInvoke === void 0) { isUserInvoke = true; }
     if (isUserInvoke) {
-        userSetDataFlag = true;
+        // stopWatching.call(this)
         // 同步 data$ 值
         try {
             Object.entries(data).forEach(function (_a) {
                 var paths = _a[0], value = _a[1];
-                var pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.');
-                var key = pathsArr.pop();
-                var obj = _this.data$;
-                while (pathsArr.length) {
-                    /* istanbul ignore next */
-                    obj = obj[pathsArr.shift()];
-                }
+                var _b = parsePath(_this.data$, paths), obj = _b[0], key = _b[1];
                 obj[key] = value;
             });
         }
@@ -1242,11 +1243,6 @@ function setData(rawSetData, data, cb, isUserInvoke) {
     }
     rawSetData.call(this, data, cb);
     this.__oldData__ = cloneDeep(this.data);
-    if (isUserInvoke) {
-        Promise.resolve().then(function () {
-            userSetDataFlag = false;
-        });
-    }
 }
 function setDataNextTick(cb) {
     var resolve;
@@ -1857,11 +1853,9 @@ function handlerSetup(ctx, options, type) {
             else {
                 // 直接返回reactive值，需要将里面的属性继续ref化
                 ctx.data$[key] =
-                    isReactive(val) || isRef(val)
-                        ? val
-                        : isPrimitive(val)
-                            ? toRef(setupData, key)
-                            : reactive(val);
+                    isReactive(setupData) && isPrimitive(val)
+                        ? toRef(setupData, key)
+                        : val;
                 ctx.data[key] = isRef(val) ? unref(val) : toRaw(val);
             }
         });
@@ -1929,9 +1923,7 @@ function watching() {
     // 保留取消监听的函数
     this.__stopWatchFn__ = watch(this.data$, function () {
         // 用户调用setData触发的响应式不做处理，避免循环更新
-        if (!userSetDataFlag) {
-            setDataQueueJob(_this);
-        }
+        setDataQueueJob(_this);
     });
 }
 function createWatching(ctx) {
@@ -2159,6 +2151,7 @@ var lcEventBus = initEvents();
  * @param type App | Page | Component
  */
 function decoratorLifeCycle(options, type) {
+    decoratorObservers(options);
     // 组件要做额外处理
     if (type === 'component') {
         // 处理component pageLifetimes
@@ -2331,6 +2324,74 @@ function decoratorLifeCycle(options, type) {
         };
     });
     return options;
+}
+/**
+ * 装饰数据监听器的变化
+ */
+function decoratorObservers(options) {
+    var observers = options.observers;
+    // 对比数据变化差异, 并同步this.data$ 的值
+    function diffAndPatch(oldData, newData) {
+        var res = diffData(oldData, newData);
+        if (res) {
+            // 同步 data$ 值
+            Object.entries(res).forEach(function (_a) {
+                var paths = _a[0], value = _a[1];
+                var _b = parsePath(oldData, paths), obj = _b[0], key = _b[1];
+                if (isRef(obj[key])) {
+                    obj[key].value = value;
+                }
+                else {
+                    obj[key] = value;
+                }
+            });
+            // this.__oldData__ = cloneDeep(args[0])
+        }
+    }
+    if (isObject$1(observers)) {
+        var allObs_1 = observers['**'];
+        observers['**'] = function (val) {
+            if (this.data$) {
+                stopWatching.call(this);
+                diffAndPatch(this.data$, val);
+                watching.call(this);
+            }
+            allObs_1 && allObs_1.call(this, val);
+        };
+        // Object.entries<LooseFunction>(observers).forEach(([key, fn]) => {
+        //   // 监听全部数据变化
+        //   if (key === '**') {
+        //     observers[key] = function (...args: any[]) {
+        //       if (this.data$) {
+        //         stopWatching.call(this)
+        //         diffAndPatch(args[0], this.data$)
+        //         watching.call(this)
+        //       }
+        //       fn.call(this, ...args)
+        //     }
+        //   } else {
+        //     observers[key] = function (...args: any[]) {
+        //       if (this.data$) {
+        //         stopWatching.call(this)
+        //         key.split(',').forEach((_k, i) => {
+        //           const [obj, k] = parsePath(this.data$, _k)
+        //           if (k === '**') {
+        //             diffAndPatch(args[i], obj)
+        //           } else {
+        //             if (isRef(obj[k])) {
+        //               obj[k].value = args[i]
+        //             } else {
+        //               obj[k] = args[i]
+        //             }
+        //           }
+        //         })
+        //         watching.call(this)
+        //       }
+        //       fn.call(this, ...args)
+        //     }
+        //   }
+        // })
+    }
 }
 /**
  * 初始化生命周期钩子相关属性

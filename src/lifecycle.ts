@@ -3,11 +3,12 @@ import {
   disabledEnumerable,
   isFunction,
   isObject,
+  parsePath,
   transformOnName
 } from './util'
 import { initEvents } from './events'
 import { handlerMixins } from './mixins'
-import { handlerSetup } from './reactive'
+import { handlerSetup, stopWatching, watching } from './reactive'
 import { setData, setDataNextTick } from './setDataEffect'
 import {
   appPushHooks,
@@ -28,6 +29,8 @@ import {
   PageLifeTime,
   WaitHookFn
 } from '../types'
+import { diffData } from './diffData'
+import { isRef } from '@vue/reactivity'
 
 let isControlLifecycle = true
 /** 不控制生命周期的运行顺序 */
@@ -137,6 +140,8 @@ export function decoratorLifeCycle(
   options: LooseObject,
   type: DecoratorType
 ): LooseObject {
+  decoratorObservers(options)
+
   // 组件要做额外处理
   if (type === 'component') {
     // 处理component pageLifetimes
@@ -331,11 +336,72 @@ export function decoratorLifeCycle(
 
   return options
 }
-
-function decoratorObservers() {
-
+/**
+ * 装饰数据监听器的变化
+ */
+function decoratorObservers(options: LooseObject) {
+  const observers = options.observers
+  // 对比数据变化差异, 并同步this.data$ 的值
+  function diffAndPatch(oldData: LooseObject, newData: LooseObject) {
+    const res = diffData(oldData, newData)
+    if (res) {
+      // 同步 data$ 值
+      Object.entries(res).forEach(([paths, value]) => {
+        const [obj, key] = parsePath(oldData, paths)
+        if (isRef(obj[key])) {
+          obj[key].value = value
+        } else {
+          obj[key] = value
+        }
+      })
+      // this.__oldData__ = cloneDeep(args[0])
+    }
+  }
+  if (isObject(observers)) {
+    const allObs = observers['**']
+    observers['**'] = function (val: any) {
+      if (this.data$) {
+        stopWatching.call(this)
+        diffAndPatch(this.data$, val)
+        watching.call(this)
+      }
+      allObs && allObs.call(this, val)
+    }
+    // Object.entries<LooseFunction>(observers).forEach(([key, fn]) => {
+    //   // 监听全部数据变化
+    //   if (key === '**') {
+    //     observers[key] = function (...args: any[]) {
+    //       if (this.data$) {
+    //         stopWatching.call(this)
+    //         diffAndPatch(args[0], this.data$)
+    //         watching.call(this)
+    //       }
+    //       fn.call(this, ...args)
+    //     }
+    //   } else {
+    //     observers[key] = function (...args: any[]) {
+    //       if (this.data$) {
+    //         stopWatching.call(this)
+    //         key.split(',').forEach((_k, i) => {
+    //           const [obj, k] = parsePath(this.data$, _k)
+    //           if (k === '**') {
+    //             diffAndPatch(args[i], obj)
+    //           } else {
+    //             if (isRef(obj[k])) {
+    //               obj[k].value = args[i]
+    //             } else {
+    //               obj[k] = args[i]
+    //             }
+    //           }
+    //         })
+    //         watching.call(this)
+    //       }
+    //       fn.call(this, ...args)
+    //     }
+    //   }
+    // })
+  }
 }
-
 
 /**
  * 初始化生命周期钩子相关属性

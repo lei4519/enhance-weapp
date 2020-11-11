@@ -1,16 +1,27 @@
-import { Epage, onShowHooks, onHideHooks, onUnloadHooks } from '../../libs/enhancemp'
+import { Epage, onHideHooks, onLoadHooks } from '../../libs/enhancemp'
+let i = 0, timer
+
 Epage({
   setup() {
-    onShowHooks(() => {
+    onLoadHooks(() => {
       this.data$.value++
     })
     onHideHooks(() => {
-      setTimeout(() => {
+      timer = setInterval(() => {
+        if (i === 3) {
+          return clearInterval(timer)
+        }
+        i++
         this.data$.value++
-      })
+      }, 10)
     })
     return {
-      value: 0
+      value: 0,
+      to() {
+        wx.navigateTo({
+          url: '/pages/reactive/reactive'
+        })
+      }
     }
   }
 })

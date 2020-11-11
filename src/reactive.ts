@@ -39,11 +39,9 @@ export function handlerSetup(
       } else {
         // 直接返回reactive值，需要将里面的属性继续ref化
         ctx.data$[key] =
-        isReactive(val) || isRef(val)
-            ? val
-            : isPrimitive(val)
+          isReactive(setupData) && isPrimitive(val)
             ? toRef(setupData, key)
-            : reactive(val)
+            : val
         ctx.data[key] = isRef(val) ? unref(val) : toRaw(val)
       }
     })
@@ -103,17 +101,6 @@ export function handlerSetup(
   return setupData
 }
 
-let tracking = true
-export function startTrack() {
-  // 响应式触发是异步的，追踪要在响应式出触发之后变更
-  Promise.resolve().then(() => {
-    tracking = true
-  })
-}
-export function stopTrack() {
-  tracking = false
-}
-
 export function watching(this: EnhanceRuntime) {
   // 如果已经被监控了，就直接退出
   if (this.__watching__) return
@@ -121,9 +108,7 @@ export function watching(this: EnhanceRuntime) {
   // 保留取消监听的函数
   this.__stopWatchFn__ = watch(this.data$, () => {
     // 用户调用setData触发的响应式不做处理，避免循环更新
-    if (tracking) {
-      setDataQueueJob(this)
-    }
+    setDataQueueJob(this)
   })
 }
 

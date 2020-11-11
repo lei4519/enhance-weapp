@@ -91,3 +91,13 @@ export function cloneDeepRawData(data: LooseObject): LooseObject {
 export function cloneDeep(data: LooseObject): LooseObject {
   return JSON.parse(JSON.stringify(data))
 }
+
+
+export function parsePath(obj: LooseObject, paths: string): [LooseObject, string] {
+  const pathsArr = paths.replace(/(\[(\d+)\])/g, '.$2').split('.')
+  const key = pathsArr.pop()!
+  while (pathsArr.length) {
+    obj = obj[pathsArr.shift()!]
+  }
+  return [obj, key]
+}

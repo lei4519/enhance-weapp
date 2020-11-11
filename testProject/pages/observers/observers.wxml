@@ -1,0 +1,8 @@
+<!--pages/watching/watching.wxml-->
+<text>pages/watching/watching.wxml</text>
+<view id="num1">{{num1}}</view>
+<view id="num2">{{num2}}</view>
+
+<test id="test" num1="{{num1}}" num2="{{num2}}"/>
+
+<button id="btn" bindtap="change">change</button>

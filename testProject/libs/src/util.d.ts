@@ -25,3 +25,4 @@ export declare function getType(val: any): string;
 export declare function getRawData(data: LooseObject): LooseObject;
 export declare function cloneDeepRawData(data: LooseObject): LooseObject;
 export declare function cloneDeep(data: LooseObject): LooseObject;
+export declare function parsePath(obj: LooseObject, paths: string): [LooseObject, string];

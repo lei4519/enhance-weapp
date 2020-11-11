@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/observers/observers",
     "pages/setData/setData",
     "pages/lifecycle/lifecycle",
     "pages/lifecycleError/lifecycle",

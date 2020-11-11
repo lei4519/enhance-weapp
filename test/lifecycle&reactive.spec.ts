@@ -122,7 +122,7 @@ describe('装饰生命周期函数', () => {
     expect(isReactive(comp.data.e)).toBeFalsy()
 
     expect(isReactive(comp.data$)).toBeTruthy()
-    expect(isReactive(comp.data$.b)).toBeFalsy()
+    expect(isReactive(comp.data$.b)).toBeTruthy()
     expect(isReactive(comp.data$.c)).toBeTruthy()
     expect(isReactive(comp.data$.e)).toBeTruthy()
   })
@@ -174,8 +174,6 @@ describe('装饰生命周期函数', () => {
           return getCurrentPages()[0]
         })
         // setup返回值，函数绑定至this(methods)上，其他值绑定到data上
-        expect(page.data.a).toBe(1)
-        expect(page.data.b).toEqual({})
         expect(page.c).toBe('function:c')
 
         const curPage = await miniProgram.currentPage()
@@ -247,8 +245,6 @@ describe('装饰生命周期函数', () => {
           return getCurrentPages()[0].selectComponent('#test')
         })
         // setup返回值，函数绑定至this(methods)上，其他值绑定到data上
-        expect(comp.data.a).toBe(1)
-        expect(comp.data.b).toEqual({})
         expect(comp.c).toBe('function:c')
 
         const curPage = await miniProgram.currentPage()
@@ -288,11 +284,12 @@ describe('装饰生命周期函数', () => {
         expect(comp.data$.reactiveVal.array).toEqual([1, 2])
       }
     }
+
     {
       /**
        * 组件的首次setData在attached调用，调用后会移除此函数防止多次调用
-       * 响应式变更在onHide/onUnload/hide/detached后会移除监听
-       * 响应式变更在onLoad/onShow/show/attached时会重新监听
+       * 响应式变更在onHide/onUnload/hide/detached后会移除监听，防止在后台消耗资源
+       * 响应式变更在onLoad/onShow/show/attached时会重新监听, 并进行diff来恢复后台运行时更改的数据
        */
       await miniProgram.reLaunch('/pages/watching/watching')
 
@@ -305,8 +302,8 @@ describe('装饰生命周期函数', () => {
         )
       ).toBe(-1)
 
-      let page = await miniProgram.evaluate(() => {
-        return getCurrentPages()[0]
+      let pageVal = await miniProgram.evaluate(() => {
+        return getCurrentPages()[0].data$.value
       })
       let comp = await miniProgram.evaluate(() => {
         return getCurrentPages()[0].selectComponent('#test')
@@ -316,13 +313,14 @@ describe('装饰生命周期函数', () => {
       let compText = await (await (await curPage.$('#test')).$('view')).text()
 
       expect(pageText).toBe('1')
-      expect(page.data$.value).toBe(1)
+      expect(pageVal).toBe(1)
       expect(compText).toBe('1')
       expect(comp.data$.value).toBe(1)
 
       await miniProgram.navigateTo('/pages/reactive/reactive')
-      page = await miniProgram.evaluate(() => {
-        return getCurrentPages()[0]
+      await setTimeoutResolve(null, 1000)
+      pageVal = await miniProgram.evaluate(() => {
+        return getCurrentPages()[0].data$.value
       })
       comp = await miniProgram.evaluate(() => {
         return getCurrentPages()[0].selectComponent('#test')
@@ -330,24 +328,25 @@ describe('装饰生命周期函数', () => {
       pageText = await (await curPage.$('view')).text()
       compText = await (await (await curPage.$('#test')).$('view')).text()
       expect(pageText).toBe('1')
-      expect(page.data$.value).toBe(2)
+      expect(pageVal).toBe(4)
       expect(compText).toBe('1')
-      expect(comp.data$.value).toBe(2)
+      expect(comp.data$.value).toBe(4)
 
       await miniProgram.navigateBack()
-      page = await miniProgram.evaluate(() => {
-        return getCurrentPages()[0]
+      pageVal = await miniProgram.evaluate(() => {
+        return getCurrentPages()[0].data$.value
       })
       comp = await miniProgram.evaluate(() => {
         return getCurrentPages()[0].selectComponent('#test')
       })
       pageText = await (await curPage.$('view')).text()
       compText = await (await (await curPage.$('#test')).$('view')).text()
-      expect(pageText).toBe('3')
-      expect(page.data$.value).toBe(3)
-      expect(compText).toBe('3')
-      expect(comp.data$.value).toBe(3)
+      expect(pageText).toBe('4')
+      expect(pageVal).toBe(4)
+      expect(compText).toBe('4')
+      expect(comp.data$.value).toBe(4)
     }
+
     {
       /** setData
        * this.setData 和 响应式数据可以互相同步
@@ -362,7 +361,6 @@ describe('装饰生命周期函数', () => {
       const fn2 = await curPage.$('#fn2')
       let text = await fn1.text()
 
-      expect(page.data.a).toBe(1)
       expect(text).toBe('1')
 
       await fn1.tap()
@@ -371,7 +369,6 @@ describe('装饰生命周期函数', () => {
         return getCurrentPages()[0]
       })
       text = await fn1.text()
-      expect(page.data.a).toBe(2)
       expect(text).toBe('2')
 
       await fn2.tap()
@@ -380,8 +377,42 @@ describe('装饰生命周期函数', () => {
         return getCurrentPages()[0]
       })
       text = await fn1.text()
-      expect(page.data.a).toBe(3)
       expect(text).toBe('3')
+    }
+
+    {
+      /** observers
+       * 组件props变化，data$也会同步变化
+       */
+      await miniProgram.reLaunch('/pages/observers/observers')
+
+      const curPage = await miniProgram.currentPage()
+      const btn = await curPage.$('#btn')
+      let page = await miniProgram.evaluate(() => {
+        return getCurrentPages()[0]
+      })
+      let comp = await miniProgram.evaluate(() => {
+        return getCurrentPages()[0].selectComponent('#test')
+      })
+
+      expect(page.data$.num1).toBe(0)
+      expect(page.data$.num2).toBe(0)
+      expect(comp.data$.num1).toBe(0)
+      expect(comp.data$.num2).toBe(0)
+
+      await btn.tap()
+
+      page = await miniProgram.evaluate(() => {
+        return getCurrentPages()[0]
+      })
+      comp = await miniProgram.evaluate(() => {
+        return getCurrentPages()[0].selectComponent('#test')
+      })
+
+      expect(page.data$.num1).toBe(1)
+      expect(page.data$.num2).toBe(2)
+      expect(comp.data$.num1).toBe(1)
+      expect(comp.data$.num2).toBe(2)
     }
   }, 30000)
 
