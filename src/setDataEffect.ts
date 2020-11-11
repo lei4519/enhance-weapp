@@ -2,6 +2,7 @@ import { cloneDeep, isFunction, parsePath } from './util'
 import { diffData } from './diffData'
 import { EnhanceRuntime, LooseFunction, LooseObject } from '../types'
 import { stopWatching, watching } from './reactive'
+import { getCurrentCtx } from './createPushHooks'
 // 需要更新的异步队列
 const setDataCtxQueue: Set<EnhanceRuntime> = new Set()
 // 是否注册了异步任务
@@ -68,10 +69,12 @@ export function setData(
   }
 }
 
-export function setDataNextTick(this: EnhanceRuntime, cb?: LooseFunction) {
+export function setDataNextTick(cb?: LooseFunction) {
+  const ctx = getCurrentCtx()
+  if (!ctx) return console.warn('未找到当前运行中的实例，请不要在setup执行堆栈外使用 nextTick')
   let resolve: any
   let promise = new Promise(r => (resolve = r))
-  this.$once('setDataRender:resolve', resolve!)
+  ctx.$once('setDataRender:resolve', resolve!)
   if (isFunction(cb)) {
     promise = promise.then(cb)
   }

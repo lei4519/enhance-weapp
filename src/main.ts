@@ -1,3 +1,4 @@
+
 export { Ecomponent } from './Ecomponent'
 export { Epage } from './Epage'
 export { Eapp } from './Eapp'
@@ -10,6 +11,8 @@ export { requestMethod as request } from './request'
 export { updateData as forceUpdata } from './setDataEffect'
 
 export { initStore, useStore } from './store'
+
+export { setDataNextTick as nextTick } from './setDataEffect'
 
 export {
   getCurrentCtx,

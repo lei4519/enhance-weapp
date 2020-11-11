@@ -9,7 +9,7 @@ import {
 import { initEvents } from './events'
 import { handlerMixins } from './mixins'
 import { handlerSetup, stopWatching, watching } from './reactive'
-import { setData, setDataNextTick } from './setDataEffect'
+import { setData } from './setDataEffect'
 import {
   appPushHooks,
   componentPushHooks,
@@ -219,8 +219,6 @@ export function decoratorLifeCycle(
         if (name !== 'onLaunch') {
           // 只有定义了setup才会进行响应式处理，这是为了兼容老项目
           if (isFunction(this.setup)) {
-            // nextTick
-            this.$nextTick = setDataNextTick
             const rawSetData = this.setData
             this.setData = function (
               data: LooseObject,
