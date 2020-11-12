@@ -602,20 +602,29 @@ forceUpdata(this)
 
 原生框架的全局状态只有一个`golbalData`，使用起来没有约束，值变化时页面也感知不到。
 
-这里我们用`Vuex`的思想来实现一个状态管理功能。
+这里我们使用computed简单实现一个状态管理功能。
 
-#### initStore
+#### createStore
 
-初始化响应式的全局状态
+初始化响应式的全局状态, 并返回getter和setter函数，通过getter获取数据（返回值为compuetd的返回值），通过setter触发变化。
+```js
+const [get, set] = createStore({a: 1})
 
-`initStore({a: 1})`
+Epage({
+  setup() {
+    const num = get(state => state.a)
 
-### useStore
+    return {
+      num
+    }
+  }
+})
 
-使用全局状态
-`const num = useStore((state) => state.a)`
+set(state => state.a++)
 
-状态变化时会重新render当前实例
+// Epage render
+
+```
 
 
 ### Vue3 Composition API 清单

@@ -14,7 +14,7 @@ export declare const isObject: (val: any) => boolean;
 export declare const isFunction: (val: any) => boolean;
 export declare const isSymbol: (val: any) => boolean;
 export declare const isPrimitive: (val: any) => boolean;
-export declare const isLooseObject: (obj: any) => boolean;
+export declare const isLooseObject: (obj: any) => any;
 /**
  * @description 返回promise，超时后resolve promise
  * @param resolveData promise.resolve 的数据

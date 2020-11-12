@@ -1,4 +1,4 @@
-import { Epage, ref, reactive, unref } from '../../libs/enhancemp'
+import { Epage, ref, reactive, unref, Ecomponent } from '../../libs/enhancemp'
 Epage({
   setup() {
     const a = ref(1)

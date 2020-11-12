@@ -10,7 +10,7 @@ export { requestMethod as request } from './request'
 
 export { updateData as forceUpdata } from './setDataEffect'
 
-export { initStore, useStore } from './store'
+export { createStore } from './store'
 
 export { setDataNextTick as nextTick } from './setDataEffect'
 

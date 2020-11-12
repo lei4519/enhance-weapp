@@ -1190,6 +1190,112 @@ function diffData(oldRootData, newRootData) {
     return updateObject;
 }
 
+// 需要装饰的所有生命周期
+var lc = {
+    app: [
+        'onLaunch',
+        'onShow',
+        'onHide',
+        'onError',
+        'onPageNotFound',
+        'onUnhandledRejection',
+        'onThemeChange'
+    ],
+    page: [
+        'onLoad',
+        'onShow',
+        'onReady',
+        'onHide',
+        'onUnload',
+        'onPullDownRefresh',
+        'onReachBottom',
+        // 'onShareAppMessage', 分享不需要包装，一个页面只有一个
+        // 'onPageScroll', 性能问题：一旦监听，每次滚动两个线程之间都会通信一次
+        'onTabItemTap',
+        'onResize',
+        'onAddToFavorites'
+    ],
+    component: [
+        'created',
+        'attached',
+        'ready',
+        'moved',
+        'detached',
+        'error',
+        'show',
+        'hide',
+        'resize'
+    ]
+};
+// 全局保留上下文，添加钩子函数时使用
+var currentCtx = null;
+function setCurrentCtx(ctx) {
+    currentCtx = ctx;
+}
+// 获取生命周期执行是的this值，可能为null
+function getCurrentCtx() {
+    return currentCtx;
+}
+// 生成添加钩子的函数
+function createPushHooks(name) {
+    // 添加钩子函数
+    return function pushHooks(cb) {
+        // 函数才能被推入
+        if (isFunction$1(cb)) {
+            var i = void 0;
+            if ((i = currentCtx) && (i = i.__hooks__[name])) {
+                // 避免onShow、onHide等多次调用的生命周期，重复添加相同的钩子函数
+                if (!i.includes(cb)) {
+                    i.push(cb);
+                }
+            }
+        }
+    };
+}
+// App的添加函数
+var appPushHooks = lc.app.reduce(function (res, name) {
+    res[name] = createPushHooks(name);
+    return res;
+}, {});
+var onLaunch = appPushHooks.onLaunch;
+var onAppShow = appPushHooks.onShow;
+var onAppHide = appPushHooks.onHide;
+var onAppError = appPushHooks.onError;
+var onPageNotFound = appPushHooks.onPageNotFound;
+var onUnhandledRejection = appPushHooks.onUnhandledRejection;
+var onThemeChange = appPushHooks.onThemeChange;
+// Page的添加函数
+var pagePushHooks = lc.page.reduce(function (res, name) {
+    res[name] = createPushHooks(name);
+    return res;
+}, {});
+var onLoad = pagePushHooks.onLoad;
+var onShow = pagePushHooks.onShow;
+var onReady = pagePushHooks.onReady;
+var onHide = pagePushHooks.onHide;
+var onUnload = pagePushHooks.onUnload;
+var onPullDownRefresh = pagePushHooks.onPullDownRefresh;
+var onReachBottom = pagePushHooks.onReachBottom;
+var onTabItemTap = pagePushHooks.onTabItemTap;
+var onResize = pagePushHooks.onResize;
+var onAddToFavorites = pagePushHooks.onAddToFavorites;
+// Component的添加函数
+var componentPushHooks = lc.component.reduce(function (res, name) {
+    // created => onCreated | ready => onReady
+    var onName = transformOnName(name);
+    res[onName] = createPushHooks(name);
+    return res;
+}, {});
+var onCreated = componentPushHooks.onCreated;
+var onAttached = componentPushHooks.onAttached;
+var onComponentReady = componentPushHooks.onReady;
+var onMoved = componentPushHooks.onMoved;
+var onDetached = componentPushHooks.onDetached;
+var onComponentError = componentPushHooks.onError;
+var onPageShow = componentPushHooks.onShow;
+var onPageHide = componentPushHooks.onHide;
+var onPageResize = componentPushHooks.onResize;
+
 // 需要更新的异步队列
 var setDataCtxQueue = new Set();
 // 是否注册了异步任务
@@ -1245,9 +1351,12 @@ function setData(rawSetData, data, cb, isUserInvoke) {
     this.__oldData__ = cloneDeep(this.data);
 }
 function setDataNextTick(cb) {
+    var ctx = getCurrentCtx();
+    if (!ctx)
+        return console.warn('未找到当前运行中的实例，请不要在setup执行堆栈外使用 nextTick');
     var resolve;
     var promise = new Promise(function (r) { return (resolve = r); });
-    this.$once('setDataRender:resolve', resolve);
+    ctx.$once('setDataRender:resolve', resolve);
     if (isFunction$1(cb)) {
         promise = promise.then(cb);
     }
@@ -1941,112 +2050,6 @@ function createStopWatching(ctx) {
     return stopWatching.bind(ctx);
 }
 
-// 需要装饰的所有生命周期
-var lc = {
-    app: [
-        'onLaunch',
-        'onShow',
-        'onHide',
-        'onError',
-        'onPageNotFound',
-        'onUnhandledRejection',
-        'onThemeChange'
-    ],
-    page: [
-        'onLoad',
-        'onShow',
-        'onReady',
-        'onHide',
-        'onUnload',
-        'onPullDownRefresh',
-        'onReachBottom',
-        // 'onShareAppMessage', 分享不需要包装，一个页面只有一个
-        // 'onPageScroll', 性能问题：一旦监听，每次滚动两个线程之间都会通信一次
-        'onTabItemTap',
-        'onResize',
-        'onAddToFavorites'
-    ],
-    component: [
-        'created',
-        'attached',
-        'ready',
-        'moved',
-        'detached',
-        'error',
-        'show',
-        'hide',
-        'resize'
-    ]
-};
-// 全局保留上下文，添加钩子函数时使用
-var currentCtx = null;
-function setCurrentCtx(ctx) {
-    currentCtx = ctx;
-}
-// 获取生命周期执行是的this值，可能为null
-function getCurrentCtx() {
-    return currentCtx;
-}
-// 生成添加钩子的函数
-function createPushHooks(name) {
-    // 添加钩子函数
-    return function pushHooks(cb) {
-        // 函数才能被推入
-        if (isFunction$1(cb)) {
-            var i = void 0;
-            if ((i = currentCtx) && (i = i.__hooks__[name])) {
-                // 避免onShow、onHide等多次调用的生命周期，重复添加相同的钩子函数
-                if (!i.includes(cb)) {
-                    i.push(cb);
-                }
-            }
-        }
-    };
-}
-// App的添加函数
-var appPushHooks = lc.app.reduce(function (res, name) {
-    res[name] = createPushHooks(name);
-    return res;
-}, {});
-var onLaunch = appPushHooks.onLaunch;
-var onAppShow = appPushHooks.onShow;
-var onAppHide = appPushHooks.onHide;
-var onAppError = appPushHooks.onError;
-var onPageNotFound = appPushHooks.onPageNotFound;
-var onUnhandledRejection = appPushHooks.onUnhandledRejection;
-var onThemeChange = appPushHooks.onThemeChange;
-// Page的添加函数
-var pagePushHooks = lc.page.reduce(function (res, name) {
-    res[name] = createPushHooks(name);
-    return res;
-}, {});
-var onLoad = pagePushHooks.onLoad;
-var onShow = pagePushHooks.onShow;
-var onReady = pagePushHooks.onReady;
-var onHide = pagePushHooks.onHide;
-var onUnload = pagePushHooks.onUnload;
-var onPullDownRefresh = pagePushHooks.onPullDownRefresh;
-var onReachBottom = pagePushHooks.onReachBottom;
-var onTabItemTap = pagePushHooks.onTabItemTap;
-var onResize = pagePushHooks.onResize;
-var onAddToFavorites = pagePushHooks.onAddToFavorites;
-// Component的添加函数
-var componentPushHooks = lc.component.reduce(function (res, name) {
-    // created => onCreated | ready => onReady
-    var onName = transformOnName(name);
-    res[onName] = createPushHooks(name);
-    return res;
-}, {});
-var onCreated = componentPushHooks.onCreated;
-var onAttached = componentPushHooks.onAttached;
-var onComponentReady = componentPushHooks.onReady;
-var onMoved = componentPushHooks.onMoved;
-var onDetached = componentPushHooks.onDetached;
-var onComponentError = componentPushHooks.onError;
-var onPageShow = componentPushHooks.onShow;
-var onPageHide = componentPushHooks.onHide;
-var onPageResize = componentPushHooks.onResize;
-
 var isControlLifecycle = true;
 /** 不控制生命周期的运行顺序 */
 var notControlLifecycle = function () {
@@ -2217,8 +2220,6 @@ function decoratorLifeCycle(options, type) {
                 if (name !== 'onLaunch') {
                     // 只有定义了setup才会进行响应式处理，这是为了兼容老项目
                     if (isFunction$1(this.setup)) {
-                        // nextTick
-                        this.$nextTick = setDataNextTick;
                         var rawSetData_1 = this.setData;
                         this.setData = function (data, cb, isUserInvoke) {
                             if (isUserInvoke === void 0) { isUserInvoke = true; }
@@ -2549,42 +2550,35 @@ function requestMethod(options) {
 }
 requestMethod.interceptors = interceptors;
 
-var state = null;
-function initStore(initState) {
-    return state = reactive(initState);
-}
-function useStore(pathStr) {
-    var ctx = getCurrentCtx();
-    if (!ctx)
-        return console.warn('未找到当前运行中的实例，请不要在setup执行堆栈外使用 useStore');
-    if (!state)
-        return console.warn('请先使用initStore 初始化');
-    if (!pathStr)
-        return console.warn('useStore 参数不能为空');
-    // const returnStr = /(=>|return)\s+(.[^\s]+)/igm
-    var paths = pathStr.split('.');
-    var key = paths.pop();
-    var obj = state;
-    try {
-        while (paths.length) {
-            obj = obj[paths.pop()];
-        }
-    }
-    catch (e) {
-        console.error("useStore(" + pathStr + ")", '传入的路径错误');
-        throw e;
-    }
-    var val = toRef(obj, key);
-    var stopWatching = watch(val, updateData.bind(ctx));
-    ctx.$once('onUnload:finally', stopWatching);
-    ctx.$once('detached:finally', stopWatching);
-    return val;
+function createStore(initState) {
+    if (initState === void 0) { initState = {}; }
+    var _state = reactive(initState);
+    var getStore = function (getter) {
+        var ctx = getCurrentCtx();
+        if (!ctx)
+            console.warn('未找到当前运行中的实例，请不要在setup执行堆栈外使用 useStore');
+        if (!isFunction$1(getter))
+            console.warn('getStore 参数必须是函数');
+        var val = computed(function () { return getter(_state); });
+        ctx.$once('onUnload:finally', function () {
+            stop(val.effect);
+        });
+        ctx.$once('detached:finally', function () {
+            stop(val.effect);
+        });
+        return val;
+    };
+    var setStore = function (setter) {
+        return setter(_state);
+    };
+    return [getStore, setStore];
 }
 
 exports.Eapp = Eapp;
 exports.Ecomponent = Ecomponent;
 exports.Epage = Epage;
 exports.computed = computed;
+exports.createStore = createStore;
 exports.customControlLifecycle = customControlLifecycle;
 exports.customRef = customRef;
 exports.effect = effect;
@@ -2592,12 +2586,12 @@ exports.enableTracking = enableTracking;
 exports.forceUpdata = updateData;
 exports.getCurrentCtx = getCurrentCtx;
 exports.globalMixins = globalMixins;
-exports.initStore = initStore;
 exports.isProxy = isProxy;
 exports.isReactive = isReactive;
 exports.isReadonly = isReadonly;
 exports.isRef = isRef;
 exports.markRaw = markRaw;
+exports.nextTick = setDataNextTick;
 exports.notControlLifecycle = notControlLifecycle;
 exports.onAddToFavoritesHooks = onAddToFavorites;
 exports.onAppErrorHooks = onAppError;
@@ -2643,6 +2637,5 @@ exports.track = track;
 exports.trigger = trigger;
 exports.triggerRef = triggerRef;
 exports.unref = unref;
-exports.useStore = useStore;
 exports.watch = watch;
 exports.watchEffect = watchEffect;
