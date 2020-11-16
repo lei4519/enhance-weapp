@@ -51,6 +51,7 @@ export function setData(
   isUserInvoke = true
 ) {
   if (isUserInvoke) {
+    // 如果在这里停止监听，会导致setData和data$同时使用时，data$的响应式变化无效
     // stopWatching.call(this)
     // 同步 data$ 值
     try {

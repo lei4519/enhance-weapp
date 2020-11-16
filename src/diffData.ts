@@ -35,6 +35,7 @@ export function diffData(
 
   /* 处理根对象 */
   // 获取原始值
+  oldRootData = getRawData(oldRootData)
   newRootData = getRawData(newRootData)
   // 根对象所有的旧键
   const oldRootKeys = Object.keys(oldRootData)
@@ -62,10 +63,11 @@ export function diffData(
 
   // 使用循环而非递归，避免数据量过大时爆栈
   diffQueueLoop: while (diffQueue.length) {
-    const [oldData, proxyData, keyPath] = diffQueue.shift()!
+    const [proxyOldData, proxyNewData, keyPath] = diffQueue.shift()!
 
     // 获取原始值
-    const newData = getRawData(proxyData)
+    const oldData = getRawData(proxyOldData)
+    const newData = getRawData(proxyNewData)
 
     // 如果相等，代表是基本类型
     if (oldData === newData) {

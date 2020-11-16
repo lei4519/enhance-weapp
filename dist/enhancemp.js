@@ -1068,6 +1068,7 @@ function diffData(oldRootData, newRootData) {
     };
     /* 处理根对象 */
     // 获取原始值
+    oldRootData = getRawData(oldRootData);
     newRootData = getRawData(newRootData);
     // 根对象所有的旧键
     var oldRootKeys = Object.keys(oldRootData);
@@ -1092,9 +1093,10 @@ function diffData(oldRootData, newRootData) {
         });
     }
     var _loop_1 = function () {
-        var _a = diffQueue.shift(), oldData = _a[0], proxyData = _a[1], keyPath = _a[2];
+        var _a = diffQueue.shift(), proxyOldData = _a[0], proxyNewData = _a[1], keyPath = _a[2];
         // 获取原始值
-        var newData = getRawData(proxyData);
+        var oldData = getRawData(proxyOldData);
+        var newData = getRawData(proxyNewData);
         // 如果相等，代表是基本类型
         if (oldData === newData) {
             return "continue";
@@ -1334,6 +1336,7 @@ function setData(rawSetData, data, cb, isUserInvoke) {
     var _this = this;
     if (isUserInvoke === void 0) { isUserInvoke = true; }
     if (isUserInvoke) {
+        // 如果在这里停止监听，会导致setData和data$同时使用时，data$的响应式变化无效
         // stopWatching.call(this)
         // 同步 data$ 值
         try {
@@ -2154,7 +2157,7 @@ var lcEventBus = initEvents();
  * @param type App | Page | Component
  */
 function decoratorLifeCycle(options, type) {
-    decoratorObservers(options);
+    decoratorObservers(options, type);
     // 组件要做额外处理
     if (type === 'component') {
         // 处理component pageLifetimes
@@ -2329,8 +2332,10 @@ function decoratorLifeCycle(options, type) {
 /**
  * 装饰数据监听器的变化
  */
-function decoratorObservers(options) {
-    var observers = options.observers;
+function decoratorObservers(options, type) {
+    if (type !== 'component')
+        return;
+    var observers = (options.observers = options.observers || {});
     // 对比数据变化差异, 并同步this.data$ 的值
     function diffAndPatch(oldData, newData) {
         var res = diffData(oldData, newData);
@@ -2349,50 +2354,15 @@ function decoratorObservers(options) {
             // this.__oldData__ = cloneDeep(args[0])
         }
     }
-    if (isObject$1(observers)) {
-        var allObs_1 = observers['**'];
-        observers['**'] = function (val) {
-            if (this.data$) {
-                stopWatching.call(this);
-                diffAndPatch(this.data$, val);
-                watching.call(this);
-            }
-            allObs_1 && allObs_1.call(this, val);
-        };
-        // Object.entries<LooseFunction>(observers).forEach(([key, fn]) => {
-        //   // 监听全部数据变化
-        //   if (key === '**') {
-        //     observers[key] = function (...args: any[]) {
-        //       if (this.data$) {
-        //         stopWatching.call(this)
-        //         diffAndPatch(args[0], this.data$)
-        //         watching.call(this)
-        //       }
-        //       fn.call(this, ...args)
-        //     }
-        //   } else {
-        //     observers[key] = function (...args: any[]) {
-        //       if (this.data$) {
-        //         stopWatching.call(this)
-        //         key.split(',').forEach((_k, i) => {
-        //           const [obj, k] = parsePath(this.data$, _k)
-        //           if (k === '**') {
-        //             diffAndPatch(args[i], obj)
-        //           } else {
-        //             if (isRef(obj[k])) {
-        //               obj[k].value = args[i]
-        //             } else {
-        //               obj[k] = args[i]
-        //             }
-        //           }
-        //         })
-        //         watching.call(this)
-        //       }
-        //       fn.call(this, ...args)
-        //     }
-        //   }
-        // })
-    }
+    var allObs = observers['**'];
+    observers['**'] = function (val) {
+        if (this.data$) {
+            stopWatching.call(this);
+            diffAndPatch(this.data$, val);
+            watching.call(this);
+        }
+        allObs && allObs.call(this, val);
+    };
 }
 /**
  * 初始化生命周期钩子相关属性
