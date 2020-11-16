@@ -1,4 +1,4 @@
-import { cloneDeep, isFunction, parsePath } from './util'
+import { cloneDeep, isFunction, parsePath, resolvePromise } from './util'
 import { diffData } from './diffData'
 import { EnhanceRuntime, LooseFunction, LooseObject } from '../types'
 import { stopWatching, watching } from './reactive'
@@ -18,7 +18,7 @@ export function setDataQueueJob(ctx: EnhanceRuntime) {
 function setDataQueueFlush() {
   if (!isFlushing) {
     isFlushing = true
-    Promise.resolve().then(flushSetDataJobs)
+    resolvePromise.then(flushSetDataJobs)
   }
 }
 

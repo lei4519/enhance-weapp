@@ -5,11 +5,12 @@ import {
   isFunction,
   isObject,
   parsePath,
+  resolvePromise,
   transformOnName
 } from './util'
 import { initEvents } from './events'
 import { handlerMixins } from './mixins'
-import { handlerSetup, stopWatching, watching } from './reactive'
+import { handlerSetup } from './reactive'
 import { setData } from './setDataEffect'
 import {
   appPushHooks,
@@ -215,7 +216,15 @@ export function decoratorLifeCycle(
             this['__show:resolve__'] = this['__show:reject__'] = false
           })
         }
-
+        if (type === 'component') {
+          const triggerEvent = this.triggerEvent
+          this.triggerEvent = function (...args: any[]) {
+            // 改为异步的以解决响应式异步更新问题
+            resolvePromise.then(() => {
+                  triggerEvent.call(this, ...args)
+              })
+          }
+      }
         // App 里没有data，没有视图，不需要使用响应式
         if (name !== 'onLaunch') {
           // 只有定义了setup才会进行响应式处理，这是为了兼容老项目

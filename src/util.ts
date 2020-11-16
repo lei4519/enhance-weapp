@@ -101,3 +101,5 @@ export function parsePath(obj: LooseObject, paths: string): [LooseObject, string
   }
   return [obj, key]
 }
+
+export const resolvePromise = Promise.resolve()

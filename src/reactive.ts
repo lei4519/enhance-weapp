@@ -3,7 +3,8 @@ import {
   disabledEnumerable,
   isFunction,
   isObject,
-  isPrimitive
+  isPrimitive,
+  resolvePromise
 } from './util'
 import {
   isReactive,
@@ -13,7 +14,7 @@ import {
   toRef,
   unref
 } from '@vue/reactivity'
-import { setDataQueueJob, updateData } from './setDataEffect'
+import { updateData } from './setDataEffect'
 import { watch } from '@vue/runtime-core'
 import { EnhanceRuntime, LooseObject, DecoratorType } from '../types'
 
@@ -72,7 +73,7 @@ export function handlerSetup(
     ctx.__hooks__.onLoad.unshift(watching)
     ctx.__hooks__.onShow.unshift(() => {
       if (ctx['__onHide:resolve__'] && !ctx.__watching__) {
-        Promise.resolve().then(() => updateData(ctx))
+        resolvePromise.then(() => updateData(ctx))
       }
       watching()
     })
@@ -84,13 +85,13 @@ export function handlerSetup(
     // 响应式监听要先于其他函数前执行
     ctx.__hooks__.attached.unshift(() => {
       if (ctx['__detached:resolve__'] && !ctx.__watching__) {
-        Promise.resolve().then(() => updateData(ctx))
+        resolvePromise.then(() => updateData(ctx))
       }
       watching()
     })
     ctx.__hooks__.show.unshift(() => {
       if (ctx['__hide:resolve__'] && !ctx.__watching__) {
-        Promise.resolve().then(() => updateData(ctx))
+        resolvePromise.then(() => updateData(ctx))
       }
       watching()
     })
@@ -107,8 +108,7 @@ export function watching(this: EnhanceRuntime) {
   this.__watching__ = true
   // 保留取消监听的函数
   this.__stopWatchFn__ = watch(this.data$, () => {
-    // 用户调用setData触发的响应式不做处理，避免循环更新
-    setDataQueueJob(this)
+    updateData(this)
   })
 }
 

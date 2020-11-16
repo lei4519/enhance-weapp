@@ -2,6 +2,29 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __spreadArrays() {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+}
+
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
@@ -983,29 +1006,7 @@ function parsePath(obj, paths) {
     }
     return [obj, key];
 }
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __spreadArrays() {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-}
+var resolvePromise = Promise.resolve();
 
 function initEvents(ctx) {
     if (ctx === void 0) { ctx = {}; }
@@ -1371,27 +1372,6 @@ var onPageShow = componentPushHooks.onShow;
 var onPageHide = componentPushHooks.onHide;
 var onPageResize = componentPushHooks.onResize;
 
-// 需要更新的异步队列
-var setDataCtxQueue = new Set();
-// 是否注册了异步任务
-var isFlushing = false;
-function setDataQueueJob(ctx) {
-    if (!setDataCtxQueue.has(ctx)) {
-        setDataCtxQueue.add(ctx);
-        setDataQueueFlush();
-    }
-}
-function setDataQueueFlush() {
-    if (!isFlushing) {
-        isFlushing = true;
-        Promise.resolve().then(flushSetDataJobs);
-    }
-}
-function flushSetDataJobs() {
-    setDataCtxQueue.forEach(updateData);
-    setDataCtxQueue.clear();
-    isFlushing = false;
-}
 function updateData(ctx) {
     var res = diffData(ctx.__oldData__, ctx.data$);
     if (!res)
@@ -1658,7 +1638,7 @@ function logError(err, type, contextVNode, throwInDev = true) {
     }
 }
 
-let isFlushing$1 = false;
+let isFlushing = false;
 let isFlushPending = false;
 const queue = [];
 let flushIndex = 0;
@@ -1684,14 +1664,14 @@ function queueJob(job) {
     // allow it recursively trigger itself - it is the user's responsibility to
     // ensure it doesn't end up in an infinite loop.
     if ((!queue.length ||
-        !queue.includes(job, isFlushing$1 && job.allowRecurse ? flushIndex + 1 : flushIndex)) &&
+        !queue.includes(job, isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex)) &&
         job !== currentPreFlushParentJob) {
         queue.push(job);
         queueFlush();
     }
 }
 function queueFlush() {
-    if (!isFlushing$1 && !isFlushPending) {
+    if (!isFlushing && !isFlushPending) {
         isFlushPending = true;
         currentFlushPromise = resolvedPromise.then(flushJobs);
     }
@@ -1765,7 +1745,7 @@ function flushPostFlushCbs(seen) {
 const getId = (job) => job.id == null ? Infinity : job.id;
 function flushJobs(seen) {
     isFlushPending = false;
-    isFlushing$1 = true;
+    isFlushing = true;
     {
         seen = seen || new Map();
     }
@@ -1795,7 +1775,7 @@ function flushJobs(seen) {
         flushIndex = 0;
         queue.length = 0;
         flushPostFlushCbs(seen);
-        isFlushing$1 = false;
+        isFlushing = false;
         currentFlushPromise = null;
         // some postFlushCb queued jobs!
         // keep flushing until it drains.
@@ -2418,7 +2398,7 @@ function handlerSetup(ctx, options, type) {
         ctx.__hooks__.onLoad.unshift(watching);
         ctx.__hooks__.onShow.unshift(function () {
             if (ctx['__onHide:resolve__'] && !ctx.__watching__) {
-                Promise.resolve().then(function () { return updateData(ctx); });
+                resolvePromise.then(function () { return updateData(ctx); });
             }
             watching();
         });
@@ -2431,13 +2411,13 @@ function handlerSetup(ctx, options, type) {
         // 响应式监听要先于其他函数前执行
         ctx.__hooks__.attached.unshift(function () {
             if (ctx['__detached:resolve__'] && !ctx.__watching__) {
-                Promise.resolve().then(function () { return updateData(ctx); });
+                resolvePromise.then(function () { return updateData(ctx); });
             }
             watching();
         });
         ctx.__hooks__.show.unshift(function () {
             if (ctx['__hide:resolve__'] && !ctx.__watching__) {
-                Promise.resolve().then(function () { return updateData(ctx); });
+                resolvePromise.then(function () { return updateData(ctx); });
             }
             watching();
         });
@@ -2455,8 +2435,7 @@ function watching() {
     this.__watching__ = true;
     // 保留取消监听的函数
     this.__stopWatchFn__ = watch(this.data$, function () {
-        // 用户调用setData触发的响应式不做处理，避免循环更新
-        setDataQueueJob(_this);
+        updateData(_this);
     });
 }
 function createWatching(ctx) {
@@ -2639,6 +2618,20 @@ function decoratorLifeCycle(options, type) {
                         /* istanbul ignore next */
                         _this['__show:resolve__'] = _this['__show:reject__'] = false;
                     });
+                }
+                if (type === 'component') {
+                    var triggerEvent_1 = this.triggerEvent;
+                    this.triggerEvent = function () {
+                        var _this = this;
+                        var args = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            args[_i] = arguments[_i];
+                        }
+                        // 改为异步的以解决响应式异步更新问题
+                        resolvePromise.then(function () {
+                            triggerEvent_1.call.apply(triggerEvent_1, __spreadArrays([_this], args));
+                        });
+                    };
                 }
                 // App 里没有data，没有视图，不需要使用响应式
                 if (name !== 'onLaunch') {
