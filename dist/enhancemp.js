@@ -2351,15 +2351,13 @@ function decoratorObservers(options, type) {
                     obj[key] = value;
                 }
             });
-            // this.__oldData__ = cloneDeep(args[0])
+            this.__oldData__ = cloneDeep(newData);
         }
     }
     var allObs = observers['**'];
     observers['**'] = function (val) {
         if (this.data$) {
-            stopWatching.call(this);
-            diffAndPatch(this.data$, val);
-            watching.call(this);
+            diffAndPatch.call(this, this.data$, val);
         }
         allObs && allObs.call(this, val);
     };

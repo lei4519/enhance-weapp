@@ -1,4 +1,5 @@
 import {
+  cloneDeep,
   defineReadonlyProp,
   disabledEnumerable,
   isFunction,
@@ -342,7 +343,7 @@ function decoratorObservers(options: LooseObject, type: DecoratorType) {
 
   const observers = (options.observers = options.observers || {})
   // 对比数据变化差异, 并同步this.data$ 的值
-  function diffAndPatch(oldData: LooseObject, newData: LooseObject) {
+  function diffAndPatch(this: EnhanceRuntime, oldData: LooseObject, newData: LooseObject) {
     const res = diffData(oldData, newData)
     if (res) {
       // 同步 data$ 值
@@ -354,15 +355,13 @@ function decoratorObservers(options: LooseObject, type: DecoratorType) {
           obj[key] = value
         }
       })
-      // this.__oldData__ = cloneDeep(args[0])
+      this.__oldData__ = cloneDeep(newData)
     }
   }
   const allObs = observers['**']
   observers['**'] = function (val: any) {
     if (this.data$) {
-      stopWatching.call(this)
-      diffAndPatch(this.data$, val)
-      watching.call(this)
+      diffAndPatch.call(this, this.data$, val)
     }
     allObs && allObs.call(this, val)
   }
