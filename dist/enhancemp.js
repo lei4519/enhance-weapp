@@ -2361,35 +2361,50 @@ function decoratorLifeCycle(options, type) {
 function decoratorObservers(options, type) {
     if (type !== 'component')
         return;
-    var observers = (options.observers = options.observers || {});
-    // 对比数据变化差异, 并同步this.data$ 的值
-    function diffAndPatch(oldData, newData) {
-        var _this = this;
-        var res = diffData(oldData, newData)[0];
-        if (res) {
-            // 同步 data$ 值
-            Object.entries(res).forEach(function (_a) {
-                var paths = _a[0], value = _a[1];
-                var _b = parsePath(oldData, paths), obj = _b[0], key = _b[1];
-                var _c = parsePath(_this.__oldData__, paths), obj1 = _c[0], key1 = _c[1];
-                if (isRef(obj[key])) {
-                    obj[key].value = value;
-                    obj1[key1].value = isPrimitive(value) ? value : cloneDeep(value);
+    if (options.properties) {
+        var observers_1 = (options.observers = options.observers || {});
+        Object.keys(options.properties).forEach(function (key) {
+            // 原始监听函数
+            var o = observers_1[key];
+            observers_1[key] = function (val) {
+                if (isPrimitive(val)) {
+                    if (val !== this.data$[key]) {
+                        this.data$[key] = val;
+                    }
                 }
                 else {
-                    obj[key] = value;
-                    obj1[key1] = isPrimitive(value) ? value : cloneDeep(value);
+                    this.data$[key] = val;
                 }
-            });
-        }
+                o && o.call(this, val);
+            };
+        });
     }
-    var allObs = observers['**'];
-    observers['**'] = function (val) {
-        if (this.data$) {
-            diffAndPatch.call(this, this.data$, val);
-        }
-        allObs && allObs.call(this, val);
-    };
+    // const observers = (options.observers = options.observers || {})
+    // // 对比数据变化差异, 并同步this.data$ 的值
+    // function diffAndPatch(this: EnhanceRuntime, oldData: LooseObject, newData: LooseObject) {
+    //   const [res] = diffData(oldData, newData)
+    //   if (res) {
+    //     // 同步 data$ 值
+    //     Object.entries(res).forEach(([paths, value]) => {
+    //       const [obj, key] = parsePath(oldData, paths)
+    //       const [obj1, key1] = parsePath(this.__oldData__, paths)
+    //       if (isRef(obj[key])) {
+    //         obj[key].value = value
+    //         obj1[key1].value = isPrimitive(value) ? value : cloneDeep(value)
+    //       } else {
+    //         obj[key] = value
+    //         obj1[key1] = isPrimitive(value) ? value : cloneDeep(value)
+    //       }
+    //     })
+    //   }
+    // }
+    // const allObs = observers['**']
+    // observers['**'] = function (val: any) {
+    //   if (this.data$) {
+    //     diffAndPatch.call(this, this.data$, val)
+    //   }
+    //   allObs && allObs.call(this, val)
+    // }
 }
 /**
  * 初始化生命周期钩子相关属性

@@ -350,33 +350,50 @@ export function decoratorLifeCycle(
  */
 function decoratorObservers(options: LooseObject, type: DecoratorType) {
   if (type !== 'component') return
-
-  const observers = (options.observers = options.observers || {})
-  // 对比数据变化差异, 并同步this.data$ 的值
-  function diffAndPatch(this: EnhanceRuntime, oldData: LooseObject, newData: LooseObject) {
-    const [res] = diffData(oldData, newData)
-    if (res) {
-      // 同步 data$ 值
-      Object.entries(res).forEach(([paths, value]) => {
-        const [obj, key] = parsePath(oldData, paths)
-        const [obj1, key1] = parsePath(this.__oldData__, paths)
-        if (isRef(obj[key])) {
-          obj[key].value = value
-          obj1[key1].value = isPrimitive(value) ? value : cloneDeep(value)
+  if (options.properties) {
+    const observers = (options.observers = options.observers || {})
+    Object.keys(options.properties).forEach((key) => {
+      // 原始监听函数
+      const o = observers[key]
+      observers[key] = function (val: any[]) {
+        if (isPrimitive(val)) {
+          if (val !== this.data$[key]) {
+            this.data$[key] = val
+          }
         } else {
-          obj[key] = value
-          obj1[key1] = isPrimitive(value) ? value : cloneDeep(value)
+          this.data$[key] = val
         }
-      })
-    }
+        o && o.call(this, val)
+      }
+    })
   }
-  const allObs = observers['**']
-  observers['**'] = function (val: any) {
-    if (this.data$) {
-      diffAndPatch.call(this, this.data$, val)
-    }
-    allObs && allObs.call(this, val)
-  }
+  // const observers = (options.observers = options.observers || {})
+
+  // // 对比数据变化差异, 并同步this.data$ 的值
+  // function diffAndPatch(this: EnhanceRuntime, oldData: LooseObject, newData: LooseObject) {
+  //   const [res] = diffData(oldData, newData)
+  //   if (res) {
+  //     // 同步 data$ 值
+  //     Object.entries(res).forEach(([paths, value]) => {
+  //       const [obj, key] = parsePath(oldData, paths)
+  //       const [obj1, key1] = parsePath(this.__oldData__, paths)
+  //       if (isRef(obj[key])) {
+  //         obj[key].value = value
+  //         obj1[key1].value = isPrimitive(value) ? value : cloneDeep(value)
+  //       } else {
+  //         obj[key] = value
+  //         obj1[key1] = isPrimitive(value) ? value : cloneDeep(value)
+  //       }
+  //     })
+  //   }
+  // }
+  // const allObs = observers['**']
+  // observers['**'] = function (val: any) {
+  //   if (this.data$) {
+  //     diffAndPatch.call(this, this.data$, val)
+  //   }
+  //   allObs && allObs.call(this, val)
+  // }
 }
 
 /**
