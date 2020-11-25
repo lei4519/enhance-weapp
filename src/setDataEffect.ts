@@ -28,7 +28,7 @@ function flushSetDataJobs() {
   isFlushing = false
 }
 export function updateData(ctx: EnhanceRuntime) {
-  const res = diffData(ctx.__oldData__, ctx.data$)
+  const [res, isAddKey] = diffData(ctx.__oldData__, ctx.data$)
   if (!res) return ctx.$emit('setDataRender:resolve')
   // console.log('响应式触发this.setData，参数: ', res)
   ctx.setData(
@@ -38,10 +38,14 @@ export function updateData(ctx: EnhanceRuntime) {
     },
     false
   )
-  // 对于新增的值，重新监听
-  stopWatching.call(ctx)
-  watching.call(ctx)
-  ctx.__oldData__ = cloneDeep(ctx.data)
+  setTimeout(() => {
+    if (isAddKey) {
+      // 对于新增的值，重新监听
+      stopWatching.call(ctx)
+      watching.call(ctx)
+    }
+    ctx.__oldData__ = cloneDeep(ctx.data)
+  })
 }
 export function setData(
   this: EnhanceRuntime,

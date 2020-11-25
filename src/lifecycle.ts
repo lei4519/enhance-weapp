@@ -353,7 +353,7 @@ function decoratorObservers(options: LooseObject, type: DecoratorType) {
   const observers = (options.observers = options.observers || {})
   // 对比数据变化差异, 并同步this.data$ 的值
   function diffAndPatch(this: EnhanceRuntime, oldData: LooseObject, newData: LooseObject) {
-    const res = diffData(oldData, newData)
+    const [res] = diffData(oldData, newData)
     if (res) {
       // 同步 data$ 值
       Object.entries(res).forEach(([paths, value]) => {

@@ -19,9 +19,11 @@ import { cloneDeepRawData, getRawData, getType, isPrimitive } from './util'
 export function diffData(
   oldRootData: LooseObject,
   newRootData: LooseObject
-): LooseObject | null {
+): [LooseObject | null, boolean] {
   // 更新对象，最终传给this.setData的值
   let updateObject: LooseObject | null = null
+  // 是否有新增的值，如果有的话就需要重新监听
+  let isAddKey = false
   // 需要对比数据的数组
   type DiffQueue = [LooseObject, LooseObject, string][]
   const diffQueue: DiffQueue = []
@@ -54,6 +56,7 @@ export function diffData(
   })
   // 有新增的值
   if (newRootKeys.length) {
+    isAddKey = true
     newRootKeys.forEach(key => {
       // 将新增值加入更新对象
       addUpdateData(key, newRootData[key])
@@ -99,6 +102,7 @@ export function diffData(
         addUpdateData(keyPath, newData)
         continue
       }
+      isAddKey = oldData.length < newData.length
       // 将新数组的每一项推入diff队列中
       for (let i = 0, l = newData.length; i < l; i++) {
         diffQueue.push([oldData[i], newData[i], `${keyPath}[${i}]`])
@@ -144,6 +148,7 @@ export function diffData(
     }
     // 有新增的值
     if (newKeys.length) {
+      isAddKey = true
       newKeys.forEach(key => {
         addUpdateData(`${keyPath}.${key}`, newData[key])
       })
@@ -153,5 +158,5 @@ export function diffData(
       diffQueue.push(...diffChild)
     }
   }
-  return updateObject
+  return [updateObject, isAddKey]
 }
