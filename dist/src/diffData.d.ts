@@ -15,4 +15,4 @@ import { LooseObject } from '../types';
  * @param {Object} newRootData 新值: this.data$
  * @return {Object}  传给this.setData的值
  */
-export declare function diffData(oldRootData: LooseObject, newRootData: LooseObject): LooseObject | null;
+export declare function diffData(oldRootData: LooseObject, newRootData: LooseObject): [LooseObject | null, boolean];

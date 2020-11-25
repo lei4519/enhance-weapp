@@ -1,8 +1,15 @@
-import { cloneDeep, isFunction, parsePath, resolvePromise } from './util'
+import {
+  cloneDeep,
+  isFunction,
+  isPrimitive,
+  parsePath,
+  resolvePromise
+} from './util'
 import { diffData } from './diffData'
 import { EnhanceRuntime, LooseFunction, LooseObject } from '../types'
 import { stopWatching, watching } from './reactive'
 import { getCurrentCtx } from './createPushHooks'
+import { isRef } from '@vue/reactivity'
 // 需要更新的异步队列
 const setDataCtxQueue: Set<EnhanceRuntime> = new Set()
 // 是否注册了异步任务
@@ -38,14 +45,22 @@ export function updateData(ctx: EnhanceRuntime) {
     },
     false
   )
-  setTimeout(() => {
-    if (isAddKey) {
+  // 同步 旧值
+  Object.entries(res).forEach(([paths, value]) => {
+    const [obj, key] = parsePath(ctx.__oldData__, paths)
+    if (isRef(obj[key])) {
+      obj[key].value = isPrimitive(value) ? value : cloneDeep(value)
+    } else {
+      obj[key] = isPrimitive(value) ? value : cloneDeep(value)
+    }
+  })
+  if (isAddKey) {
+    setTimeout(() => {
       // 对于新增的值，重新监听
       stopWatching.call(ctx)
       watching.call(ctx)
-    }
-    ctx.__oldData__ = cloneDeep(ctx.data)
-  })
+    })
+  }
 }
 export function setData(
   this: EnhanceRuntime,
@@ -68,15 +83,25 @@ export function setData(
     }
   }
   rawSetData.call(this, data, cb)
-  this.__oldData__ = cloneDeep(this.data)
-  if (isUserInvoke) {
-    // watching.call(this)
-  }
+  Object.entries(data).forEach(([paths, value]) => {
+    const [obj, key] = parsePath(this.__oldData__, paths)
+    if (isRef(obj[key])) {
+      obj[key].value = isPrimitive(value) ? value : cloneDeep(value)
+    } else {
+      obj[key] = isPrimitive(value) ? value : cloneDeep(value)
+    }
+  })
+  // if (isUserInvoke) {
+  // watching.call(this)
+  // }
 }
 
 export function setDataNextTick(cb?: LooseFunction) {
   const ctx = getCurrentCtx()
-  if (!ctx) return console.warn('未找到当前运行中的实例，请不要在setup执行堆栈外使用 nextTick')
+  if (!ctx)
+    return console.warn(
+      '未找到当前运行中的实例，请不要在setup执行堆栈外使用 nextTick'
+    )
   let resolve: any
   let promise = new Promise(r => (resolve = r))
   ctx.$once('setDataRender:resolve', resolve!)

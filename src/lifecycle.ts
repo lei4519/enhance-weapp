@@ -4,6 +4,7 @@ import {
   disabledEnumerable,
   isFunction,
   isObject,
+  isPrimitive,
   parsePath,
   resolvePromise,
   transformOnName
@@ -358,13 +359,15 @@ function decoratorObservers(options: LooseObject, type: DecoratorType) {
       // 同步 data$ 值
       Object.entries(res).forEach(([paths, value]) => {
         const [obj, key] = parsePath(oldData, paths)
+        const [obj1, key1] = parsePath(this.__oldData__, paths)
         if (isRef(obj[key])) {
           obj[key].value = value
+          obj1[key1].value = isPrimitive(value) ? value : cloneDeep(value)
         } else {
           obj[key] = value
+          obj1[key1] = isPrimitive(value) ? value : cloneDeep(value)
         }
       })
-      this.__oldData__ = cloneDeep(newData)
     }
   }
   const allObs = observers['**']

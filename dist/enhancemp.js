@@ -1059,6 +1059,8 @@ function handlerMixins(type, ctx) {
 function diffData(oldRootData, newRootData) {
     // 更新对象，最终传给this.setData的值
     var updateObject = null;
+    // 是否有新增的值，如果有的话就需要重新监听
+    var isAddKey = false;
     var diffQueue = [];
     // 添加更新对象
     var addUpdateData = function (key, val) {
@@ -1088,6 +1090,7 @@ function diffData(oldRootData, newRootData) {
     });
     // 有新增的值
     if (newRootKeys.length) {
+        isAddKey = true;
         newRootKeys.forEach(function (key) {
             // 将新增值加入更新对象
             addUpdateData(key, newRootData[key]);
@@ -1124,6 +1127,7 @@ function diffData(oldRootData, newRootData) {
                 addUpdateData(keyPath, newData);
                 return "continue";
             }
+            isAddKey = oldData.length < newData.length;
             // 将新数组的每一项推入diff队列中
             for (var i = 0, l = newData.length; i < l; i++) {
                 diffQueue.push([oldData[i], newData[i], keyPath + "[" + i + "]"]);
@@ -1173,6 +1177,7 @@ function diffData(oldRootData, newRootData) {
         }
         // 有新增的值
         if (newKeys.length) {
+            isAddKey = true;
             newKeys.forEach(function (key) {
                 addUpdateData(keyPath + "." + key, newData[key]);
             });
@@ -1190,7 +1195,7 @@ function diffData(oldRootData, newRootData) {
             case "continue-diffQueueLoop": continue diffQueueLoop;
         }
     }
-    return updateObject;
+    return [updateObject, isAddKey];
 }
 
 // 需要装饰的所有生命周期
@@ -1300,17 +1305,31 @@ var onPageHide = componentPushHooks.onHide;
 var onPageResize = componentPushHooks.onResize;
 
 function updateData(ctx) {
-    var res = diffData(ctx.__oldData__, ctx.data$);
+    var _a = diffData(ctx.__oldData__, ctx.data$), res = _a[0], isAddKey = _a[1];
     if (!res)
         return ctx.$emit('setDataRender:resolve');
     // console.log('响应式触发this.setData，参数: ', res)
     ctx.setData(res, function () {
         ctx.$emit('setDataRender:resolve');
     }, false);
-    // 对于新增的值，重新监听
-    stopWatching.call(ctx);
-    watching.call(ctx);
-    ctx.__oldData__ = cloneDeep(ctx.data);
+    // 同步 旧值
+    Object.entries(res).forEach(function (_a) {
+        var paths = _a[0], value = _a[1];
+        var _b = parsePath(ctx.__oldData__, paths), obj = _b[0], key = _b[1];
+        if (isRef(obj[key])) {
+            obj[key].value = isPrimitive(value) ? value : cloneDeep(value);
+        }
+        else {
+            obj[key] = isPrimitive(value) ? value : cloneDeep(value);
+        }
+    });
+    if (isAddKey) {
+        setTimeout(function () {
+            // 对于新增的值，重新监听
+            stopWatching.call(ctx);
+            watching.call(ctx);
+        });
+    }
 }
 function setData(rawSetData, data, cb, isUserInvoke) {
     var _this = this;
@@ -1331,7 +1350,19 @@ function setData(rawSetData, data, cb, isUserInvoke) {
         }
     }
     rawSetData.call(this, data, cb);
-    this.__oldData__ = cloneDeep(this.data);
+    Object.entries(data).forEach(function (_a) {
+        var paths = _a[0], value = _a[1];
+        var _b = parsePath(_this.__oldData__, paths), obj = _b[0], key = _b[1];
+        if (isRef(obj[key])) {
+            obj[key].value = isPrimitive(value) ? value : cloneDeep(value);
+        }
+        else {
+            obj[key] = isPrimitive(value) ? value : cloneDeep(value);
+        }
+    });
+    // if (isUserInvoke) {
+    // watching.call(this)
+    // }
 }
 function setDataNextTick(cb) {
     var ctx = getCurrentCtx();
@@ -2331,20 +2362,23 @@ function decoratorObservers(options, type) {
     var observers = (options.observers = options.observers || {});
     // 对比数据变化差异, 并同步this.data$ 的值
     function diffAndPatch(oldData, newData) {
-        var res = diffData(oldData, newData);
+        var _this = this;
+        var res = diffData(oldData, newData)[0];
         if (res) {
             // 同步 data$ 值
             Object.entries(res).forEach(function (_a) {
                 var paths = _a[0], value = _a[1];
                 var _b = parsePath(oldData, paths), obj = _b[0], key = _b[1];
+                var _c = parsePath(_this.__oldData__, paths), obj1 = _c[0], key1 = _c[1];
                 if (isRef(obj[key])) {
                     obj[key].value = value;
+                    obj1[key1].value = isPrimitive(value) ? value : cloneDeep(value);
                 }
                 else {
                     obj[key] = value;
+                    obj1[key1] = isPrimitive(value) ? value : cloneDeep(value);
                 }
             });
-            this.__oldData__ = cloneDeep(newData);
         }
     }
     var allObs = observers['**'];
