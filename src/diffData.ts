@@ -84,7 +84,9 @@ export function diffData(
 
     // 类型不等，直接重设
     if (oldType !== newType) {
-      addUpdateData(keyPath, newData)
+      if (oldType !== 'Null' && newType !== 'Undefined') {
+        addUpdateData(keyPath, newData)
+      }
       continue
     }
 
