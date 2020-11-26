@@ -5,7 +5,6 @@ import {
   isFunction,
   isObject,
   isPrimitive,
-  parsePath,
   resolvePromise,
   transformOnName
 } from './util'
@@ -355,15 +354,23 @@ function decoratorObservers(options: LooseObject, type: DecoratorType) {
     Object.keys(options.properties).forEach((key) => {
       // 原始监听函数
       const o = observers[key]
+      let f = false
       observers[key] = function (val: any[]) {
-        if (isPrimitive(val)) {
-          if (val !== this.data$[key]) {
-            this.data$[key] = val
+        if (f) return
+        f = true
+        resolvePromise.then(() => {
+          f = false
+          if (isPrimitive(val)) {
+            if (val !== this.data$[key]) {
+              this.data$[key] = val
+              this.__oldData__[key] = val
+            }
+          } else {
+            this.data$[key] = cloneDeep(val)
+            this.__oldData__[key] = cloneDeep(val)
           }
-        } else {
-          this.data$[key] = val
-        }
-        o && o.call(this, val)
+          o && o.call(this, val)
+        })
       }
     })
   }

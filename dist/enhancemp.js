@@ -2366,16 +2366,26 @@ function decoratorObservers(options, type) {
         Object.keys(options.properties).forEach(function (key) {
             // 原始监听函数
             var o = observers_1[key];
+            var f = false;
             observers_1[key] = function (val) {
-                if (isPrimitive(val)) {
-                    if (val !== this.data$[key]) {
-                        this.data$[key] = val;
+                var _this = this;
+                if (f)
+                    return;
+                f = true;
+                resolvePromise.then(function () {
+                    f = false;
+                    if (isPrimitive(val)) {
+                        if (val !== _this.data$[key]) {
+                            _this.data$[key] = val;
+                            _this.__oldData__[key] = val;
+                        }
                     }
-                }
-                else {
-                    this.data$[key] = val;
-                }
-                o && o.call(this, val);
+                    else {
+                        _this.data$[key] = cloneDeep(val);
+                        _this.__oldData__[key] = cloneDeep(val);
+                    }
+                    o && o.call(_this, val);
+                });
             };
         });
     }
