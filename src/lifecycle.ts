@@ -354,12 +354,7 @@ function decoratorObservers(options: LooseObject, type: DecoratorType) {
     Object.keys(options.properties).forEach((key) => {
       // 原始监听函数
       const o = observers[key]
-      let f = false
       observers[key] = function (val: any[]) {
-        if (f) return
-        f = true
-        resolvePromise.then(() => {
-          f = false
           if (isPrimitive(val)) {
             if (val !== this.data$[key]) {
               this.data$[key] = val
@@ -370,7 +365,6 @@ function decoratorObservers(options: LooseObject, type: DecoratorType) {
             this.__oldData__[key] = cloneDeep(val)
           }
           o && o.call(this, val)
-        })
       }
     })
   }
