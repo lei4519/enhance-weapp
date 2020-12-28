@@ -1,7 +1,7 @@
 {
   "name": "enhance-weapp",
   "version": "1.0.0",
-  "description": "增强小程序开发能力，加入vue composition api等特性",
+  "description": "增强小程序运行时能力，加入vue composition api等特性",
   "main": "dist/enhancemp.min.js",
   "types": "./dist/src/main.d.ts",
   "scripts": {
@@ -10,6 +10,10 @@
     "startWxIDE": "/Applications/wechatwebdevtools.app/Contents/MacOS/cli --auto /Users/lay/docker/web/gitlab/enhance-weapp/testProject --auto-port 9420",
     "test:all": "jest",
     "test:single": "jest test/lifecycle&reactive.spec.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:lei4519/enhance-weapp.git"
   },
   "keywords": [
     "composition",

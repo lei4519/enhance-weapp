@@ -10,7 +10,7 @@
 ## 安装
 
 ```js
-npm i git+https://gitlab.leju.com/librarys/enhance-weapp.git --save
+npm i enhance-weapp --save
 ```
 
 ## 示例
