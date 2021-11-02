@@ -16,7 +16,7 @@ npm i enhance-weapp --save
 ## 示例
 - ⚠️ 必须在 app.js 中调用 `Eapp`，页面中才能正常工作。
  - 原因是 page 的 `onLoad` 默认在 app 的 `onShow` 执行完成后才会执行，而响应式数据监听是在 `onLoad` 中进行的。
- - 具体参考 <a href="#user-content-框架注意点">框架注意点</a>
+ - 具体参考 框架注意点
 ```js
 // app.js
 import {Eapp} from 'enhance-weapp'
